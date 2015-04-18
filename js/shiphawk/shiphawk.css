@@ -1,0 +1,26 @@
+#shiphawk_type_of_product_value {
+    display: none;
+}
+
+.type_link:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#type_product {
+    position: absolute;
+    z-index: 99;
+    background-color: #ffffff;
+}
+
+.shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .header, .shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .footer {
+    display: none!important;
+}
+.shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .middle {
+    min-height: 200px!important;
+}
+.shiphawk-shipping-adminhtml-shipment-newshipment .wrapper {
+    min-height: 200px!important;;
+    min-width:360px!important;;
+
+}

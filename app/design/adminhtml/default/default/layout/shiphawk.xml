@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+
+    <adminhtml_catalog_product_edit>
+
+        <reference name="head">
+
+            <action method="addJs"><script>shiphawk/shiphawk.js</script></action>
+
+            <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
+
+        </reference>
+    </adminhtml_catalog_product_edit>
+
+    <adminhtml_catalog_product_action_attribute_edit>
+
+        <reference name="head">
+
+            <action method="addJs"><script>shiphawk/shiphawk.js</script></action>
+
+            <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
+
+        </reference>
+    </adminhtml_catalog_product_action_attribute_edit>
+
+    <adminhtml_catalog_product_new>
+        <reference name="head">
+
+            <action method="addJs"><script>shiphawk/shiphawk.js</script></action>
+
+            <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
+
+        </reference>
+    </adminhtml_catalog_product_new>
+
+    <adminhtml_sales_order_view>
+        <reference name="head">
+
+            <action method="addJs"><script>shiphawk/shiphawk_shipment.js</script></action>
+
+            <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
+
+            <action method="addItem">
+                <type>js_css</type>
+                <name>prototype/windows/themes/default.css</name>
+            </action>
+            <action method="addCss">
+                <name>lib/prototype/windows/themes/magento.css</name>
+            </action>
+
+        </reference>
+    </adminhtml_sales_order_view>
+
+    <adminhtml_origins_index>
+        <reference name="content">
+            <block type="shiphawk_shipping/adminhtml_origins" name="origins.grid_container" />
+        </reference>
+    </adminhtml_origins_index>
+
+    <adminhtml_origins_new>
+        <update handle="adminhtml_origins_edit"/>
+    </adminhtml_origins_new>
+
+    <adminhtml_origins_edit>
+        <reference name="content">
+            <block type="shiphawk_shipping/adminhtml_origins_edit" name="origins.edit" />
+        </reference>
+    </adminhtml_origins_edit>
+
+    <shiphawk_shipping_adminhtml_shipment_newshipment>
+        <reference name="head">
+            <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
+        </reference>
+    </shiphawk_shipping_adminhtml_shipment_newshipment>
+
+
+</layout>

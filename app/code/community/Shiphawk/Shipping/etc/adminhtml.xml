@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<config>
+    <menu>
+        <shiphawk_shipping translate="title" module="shiphawk_shipping">
+            <title>Shiphawk Shipping Origins</title>
+            <sort_order>55</sort_order>
+            <children>
+                <origins module="shiphawk_shipping">
+                    <title>Manage Shipping Origins</title>
+                    <sort_order>30</sort_order>
+                    <action>adminhtml/origins</action>
+                </origins>
+            </children>
+        </shiphawk_shipping>
+    </menu>
+</config>
