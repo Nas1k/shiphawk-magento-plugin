@@ -17,6 +17,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             $shiphawk_rate_data = unserialize($order->getData('shiphawk_book_id')); //rate id
 
             $api = Mage::getModel('shiphawk_shipping/api');
+            $helper = Mage::helper('shiphawk_shipping');
 
             $items = Mage::getModel('shiphawk_shipping/carrier')->getShiphawkItems($order);
 
@@ -25,28 +26,29 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             $shipping_description = $order->getShippingDescription();
 
             $is_multi_zip = (count($grouped_items_by_zip) > 1) ? true : false;
-            $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter();
+            $is_admin = $helper->checkIsAdmin();
+            $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin);
+            $carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
             if($is_multi_zip) {
                 $rate_filter = 'best';
             }
 
             foreach($shiphawk_rate_data as $rate_id=>$products_ids) {
                     $is_rate = false;
-                    //если $is_multi_zip то используем  $rate_filter = best значит в респонсе будет всего один метод
+
                     if(($is_multi_zip)||($rate_filter == 'best')) {
-                        $responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter);
+                        $responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
                     // get only one method for each group of product
                         $rate_id = $responceObject[0]->id;
                         $is_rate = true;
 
                     }else{
-                        $responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter);
+                        $responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
 
+                        $original_shipping_price = $order->getShiphawkShippingAmount();
                         foreach ($responceObject as $responce) {
 
-                            //if( strpos($shipping_description, $responce->summary->service) !== false ) {
-                            $shipping_amaount = $order->getShippingAmount();
-                            if( $shipping_amaount == $responce->summary->price ) {
+                            if( $original_shipping_price == $responce->summary->price ) {
                                 $rate_id = $responce->id;
                                 $is_rate = true;
                                 break;
@@ -102,7 +104,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
             $this->loadLayout();
 
-            $this->getLayout()->getBlock('content')->append($this->getLayout()->createBlock('core/template')->setTemplate('shiphawk/shipment.phtml')->setOrder($order));
+            $this->getLayout()->getBlock('content')->append($this->getLayout()->createBlock('shiphawk_shipping/adminhtml_shipment')->setTemplate('shiphawk/shipment.phtml')->setOrder($order));
 
             $this->renderLayout();
 
@@ -141,23 +143,19 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             $shipping_description = $order->getShippingDescription();
 
             $is_multi_zip = (count($grouped_items_by_zip) > 1) ? true : false;
-            $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter();
+           /* $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter();
             if($is_multi_zip) {
                 $rate_filter = 'best';
-            }
+            }*/
 
             foreach($shiphawk_rate_data as $rate_id=>$products_ids) {
 
-                //если $is_multi_zip то используем  $rate_filter = best значит в респонсе будет всего один метод
                     // add book
                     if($is_multi == 0) {
                         if($shiphawk_rate_id == $rate_id) {
                             $track_data = $api->toBook($order,$rate_id,$products_ids);
-//name
-                            //todo save prce in custom attribute
-                            //$order->setShippingDescription($products_ids['name']);
-                            //$order->setShippingAmount($products_ids['price']);
-                            //$order->save();
+                            $order->setShiphawkShippingAmount($products_ids['price']);
+                            $order->save();
 
                             $shipment = $api->_initShipHawkShipment($order,$products_ids);
                             $shipment->register();
@@ -174,12 +172,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         }
                     }else{
                         $track_data = $api->toBook($order,$rate_id,$products_ids);
-//name
 
-                        //todo save prce in custom attribute
-                        //$order->setShippingDescription($shiphawk_rate_id);
-                        //$order->setShippingAmount($multi_price);
-                        //$order->save();
+                        $order->setShiphawkShippingAmount($multi_price);
+                        $order->save();
 
                         $shipment = $api->_initShipHawkShipment($order,$products_ids);
                         $shipment->register();
@@ -194,8 +189,6 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $shipmentCreatedMessage = $this->__("The multi-origin shipment's has been created.");
                         $this->_getSession()->addSuccess($shipmentCreatedMessage);
                     }
-
-
 
             }
 

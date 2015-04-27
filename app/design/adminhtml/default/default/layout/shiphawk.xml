@@ -4,8 +4,12 @@
     <adminhtml_catalog_product_edit>
 
         <reference name="head">
+            <action method="addItem">
+                <type>js</type>
+                <name>shiphawk/shiphawk.js</name>
 
-            <action method="addJs"><script>shiphawk/shiphawk.js</script></action>
+                <aParams>id="shiphawkjsfile"</aParams>
+            </action>
 
             <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
 
@@ -16,7 +20,11 @@
 
         <reference name="head">
 
-            <action method="addJs"><script>shiphawk/shiphawk.js</script></action>
+            <action method="addItem">
+                <type>js</type>
+                <name>shiphawk/shiphawk.js</name>
+                <aParams>id="shiphawkjsfile"</aParams>
+            </action>
 
             <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
 
@@ -26,7 +34,11 @@
     <adminhtml_catalog_product_new>
         <reference name="head">
 
-            <action method="addJs"><script>shiphawk/shiphawk.js</script></action>
+            <action method="addItem">
+                <type>js</type>
+                <name>shiphawk/shiphawk.js</name>
+                <aParams>id="shiphawkjsfile"</aParams>
+            </action>
 
             <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
 
@@ -73,5 +85,16 @@
         </reference>
     </shiphawk_shipping_adminhtml_shipment_newshipment>
 
+    <adminhtml_sales_order_view>
+        <reference name="order_tab_info">
+            <action method="setTemplate">
+                <template>shiphawk/amount.phtml</template>
+            </action>
+        </reference>
+    </adminhtml_sales_order_view>
+
+    <adminhtml_sales_order_shipment_view>
+
+    </adminhtml_sales_order_shipment_view>
 
 </layout>

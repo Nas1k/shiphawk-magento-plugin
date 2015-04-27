@@ -1,7 +1,7 @@
 <?php
 class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 {
-    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter) {
+    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type = '') {
 
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
@@ -9,17 +9,29 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $url_api_rates = $helper->getApiUrl() . 'rates/standard?api_key=' . $api_key;
 
         $from_type  = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_location_type');
-        //$rate_filter = $helper->getRateFilter();
+
         $curl = curl_init();
 
         //TODO if products has various Origin Location Type ?
-        $items_array = array(
-            'from_zip'=> $from_zip,
-            'to_zip'=> $to_zip,
-            'rate_filter' => $rate_filter,
-            'items' => $items,
-            'from_type' => $from_type
-        );
+        if($carrier_type == '') {
+            $items_array = array(
+                'from_zip'=> $from_zip,
+                'to_zip'=> $to_zip,
+                'rate_filter' => $rate_filter,
+                'items' => $items,
+                'from_type' => $from_type
+            );
+        }else{
+            $items_array = array(
+                'from_zip'=> $from_zip,
+                'to_zip'=> $to_zip,
+                'rate_filter' => $rate_filter,
+                'carrier_type' => $carrier_type,
+                'items' => $items,
+                'from_type' => $from_type
+            );
+        }
+
 
         $items_array =  json_encode($items_array);
 
@@ -85,7 +97,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     'phone_num' => $origin_address_product['origin_phone'] ? $origin_address_product['origin_phone'] : $origin_address['origin_phone'],
                     'city' => $origin_address_product['origin_city'] ? $origin_address_product['origin_city'] : $origin_address['origin_city'],
                     'state' => $origin_address_product['origin_state'] ? $origin_address_product['origin_state'] : $origin_address['origin_state'],
-                    'zipcode' => $origin_address_product['default_origin_zip'] ? $origin_address_product['default_origin_zip'] : $origin_address['default_origin_zip']
+                    'zipcode' => $origin_address_product['default_origin_zip'] ? $origin_address_product['default_origin_zip'] : $origin_address['default_origin_zip'],
+                    'email' => $origin_address_product['origin_email'] ? $origin_address_product['origin_email'] : $origin_address['origin_email']
                 ),
             'destination_address' =>
                 array(
@@ -95,7 +108,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     'phone_num' => $ship_addr['telephone'],
                     'city' => $ship_addr['city'],
                     'state' => $ship_addr['region'],
-                    'zipcode' => $ship_addr['postcode']
+                    'zipcode' => $ship_addr['postcode'],
+                    'email' => $ship_addr['email']
                 ),
             'billing_address' =>
                 array(
@@ -105,7 +119,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     'phone_num' => $bill_addr['telephone'],
                     'city' => $bill_addr['city'],
                     'state' => $bill_addr['region'], //'NY',
-                    'zipcode' => $bill_addr['postcode']
+                    'zipcode' => $bill_addr['postcode'],
+                    'email' => $bill_addr['email']
                 ),
             'pickup' =>
                 array(
@@ -155,6 +170,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $origin_address['origin_city'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_city');
         $origin_address['default_origin_zip'] = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
         $origin_address['origin_phone'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_phone');
+        $origin_address['origin_email'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_email');
 
         return $origin_address;
     }
@@ -180,6 +196,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             $origin_address_product['origin_city'] = $shipping_origin->getData('shiphawk_origin_city');
             $origin_address_product['default_origin_zip'] = $shipping_origin->getData('shiphawk_origin_zipcode');
             $origin_address_product['origin_phone'] = $shipping_origin->getData('shiphawk_origin_phonenum');
+            $origin_address_product['origin_email'] = $shipping_origin->getData('shiphawk_origin_email');
             //todo shiphawk_origin_location ?
         }
         catch(Exception $e)
@@ -359,7 +376,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 if (!empty($arr_res)) {
                     $comment = '';
                     $event_list = '';
-                    //$shipment->addComment($resp);
+
                     if (count($arr_res->events)) {
 
                         foreach ($arr_res->events as $event) {
@@ -368,7 +385,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     }
 
                     try {
-                        Mage::log($arr_res, null, 'tracking.log');
+
                         $crated_time = $this->convertDateTome($arr_res->created_at);
 
                         $comment = $arr_res->resource_name . ': ' . $arr_res->id  . '<br>' . 'Created: ' . $crated_time['date'] . ' at ' . $crated_time['time'] . '<br>' . $event_list;
@@ -402,8 +419,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     }
 
     public function convertDateTome ($date_time) {
-        ///2015-04-01T15:57:42Z
-        //todo check time
         $result = array();
         $t = explode('T', $date_time);
         $result['date'] = date("m/d/y", strtotime($t[0]));

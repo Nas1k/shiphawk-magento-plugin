@@ -23,8 +23,11 @@ class Shiphawk_Shipping_Helper_Data extends
         return Mage::getUrl('shiphawk/index/tracking', array('api_key' => $api_key));
     }
 
-    public function getRateFilter()
+    public function getRateFilter($is_admin = false)
     {
+        if ($is_admin == true) {
+            return Mage::getStoreConfig('carriers/shiphawk_shipping/admin_rate_filter');
+        }
         return Mage::getStoreConfig('carriers/shiphawk_shipping/rate_filter');
     }
 
@@ -58,16 +61,18 @@ class Shiphawk_Shipping_Helper_Data extends
         return $result;
     }
 
-    public function getSipHawkCode($shiphawk_book_id, $shipping_amaount) {
-        $result = array(); // сравниваем цены доставки, так как название методов совпадает не всегда
+    public function getSipHawkCode($shiphawk_book_id, $shipping_code) {
+        $result = array();
+
         foreach ($shiphawk_book_id as $rate_id=>$method_data) {
             //if( strpos($shipping_description, $method_data['name']) !== false ) {
-            if( $shipping_amaount == $method_data['price'] ) {
+            //if( $shipping_code == $method_data['price'] ) {
+              if($this->getOriginalShipHawkShippingPrice($shipping_code, $method_data['price'])) {
                 $result = array($rate_id => $method_data);
                 return $result;
             }
         }
-        return null;
+        return $result;
     }
 
     public function checkIsAdmin () {
@@ -130,13 +135,39 @@ class Shiphawk_Shipping_Helper_Data extends
         return null;
     }
 
-    /*
+    public function discountPercentage($price) {
+        $discountPercentage = Mage::getStoreConfig('carriers/shiphawk_shipping/discount_percentage');
 
-    Sorry, not all products have necessary ShipHawk fields filled in. Please add necessary data for next products:
-    prod.name1
-prod.name2
+        if(!empty($discountPercentage)) {
+            $price = $price + ($price * ($discountPercentage/100));
+        }
 
-    */
 
+        return $price;
+    }
+
+    public function discountFixed($price) {
+        $discountFixed = Mage::getStoreConfig('carriers/shiphawk_shipping/discount_fixed');
+        if(!empty($discountFixed)) {
+            $price = $price + ($discountFixed);
+        }
+
+        return $price;
+    }
+
+    public function getDiscountShippingPrice($price) {
+        $price = $this->discountPercentage($price);
+        $price = $this->discountFixed($price);
+
+        if($price <= 0) {
+            return 0;
+        }
+        return $price;
+    }
+
+    public function getOriginalShipHawkShippingPrice($shipping_code, $shipping_method_value) {
+        $result = strpos($shipping_code, $shipping_method_value);
+        return $result;
+    }
 
 }

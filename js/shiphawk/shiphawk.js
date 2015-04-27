@@ -11,7 +11,12 @@ document.observe("dom:loaded", function() {
         if (document.URL.indexOf('catalog_product_action_attribute') > 0) {
             is_mass_action = 1;
         }
-        var url = '/shiphawk/index/origins';
+        var url = 'shiphawk/index/origins';
+        var myScript = document.getElementById('shiphawkjsfile');
+        var myScriptSrc = myScript.getAttribute('src');
+        myScriptSrc = myScriptSrc.substring(0,myScriptSrc.length - 23);
+
+        url = myScriptSrc + url;
 
         var parameters = {
             origin_id: shiphawk_shipping_origins.value,
@@ -57,14 +62,18 @@ document.observe("dom:loaded", function() {
         typeloader = setTimeout(function(){ respondToClick(event); }, 750);
     });
 
+
     function respondToClick(event) {
 
         var element = event.element();
 
         var minlength = 3;
+        var myScript = document.getElementById('shiphawkjsfile');
+        var myScriptSrc = myScript.getAttribute('src');
+        myScriptSrc = myScriptSrc.substring(0,myScriptSrc.length - 23);
 
-        var url = '/shiphawk/index/search';
-
+        var url = 'shiphawk/index/search';
+        url = myScriptSrc + url;
         var parameters = {
             search_tag: element.value
         };

@@ -13,14 +13,18 @@
     background-color: #ffffff;
 }
 
-.shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .header, .shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .footer {
+.shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .header, .shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .footer, .shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .notification-global {
     display: none!important;
 }
 .shiphawk-shipping-adminhtml-shipment-newshipment .wrapper .middle {
     min-height: 200px!important;
 }
 .shiphawk-shipping-adminhtml-shipment-newshipment .wrapper {
-    min-height: 200px!important;;
-    min-width:360px!important;;
+    min-height: 200px!important;
+    min-width:360px!important;
+}
 
+.submitshiphawk_button {
+    margin-top: 20px;
+    padding: 2px;
 }

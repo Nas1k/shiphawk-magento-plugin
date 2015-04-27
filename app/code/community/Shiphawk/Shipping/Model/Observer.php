@@ -35,11 +35,17 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
 
+            //shiphawk_shipping_amount
+
             if($multi_zip_code == false) {
-                //
-                $shipping_amaount = $order->getShippingAmount();
-                //$shiphawk_book_id  = $helper->getSipHawkCode($shiphawk_book_id, $shipping_description);
-                $shiphawk_book_id  = $helper->getSipHawkCode($shiphawk_book_id, $shipping_amaount);
+
+                $shiphawk_book_id  = $helper->getSipHawkCode($shiphawk_book_id, $shipping_code);
+                foreach ($shiphawk_book_id as $rate_id=>$method_data) {
+
+
+                        $order->setShiphawkShippingAmount($method_data['price']);
+
+                }
             }
 
             $order->setShiphawkBookId(serialize($shiphawk_book_id));
@@ -57,25 +63,4 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
     }
 
-    public function saveShipHawkId() {
-        //do not enter in this event
-
-        /*$ship_hawk_id = Mage::getSingleton('core/session')->getShiphawkId();
-        $order = Mage::getModel('sales/order')->load(Mage::getSingleton('checkout/session')->getLastOrderId());
-
-        $order->setShiphawkApiId($ship_hawk_id);
-        $order->save();
-
-
-
-        Mage::getSingleton('core/session')->unsShiphawkId();*/
-    }
-
-    //lock attributes by code
-    /*public function lockAttributes($observer) {
-        $event = $observer->getEvent();
-        $product = $event->getProduct();
-        $product->lockAttribute('shiphawk_type_of_product_value');
-        $product->lockAttribute('shiphawk_product_id');
-    }*/
 }
