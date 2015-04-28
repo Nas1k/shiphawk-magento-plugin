@@ -1,4 +1,4 @@
- <?php
+<?php
 
 class Shiphawk_Shipping_Model_Carrier
     extends Mage_Shipping_Model_Carrier_Abstract
