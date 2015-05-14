@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<layout version="1.0.0">
+
+    <shipping_tracking_popup translate="label">
+        <reference name="content">
+            <reference name="shipping.tracking.popup">
+                <action method="setTemplate"><template>shiphawk/popup.phtml</template></action>
+            </reference>
+        </reference>
+    </shipping_tracking_popup>
+
+</layout>   
+    

@@ -272,6 +272,27 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </origin_email>
+                        <file_import translate="label comment">
+                            <label>Import Origins</label>
+                            <comment><![CDATA[File saved in <strong><span style="color: red;">var/shiphawk/import</span></strong> folder.]]></comment>
+                            <frontend_type>file</frontend_type>
+                            <backend_model>adminhtml/system_config_backend_file</backend_model>
+                            <upload_dir>var/shiphawk/import</upload_dir>
+                            <sort_order>50</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </file_import>
+
+                        <importbutton translate="label">
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>shiphawk_shipping/adminhtml_system_config_form_button</frontend_model>
+                            <sort_order>60</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Upload csv file, before start import</comment>
+                        </importbutton>
                     </fields>
                 </shiphawk_shipping>
             </groups>

@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.0.6</version>
+            <version>1.0.7</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -30,6 +30,11 @@
                     <sales_order_shipment_view>Shiphawk_Shipping_Block_Adminhtml_Sales_Order_Shipment_View</sales_order_shipment_view>
                 </rewrite>
             </adminhtml>
+            <shipping>
+                <rewrite>
+                    <tracking_popup>Shiphawk_Shipping_Block_Shipping_Tracking_Popup</tracking_popup>
+                </rewrite>
+            </shipping>
         </blocks>
         <resources>
             <shiphawk_setup>
@@ -47,15 +52,6 @@
             </shiphawk_shipping>
         </helpers>
         <events>
-            <admin_system_config_changed_section_carriers>
-                <observers>
-                    <shiphawk_shipping_config_save>
-                        <type>singleton</type>
-                        <class>shiphawk_shipping/observer</class>
-                        <method>configSaveAfter</method>
-                    </shiphawk_shipping_config_save>
-                </observers>
-            </admin_system_config_changed_section_carriers>
             <sales_order_place_after>
                 <observers>
                     <shiphawk_shipping_order_place>
@@ -89,6 +85,13 @@
                 </args>
             </Shiphawk_Shipping>
         </routers>
+        <layout>
+            <updates>
+                <shiphawk_shipping>
+                    <file>shiphawk.xml</file>
+                </shiphawk_shipping>
+            </updates>
+        </layout>
     </frontend>
     <adminhtml>
         <layout>

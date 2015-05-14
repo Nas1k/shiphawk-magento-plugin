@@ -1,17 +1,6 @@
 <?php
 class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 {
-    public function configSaveAfter($observer){
-
-        /*$is_requered_attr = Mage::getStoreConfig('carriers/shiphawk_shipping/required_attribute');
-        $shiphawk_attributes = Mage::helper('shiphawk_shipping')->getAttributes();
-
-        foreach($shiphawk_attributes as $attributeCode) {
-            $this->_setAttributeRequired($attributeCode,$is_requered_attr);
-        }*/
-
-    }
-
     protected function _setAttributeRequired($attributeCode, $is_active) {
         $attributeModel = Mage::getModel('eav/entity_attribute')->loadByCode( 'catalog_product', $attributeCode);
         $attributeModel->setIsRequired($is_active);
@@ -34,17 +23,12 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
-
             //shiphawk_shipping_amount
-
             if($multi_zip_code == false) {
 
                 $shiphawk_book_id  = $helper->getSipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
-
-
-                        $order->setShiphawkShippingAmount($method_data['price']);
-
+                    $order->setShiphawkShippingAmount($method_data['price']);
                 }
             }
 

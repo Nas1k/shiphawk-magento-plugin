@@ -109,7 +109,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Origins_Edit_Form extends Mage_Adminhtml
             'name'      => 'shiphawk_origin_email',
             'title'     => Mage::helper('shiphawk_shipping')->__('Email'),
             'label'     => Mage::helper('shiphawk_shipping')->__('Email'),
-            'required'  => true,
+            'required'  => false,
             'width'         => '400px'
         ));
 

@@ -8,6 +8,7 @@ $shipping_origins = array (
     'label'    => 'Shipping  Origins',
     'visible'     => true,
     'type'     => 'varchar',
+    'apply_to'          => 'simple',
     'input'    => 'text',
     'system'   => false,
     'required' => false,

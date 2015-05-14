@@ -12,12 +12,8 @@ document.observe("dom:loaded", function() {
             is_mass_action = 1;
         }
         var url = 'shiphawk/index/origins';
-        var myScript = document.getElementById('shiphawkjsfile');
-        var myScriptSrc = myScript.getAttribute('src');
-        myScriptSrc = myScriptSrc.substring(0,myScriptSrc.length - 23);
 
-        url = myScriptSrc + url;
-
+        url = baseMagentoUrl + url;
         var parameters = {
             origin_id: shiphawk_shipping_origins.value,
             is_mass_action : is_mass_action
@@ -38,7 +34,6 @@ document.observe("dom:loaded", function() {
 
                 shiphawk_shipping_origins.parentNode.replaceChild(el, shiphawk_shipping_origins);
 
-                //if mass edit disable input
             },
             onLoading:function(transport)
             {
@@ -68,12 +63,10 @@ document.observe("dom:loaded", function() {
         var element = event.element();
 
         var minlength = 3;
-        var myScript = document.getElementById('shiphawkjsfile');
-        var myScriptSrc = myScript.getAttribute('src');
-        myScriptSrc = myScriptSrc.substring(0,myScriptSrc.length - 23);
 
         var url = 'shiphawk/index/search';
-        url = myScriptSrc + url;
+
+        url = baseMagentoUrl + url;
         var parameters = {
             search_tag: element.value
         };

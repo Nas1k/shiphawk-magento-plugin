@@ -27,7 +27,7 @@ class Shiphawk_Shipping_Model_Carrier
 
         $hide_on_frontend = Mage::getStoreConfig('carriers/shiphawk_shipping/hide_on_frontend');
         $is_admin = $helper->checkIsAdmin();
-        // hide ShipHawk method on frontend , alow only in admin area
+        // hide ShipHawk method on frontend , allow only in admin area
         if (($hide_on_frontend == 1) && (!$is_admin)) {
             return $result;
         }
@@ -41,59 +41,130 @@ class Shiphawk_Shipping_Model_Carrier
         $ship_responces = array();
         $toOrder= array();
         $api_error = false;
-        $is_multi_zip = (count($grouped_items_by_zip) > 1) ? true : false;
+        $is_multi_zip = false;
+
+        if(count($grouped_items_by_zip) > 1)  {
+            $is_multi_zip = true;
+        }
+
 
         $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin);
 
         $carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
 
-        if($is_multi_zip) {
-            $rate_filter = 'best';
-        }
         try {
-            foreach($grouped_items_by_zip as $from_zip=>$items_) {
-                $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_, $rate_filter);
+            //default origin zip code
+            $from_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
+            //foreach($grouped_items_by_zip as $from_zip=>$items_) {
+            foreach($grouped_items_by_zip as $origin_id=>$items_) {
 
-                if(empty($checkattributes)) {
-                    $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
-                    $ship_responces[] = $responceObject;
+                if ($origin_id != 'origin_per_product') {
 
-                    if(is_object($responceObject)) {
-                        $api_error = true;
-                        Mage::log('ShipHawk responce: '.$responceObject->error, null, 'ShipHawk.log');
-                    }else{
-                        // if $rate_filter = 'best' then it is only one rate
-                        if(($is_multi_zip)||($rate_filter == 'best')) {
-                            Mage::getSingleton('core/session')->setMultiZipCode(true);
-                            $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($items_);
-                            $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
-                            $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
-                            $toOrder[$responceObject[0]->id]['items'] = $items_;
-                            $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
-                            $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
-                            $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                    if($is_multi_zip) {
+                        $rate_filter = 'best';
+                    }
+
+                    if($origin_id) {
+                        $shipHawkOrigin = Mage::getModel('shiphawk_shipping/origins')->load($origin_id);
+                        $from_zip = $shipHawkOrigin->getShiphawkOriginZipcode();
+                    }
+
+                    $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_, $rate_filter);
+
+                    if(empty($checkattributes)) {
+                        $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
+                        $ship_responces[] = $responceObject;
+
+                        if(is_object($responceObject)) {
+                            $api_error = true;
+                            Mage::log('ShipHawk response: '.$responceObject->error, null, 'ShipHawk.log');
                         }else{
-                            Mage::getSingleton('core/session')->setMultiZipCode(false);
-                            foreach ($responceObject as $responce) {
-                                $toOrder[$responce->id]['product_ids'] = $this->getProductIds($items_);
-                                $toOrder[$responce->id]['price'] = $responce->summary->price;
-                                $toOrder[$responce->id]['name'] = $responce->summary->service;
-                                $toOrder[$responce->id]['items'] = $items_;
-                                $toOrder[$responce->id]['from_zip'] = $from_zip;
-                                $toOrder[$responce->id]['to_zip'] = $to_zip;
-                                $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                            // if $rate_filter = 'best' then it is only one rate
+                            if(($is_multi_zip)||($rate_filter == 'best')) {
+                                Mage::getSingleton('core/session')->setMultiZipCode(true);
+                                $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($items_);
+                                $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
+                                $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
+                                $toOrder[$responceObject[0]->id]['items'] = $items_;
+                                $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
+                                $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
+                                $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                            }else{
+                                Mage::getSingleton('core/session')->setMultiZipCode(false);
+                                foreach ($responceObject as $responce) {
+                                    $toOrder[$responce->id]['product_ids'] = $this->getProductIds($items_);
+                                    $toOrder[$responce->id]['price'] = $responce->summary->price;
+                                    $toOrder[$responce->id]['name'] = $responce->summary->service;
+                                    $toOrder[$responce->id]['items'] = $items_;
+                                    $toOrder[$responce->id]['from_zip'] = $from_zip;
+                                    $toOrder[$responce->id]['to_zip'] = $to_zip;
+                                    $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                                }
                             }
+                        }
+                    }else{
+                        $api_error = true;
+                        foreach($checkattributes as $rate_error) {
+                            Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
                         }
                     }
                 }else{
-                    $api_error = true;
-                    foreach($checkattributes as $rate_error) {
-                        Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+
+                    $grouped_items_per_product_by_zip = $this->getGroupedItemsByZipPerProduct($items_);
+
+                    if(count($grouped_items_per_product_by_zip) > 1 ) {
+                        $is_multi_zip = true;
                     }
+
+                    if($is_multi_zip) {
+                        $rate_filter = 'best';
+                    }
+
+                    foreach ($grouped_items_per_product_by_zip as $from_zip=>$items_per_product) {
+
+                        $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_per_product, $rate_filter);
+
+                        if(empty($checkattributes)) {
+                            $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_per_product, $rate_filter, $carrier_type);
+                            $ship_responces[] = $responceObject;
+
+                            if(is_object($responceObject)) {
+                                $api_error = true;
+                                Mage::log('ShipHawk response: '.$responceObject->error, null, 'ShipHawk.log');
+                            }else{
+                                // if $rate_filter = 'best' then it is only one rate
+                                if(($is_multi_zip)||($rate_filter == 'best')) {
+                                    Mage::getSingleton('core/session')->setMultiZipCode(true);
+                                    $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($items_per_product);
+                                    $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
+                                    $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
+                                    $toOrder[$responceObject[0]->id]['items'] = $items_per_product;
+                                    $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
+                                    $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
+                                    $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                                }else{
+                                    Mage::getSingleton('core/session')->setMultiZipCode(false);
+                                    foreach ($responceObject as $responce) {
+                                        $toOrder[$responce->id]['product_ids'] = $this->getProductIds($items_per_product);
+                                        $toOrder[$responce->id]['price'] = $responce->summary->price;
+                                        $toOrder[$responce->id]['name'] = $responce->summary->service;
+                                        $toOrder[$responce->id]['items'] = $items_per_product;
+                                        $toOrder[$responce->id]['from_zip'] = $from_zip;
+                                        $toOrder[$responce->id]['to_zip'] = $to_zip;
+                                        $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                                    }
+                                }
+                            }
+                        }else{
+                            $api_error = true;
+                            foreach($checkattributes as $rate_error) {
+                                Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                            }
+                        }
+
+                    }
+
                 }
-
-
-
             }
 
             if(!$api_error) {
@@ -193,50 +264,69 @@ class Shiphawk_Shipping_Model_Carrier
 
     public function getShiphawkItems($request) {
         $items = array();
-
         foreach ($request->getAllItems() as $item) {
             $product_id = $item->getProductId();
             $product = Mage::getModel('catalog/product')->load($product_id);
 
-            $product_qty = (($product->getShiphawkQuantity() > 0)) ? $product->getShiphawkQuantity() : 1;
+            $type_id = $product->getTypeId();
+            if($type_id == 'simple') {
+                $product_qty = (($product->getShiphawkQuantity() > 0)) ? $product->getShiphawkQuantity() : 1;
 
-            //hack for admin shipment in popup
-            $qty_ordered = ($item->getQty() > 0 ) ? $item->getQty() : $item->getData('qty_ordered');
+                //hack for admin shipment in popup
+                $qty_ordered = ($item->getQty() > 0 ) ? $item->getQty() : $item->getData('qty_ordered');
 
-            if($product->getWeight() > 0) {
-                $items[] = array(
-                    'width' => $product->getShiphawkWidth(),
-                    'length' => $product->getShiphawkLength(),
-                    'height' => $product->getShiphawkHeight(),
-                    'weight' => $product->getWeight(),
-                    'value' => $this->getShipHawkItemValue($product),
-                    //'quantity' => $product_qty*$item->getQty(),
-                    'quantity' => $product_qty*$qty_ordered,
-                    'packed' => $this->getIsPacked($product),
-                    'id' => $product->getShiphawkTypeOfProductValue(),
-                    'zip'=> $this->getOriginZip($product),
-                    'product_id'=> $product_id,
-                    'xid'=> $product_id,
-                );
-            }else{
-                $items[] = array(
-                    'width' => $product->getShiphawkWidth(),
-                    'length' => $product->getShiphawkLength(),
-                    'height' => $product->getShiphawkHeight(),
-                    'value' => $this->getShipHawkItemValue($product),
-                    //'quantity' => $product_qty*$item->getQty(),
-                    'quantity' => $product_qty*$qty_ordered,
-                    'packed' => $this->getIsPacked($product),
-                    'id' => $product->getShiphawkTypeOfProductValue(),
-                    'zip'=> $this->getOriginZip($product),
-                    'product_id'=> $product_id,
-                    'xid'=> $product_id,
-                );
+                if($product->getWeight() > 0) {
+                    $items[] = array(
+                        'width' => $product->getShiphawkWidth(),
+                        'length' => $product->getShiphawkLength(),
+                        'height' => $product->getShiphawkHeight(),
+                        'weight' => $product->getWeight(),
+                        'value' => $this->getShipHawkItemValue($product),
+                        //'quantity' => $product_qty*$item->getQty(),
+                        'quantity' => $product_qty*$qty_ordered,
+                        'packed' => $this->getIsPacked($product),
+                        'id' => $product->getShiphawkTypeOfProductValue(),
+                        'zip'=> $this->getOriginZip($product),
+                        'product_id'=> $product_id,
+                        'xid'=> $product_id,
+                        'origin'=> $this->getShiphawkShippingOrigin($product),
+                    );
+                }else{
+                    $items[] = array(
+                        'width' => $product->getShiphawkWidth(),
+                        'length' => $product->getShiphawkLength(),
+                        'height' => $product->getShiphawkHeight(),
+                        'value' => $this->getShipHawkItemValue($product),
+                        //'quantity' => $product_qty*$item->getQty(),
+                        'quantity' => $product_qty*$qty_ordered,
+                        'packed' => $this->getIsPacked($product),
+                        'id' => $product->getShiphawkTypeOfProductValue(),
+                        'zip'=> $this->getOriginZip($product),
+                        'product_id'=> $product_id,
+                        'xid'=> $product_id,
+                        'origin'=> $this->getShiphawkShippingOrigin($product),
+                    );
+                }
             }
-
         }
 
         return $items;
+    }
+
+    public function getShiphawkShippingOrigin($product) {
+        $product_origin_id = $product->getShiphawkShippingOrigins();
+        /** @var $helper Shiphawk_Shipping_Helper_Data */
+        $helper = Mage::helper('shiphawk_shipping');
+        if ($product_origin_id) {
+            return $product_origin_id;
+        }
+
+        if ((empty($product_origin_id)) && ($helper->checkShipHawkOriginAttributes($product))) {
+            return 'origin_per_product';
+        }
+
+        return null;
+
     }
 
     public function getShippingZip() {
@@ -266,13 +356,14 @@ class Shiphawk_Shipping_Model_Carrier
     public function getOriginZip($product) {
         $default_origin_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
 
-        //$product_origin_zip_code = $product->getShiphawkOriginZipcode();
-
-        // get zip code froms Shiping Origin
+        $product_origin_zip_code = $product->getShiphawkOriginZipcode();
         $shipping_origin_id = $product->getData('shiphawk_shipping_origins');
 
-        $shipping_origin = Mage::getModel('shiphawk_shipping/origins')->load($shipping_origin_id);
-        $product_origin_zip_code = $shipping_origin->getData('shiphawk_origin_zipcode');
+        if((empty($product_origin_zip_code))&&(!empty($shipping_origin_id))) {
+            // get zip code froms Shiping Origin
+            $shipping_origin = Mage::getModel('shiphawk_shipping/origins')->load($shipping_origin_id);
+            $product_origin_zip_code = $shipping_origin->getData('shiphawk_origin_zipcode');
+        }
 
         $product_origin_zip_code = (empty($product_origin_zip_code)) ? $default_origin_zip : $product_origin_zip_code;
 
@@ -285,10 +376,19 @@ class Shiphawk_Shipping_Model_Carrier
         $product_is_packed = ($product_is_packed == 2) ? $default_is_packed : $product_is_packed;
 
         return ($product_is_packed ? 'true' : 'false');
-
     }
 
+    /* sort items by origin id */
     public function getGroupedItemsByZip($items) {
+        $tmp = array();
+        foreach($items as $item) {
+            $tmp[$item['origin']][] = $item;
+        }
+        return $tmp;
+    }
+
+    /* sort items by origin zip code */
+    public function getGroupedItemsByZipPerProduct($items) {
         $tmp = array();
         foreach($items as $item) {
             $tmp[$item['zip']][] = $item;
@@ -328,6 +428,10 @@ class Shiphawk_Shipping_Model_Carrier
             return "Expedited White Glove Delivery (2-3 weeks)";
         }
 
+        if ( $object->summary->carrier_type == "Home Delivery" ) {
+            return "Home Delivery - " . $object->summary->service . " (1-2 weeks)";
+        }
+
         return $object->summary->service;
 
     }
@@ -344,7 +448,20 @@ class Shiphawk_Shipping_Model_Carrier
     4. If carrier_type = "LTL","3PL" "Intermodal" AND delivery field inside [details][price] > $0.00 display name should be:
     "Expedited White Glove Delivery (2-3 weeks)"
 
+    Additional rule for naming (both frontend and backend):
+
+    If carrier_type = "Home Delivery" display name should be:
+    "Home Delivery - {{
+    {Service name from received rate}
+    }} (1-2 weeks)"
+    ==> example: Home Delivery - One Man (1-2 weeks)
+
     */
+
+    public function isTrackingAvailable()
+    {
+        return true;
+    }
 
 
 }

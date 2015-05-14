@@ -62,6 +62,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Origins_Grid extends Mage_Adminhtml_Bloc
 
         ));
 
+        $this->addExportType('*/*/export', Mage::helper('shiphawk_shipping')->__('CSV'));
+
         return parent::_prepareColumns();
     }
 

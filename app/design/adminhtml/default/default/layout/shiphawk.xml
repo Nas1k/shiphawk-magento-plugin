@@ -14,6 +14,9 @@
             <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
 
         </reference>
+        <reference name="content">
+            <block type="core/template" name="shiphawkjsfile" template="shiphawk/shiphawkjsfile.phtml"/>
+        </reference>
     </adminhtml_catalog_product_edit>
 
     <adminhtml_catalog_product_action_attribute_edit>
@@ -29,6 +32,9 @@
             <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
 
         </reference>
+        <reference name="content">
+            <block type="core/template" name="shiphawkjsfile" template="shiphawk/shiphawkjsfile.phtml"/>
+        </reference>
     </adminhtml_catalog_product_action_attribute_edit>
 
     <adminhtml_catalog_product_new>
@@ -42,6 +48,9 @@
 
             <action method="addItem"><type>js_css</type><name>shiphawk/shiphawk.css</name></action>
 
+        </reference>
+        <reference name="content">
+            <block type="core/template" name="shiphawkjsfile" template="shiphawk/shiphawkjsfile.phtml"/>
         </reference>
     </adminhtml_catalog_product_new>
 

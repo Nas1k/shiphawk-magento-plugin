@@ -69,23 +69,6 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                     }
                 }
 
-                /*if($data_from_shiphawk['event'] == 'shipment.status_update') {
-                    $comment = $data_from_shiphawk['updated_at'] . ': Status has been changed to ' . $data_from_shiphawk['status'];
-                    $shipment->addComment($comment);
-                    if($shipment_status_updates) {
-                        $shipment->sendUpdateEmail(true, $comment);
-                    }
-                }*/
-
-              /*  if($data_from_shiphawk['event'] == 'shipment.tracking_update') {
-                    $comment = $data_from_shiphawk['updated_at'] . 'There is a tracking number available for your shipment - ' . $data_from_shiphawk['tracking_number'] . '<a href="' . $data_from_shiphawk['tracking_url'] . '" target="_blank">Click here to track.</a>';
-                    $shipment->addComment($comment);
-                    if($updates_tracking_url) {
-                        $shipment->sendUpdateEmail(true, $comment);
-                    }
-                }*/
-
-                //$shipment->addComment(implode(',', $data_from_shiphawk));
 
             $shipment->save();
             }catch (Mage_Core_Exception $e) {

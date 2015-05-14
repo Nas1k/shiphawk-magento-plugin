@@ -116,6 +116,18 @@ class Shiphawk_Shipping_Adminhtml_OriginsController extends Mage_Adminhtml_Contr
         $this->_redirect('*/*/index');
     }
 
+    public function exportAction() {
+        /**
+         * Returns generated CSV file
+         */
+
+        $filename = 'origins.csv';
+        $content = Mage::helper('shiphawk_shipping/origin')->generateQuestList();
+
+        $this->_prepareDownloadResponse($filename, $content);
+
+    }
+
 
 
 }

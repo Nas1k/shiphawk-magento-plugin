@@ -170,4 +170,18 @@ class Shiphawk_Shipping_Helper_Data extends
         return $result;
     }
 
+    public function checkShipHawkOriginAttributes($product) {
+
+        $required_origins_attributes = array('shiphawk_origin_firstname', 'shiphawk_origin_lastname', 'shiphawk_origin_addressline1', 'shiphawk_origin_city', 'shiphawk_origin_state', 'shiphawk_origin_zipcode', 'shiphawk_origin_phonenum', 'shiphawk_origin_location');
+
+        foreach($required_origins_attributes as $attribute_code) {
+            $attribute_value = $product->getData($attribute_code);
+            if(empty($attribute_value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }
