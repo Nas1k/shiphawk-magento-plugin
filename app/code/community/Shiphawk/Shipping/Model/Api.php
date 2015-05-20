@@ -83,6 +83,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $origin_address = $this->getOriginAddress($origin_address_product, $default_origin_address);
 
+        Mage::log($url_api, null, 'shiphawk-book-v1.log');
+
         $next_bussines_day = date('Y-m-d', strtotime('now +1 Weekday'));
         $items_array = array(
             'rate_id'=> $rate_id,
@@ -128,6 +130,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         );
 
+        Mage::log($items_array, null, 'shiphawk-book-v1.log');
+
         $items_array =  json_encode($items_array);
 
         curl_setopt($curl, CURLOPT_URL, $url_api);
@@ -142,6 +146,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
+
+        Mage::log($arr_res, null, 'shiphawk-book-v1.log');
 
         curl_close($curl);
 

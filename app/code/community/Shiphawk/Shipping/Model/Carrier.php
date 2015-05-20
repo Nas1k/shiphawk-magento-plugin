@@ -4,6 +4,7 @@ class Shiphawk_Shipping_Model_Carrier
     extends Mage_Shipping_Model_Carrier_Abstract
     implements Mage_Shipping_Model_Carrier_Interface
 {
+    const DEFAULT_WEIGHT = 1;
     /**
      * Carrier's code, as defined in parent class
      *
@@ -296,6 +297,7 @@ class Shiphawk_Shipping_Model_Carrier
                         'width' => $product->getShiphawkWidth(),
                         'length' => $product->getShiphawkLength(),
                         'height' => $product->getShiphawkHeight(),
+                        'weight' => self::DEFAULT_WEIGHT, //todo move to config?
                         'value' => $this->getShipHawkItemValue($product),
                         //'quantity' => $product_qty*$item->getQty(),
                         'quantity' => $product_qty*$qty_ordered,

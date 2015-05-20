@@ -67,7 +67,8 @@ class Shiphawk_Shipping_Helper_Data extends
         foreach ($shiphawk_book_id as $rate_id=>$method_data) {
             //if( strpos($shipping_description, $method_data['name']) !== false ) {
             //if( $shipping_code == $method_data['price'] ) {
-              if($this->getOriginalShipHawkShippingPrice($shipping_code, $method_data['price'])) {
+            $shipping_price = (string) $method_data['price'];
+            if($this->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
                 $result = array($rate_id => $method_data);
                 return $result;
             }
