@@ -386,7 +386,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 $shipment = Mage::getModel('sales/order_shipment')->load($shipment_id);
 
                 $shipment_id_track = $this->_getTrackNumber($shipment);
-                //todo v3 subscribe for tracking update
+
                 //PUT /api/v3/shipments/{id}/tracking
                 $subscribe_url = $helper->getApiUrl() . 'shipments/' . $shipment_id_track . '/tracking?api_key=' . $api_key;
                 $callback_url = $helper->getCallbackUrl($api_key);
@@ -421,6 +421,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                             $event_list .= $event . '<br>';
                         }
                     }
+
 
                     try {
 
