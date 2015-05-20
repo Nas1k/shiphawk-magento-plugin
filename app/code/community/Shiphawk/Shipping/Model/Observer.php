@@ -26,7 +26,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             //shiphawk_shipping_amount
             if($multi_zip_code == false) {
 
-                $shiphawk_book_id  = $helper->getSipHawkCode($shiphawk_book_id, $shipping_code);
+                $shiphawk_book_id  = $helper->getShipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
                     $order->setShiphawkShippingAmount($method_data['price']);
                 }

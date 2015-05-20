@@ -47,8 +47,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         $original_shipping_price = $order->getShiphawkShippingAmount();
                         foreach ($responceObject as $responce) {
-
-                            if( $original_shipping_price == $responce->summary->price ) {
+                            $shipping_price = $helper->getSummaryPrice($responce);
+                            if( $original_shipping_price == $shipping_price ) {
                                 $rate_id = $responce->id;
                                 $is_rate = true;
                                 break;
@@ -66,7 +66,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $api->_saveShiphawkShipment($shipment);
 
                         // add track
-                        if($track_number = $track_data->shipment_id) {
+                        if($track_number = $track_data->details->id) {
                             $api->addTrackNumber($shipment, $track_number);
 
                             $api->subscribeToTrackingInfo($shipment->getId());

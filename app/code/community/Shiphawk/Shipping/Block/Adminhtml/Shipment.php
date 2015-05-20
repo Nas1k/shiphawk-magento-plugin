@@ -64,22 +64,22 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                         if(($is_multi_zip)||($rate_filter == 'best')) {
                             Mage::getSingleton('core/session')->setMultiZipCode(true);
                             $toOrder[$responceObject[0]->id]['product_ids'] = $carrier->getProductIds($items_);
-                            $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
-                            $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
+                            $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0]);
+                            $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;
                             $toOrder[$responceObject[0]->id]['items'] = $items_;
                             $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
                             $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
-                            $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                            $toOrder[$responceObject[0]->id]['carrier'] = $carrier->getCarrierName($responceObject[0]);
                         }else{
                             Mage::getSingleton('core/session')->setMultiZipCode(false);
                             foreach ($responceObject as $responce) {
                                 $toOrder[$responce->id]['product_ids'] = $carrier->getProductIds($items_);
-                                $toOrder[$responce->id]['price'] = $responce->summary->price;
-                                $toOrder[$responce->id]['name'] = $responce->summary->service;
+                                $toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce);
+                                $toOrder[$responce->id]['name'] = $responce->shipping->service;
                                 $toOrder[$responce->id]['items'] = $items_;
                                 $toOrder[$responce->id]['from_zip'] = $from_zip;
                                 $toOrder[$responce->id]['to_zip'] = $to_zip;
-                                $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                                $toOrder[$responce->id]['carrier'] = $carrier->getCarrierName($responce);
                             }
                         }
                     }
@@ -134,22 +134,22 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                             if(($is_multi_zip)||($rate_filter == 'best')) {
                                 Mage::getSingleton('core/session')->setMultiZipCode(true);
                                 $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($items_per_product);
-                                $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
-                                $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
+                                $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0]);
+                                $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;
                                 $toOrder[$responceObject[0]->id]['items'] = $items_per_product;
                                 $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
                                 $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
-                                $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                                $toOrder[$responceObject[0]->id]['carrier'] = $carrier->getCarrierName($responceObject[0]);
                             }else{
                                 Mage::getSingleton('core/session')->setMultiZipCode(false);
                                 foreach ($responceObject as $responce) {
                                     $toOrder[$responce->id]['product_ids'] = $this->getProductIds($items_per_product);
-                                    $toOrder[$responce->id]['price'] = $responce->summary->price;
-                                    $toOrder[$responce->id]['name'] = $responce->summary->service;
+                                    $toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce);
+                                    $toOrder[$responce->id]['name'] = $responce->shipping->service;
                                     $toOrder[$responce->id]['items'] = $items_per_product;
                                     $toOrder[$responce->id]['from_zip'] = $from_zip;
                                     $toOrder[$responce->id]['to_zip'] = $to_zip;
-                                    $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                                    $toOrder[$responce->id]['carrier'] = $carrier->getCarrierName($responce);
                                 }
                             }
                         }

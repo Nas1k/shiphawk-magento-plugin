@@ -74,6 +74,7 @@ class Shiphawk_Shipping_Model_Carrier
 
                     if(empty($checkattributes)) {
                         $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
+                        Mage::log($responceObject, null, 'RateResponce.log');
                         $ship_responces[] = $responceObject;
 
                         if(is_object($responceObject)) {
@@ -84,22 +85,22 @@ class Shiphawk_Shipping_Model_Carrier
                             if(($is_multi_zip)||($rate_filter == 'best')) {
                                 Mage::getSingleton('core/session')->setMultiZipCode(true);
                                 $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($items_);
-                                $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
-                                $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
+                                $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0]);
+                                $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;//
                                 $toOrder[$responceObject[0]->id]['items'] = $items_;
                                 $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
                                 $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
-                                $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                                $toOrder[$responceObject[0]->id]['carrier'] = $this->getCarrierName($responceObject[0]);
                             }else{
                                 Mage::getSingleton('core/session')->setMultiZipCode(false);
                                 foreach ($responceObject as $responce) {
                                     $toOrder[$responce->id]['product_ids'] = $this->getProductIds($items_);
-                                    $toOrder[$responce->id]['price'] = $responce->summary->price;
-                                    $toOrder[$responce->id]['name'] = $responce->summary->service;
+                                    $toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce);
+                                    $toOrder[$responce->id]['name'] = $responce->shipping->service;//
                                     $toOrder[$responce->id]['items'] = $items_;
                                     $toOrder[$responce->id]['from_zip'] = $from_zip;
                                     $toOrder[$responce->id]['to_zip'] = $to_zip;
-                                    $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                                    $toOrder[$responce->id]['carrier'] = $this->getCarrierName($responce);
                                 }
                             }
                         }
@@ -137,22 +138,22 @@ class Shiphawk_Shipping_Model_Carrier
                                 if(($is_multi_zip)||($rate_filter == 'best')) {
                                     Mage::getSingleton('core/session')->setMultiZipCode(true);
                                     $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($items_per_product);
-                                    $toOrder[$responceObject[0]->id]['price'] = $responceObject[0]->summary->price;
-                                    $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->summary->service;
+                                    $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0]);
+                                    $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;//
                                     $toOrder[$responceObject[0]->id]['items'] = $items_per_product;
                                     $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
                                     $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
-                                    $toOrder[$responceObject[0]->id]['carrier'] = $responceObject[0]->summary->carrier;
+                                    $toOrder[$responceObject[0]->id]['carrier'] = $this->getCarrierName($responceObject[0]);
                                 }else{
                                     Mage::getSingleton('core/session')->setMultiZipCode(false);
                                     foreach ($responceObject as $responce) {
                                         $toOrder[$responce->id]['product_ids'] = $this->getProductIds($items_per_product);
-                                        $toOrder[$responce->id]['price'] = $responce->summary->price;
-                                        $toOrder[$responce->id]['name'] = $responce->summary->service;
+                                        $toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce);
+                                        $toOrder[$responce->id]['name'] = $responce->shipping->service;//
                                         $toOrder[$responce->id]['items'] = $items_per_product;
                                         $toOrder[$responce->id]['from_zip'] = $from_zip;
                                         $toOrder[$responce->id]['to_zip'] = $to_zip;
-                                        $toOrder[$responce->id]['carrier'] = $responce->summary->carrier;
+                                        $toOrder[$responce->id]['carrier'] = $this->getCarrierName($responce);
                                     }
                                 }
                             }
@@ -400,12 +401,15 @@ class Shiphawk_Shipping_Model_Carrier
 
     public function getServices($ship_responces) {
         $services = array();
+        $helper = Mage::helper('shiphawk_shipping');
         foreach($ship_responces as $ship_responce) {
             if(is_array($ship_responce)) {
                 foreach($ship_responce as $object) {
                     $services[$object->id]['name'] = $this->_getServiceName($object);
-                    $services[$object->id]['price'] = $object->summary->price;
-                    $services[$object->id]['carrier'] = $object->summary->carrier;
+                    //$services[$object->id]['price'] = $object->summary->price;
+                    //$services[$object->id]['carrier'] = $object->summary->carrier;
+                    $services[$object->id]['price'] = $helper->getSummaryPrice($object);
+                    $services[$object->id]['carrier'] = $this->getCarrierName($object);
                 }
             }
         }
@@ -414,28 +418,33 @@ class Shiphawk_Shipping_Model_Carrier
     }
 
     protected function _getServiceName($object) {
-        if ( $object->summary->carrier_type == "Small Parcel" ) {
-            return $object->summary->service;
+
+        if ( $object->shipping->carrier_type == "Small Parcel" ) {
+            return $object->shipping->service;
         }
 
-        if ( $object->summary->carrier_type == "Blanket Wrap" ) {
+        if ( $object->shipping->carrier_type == "Blanket Wrap" ) {
             return "Standard White Glove Delivery (3-6 weeks)";
         }
 
-        if ( ( ( $object->summary->carrier_type == "LTL" ) || ( $object->summary->carrier_type == "3PL" ) || ( $object->summary->carrier_type == "Intermodal" ) ) && ($object->details->price->delivery == 0) ) {
+        if ( ( ( $object->shipping->carrier_type == "LTL" ) || ( $object->shipping->carrier_type == "3PL" ) || ( $object->shipping->carrier_type == "Intermodal" ) ) && ($object->delivery->price == 0) ) {
             return "Curbside Delivery (1-2 weeks)";
         }
 
-        if ( ( ( $object->summary->carrier_type == "LTL" ) || ( $object->summary->carrier_type == "3PL" ) || ( $object->summary->carrier_type == "Intermodal" ) ) && ($object->details->price->delivery > 0) ) {
+        if ( ( ( $object->shipping->carrier_type == "LTL" ) || ( $object->shipping->carrier_type == "3PL" ) || ( $object->shipping->carrier_type == "Intermodal" ) ) && ($object->delivery->price > 0) ) {
             return "Expedited White Glove Delivery (2-3 weeks)";
         }
 
-        if ( $object->summary->carrier_type == "Home Delivery" ) {
-            return "Home Delivery - " . $object->summary->service . " (1-2 weeks)";
+        if ( $object->shipping->carrier_type == "Home Delivery" ) {
+            return "Home Delivery - " . $object->shipping->service . " (1-2 weeks)";
         }
 
-        return $object->summary->service;
+        return $object->shipping->service;
 
+    }
+
+    public function getCarrierName($object) {
+        return $object->shipping->carrier_friendly_name;
     }
 
     /*

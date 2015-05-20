@@ -99,7 +99,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $api_key = Mage::helper('shiphawk_shipping')->getApiKey();
         $api_url = Mage::helper('shiphawk_shipping')->getApiUrl();
 
-        $url_api = $api_url . 'items/search/'.$search_tag.'?api_key='.$api_key;
+        $url_api = $api_url . 'items/search?q='.$search_tag.'&api_key='.$api_key;
 
         $curl = curl_init();
 
@@ -111,17 +111,17 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
+
         $responce_array = array();
         $responce = array();
 
-        if(($arr_res->error) || ($arr_res['error'])) {
-
+        if(($arr_res->error)) {
             Mage::log($arr_res->error, null, 'ShipHawk.log');
             $responce_html = '';
             $responce['shiphawk_error'] = $arr_res->error;
         }else{
             foreach ((array) $arr_res as $el) {
-                $responce_array[$el->id] = $el->name.' ('.$el->category.')';
+                $responce_array[$el->id] = $el->name.' ('.$el->category_name. ' - ' . $el->subcategory->name . ')';
             }
 
             $responce_html="<ul>";

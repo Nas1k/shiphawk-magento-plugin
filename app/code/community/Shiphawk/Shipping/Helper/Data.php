@@ -61,14 +61,14 @@ class Shiphawk_Shipping_Helper_Data extends
         return $result;
     }
 
-    public function getSipHawkCode($shiphawk_book_id, $shipping_code) {
+    public function getShipHawkCode($shiphawk_book_id, $shipping_code) {
         $result = array();
 
         foreach ($shiphawk_book_id as $rate_id=>$method_data) {
             //if( strpos($shipping_description, $method_data['name']) !== false ) {
             //if( $shipping_code == $method_data['price'] ) {
             $shipping_price = (string) $method_data['price'];
-            if($this->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
+              if($this->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
                 $result = array($rate_id => $method_data);
                 return $result;
             }
@@ -183,6 +183,10 @@ class Shiphawk_Shipping_Helper_Data extends
         }
 
         return true;
+    }
+
+    public function getSummaryPrice($object) {
+        return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
     }
 
 }

@@ -6,7 +6,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
         //$url_api_rates = $helper->getApiUrl() . 'rates/full?api_key=' . $api_key;
-        $url_api_rates = $helper->getApiUrl() . 'rates/standard?api_key=' . $api_key;
+        $url_api_rates = $helper->getApiUrl() . 'rates?api_key=' . $api_key;
 
         $from_type  = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_location_type');
 
@@ -33,7 +33,9 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             );
         }
 
-        $items_array =  json_encode($items_array);
+        Mage::log($items_array, null, 'Items.log');
+
+       $items_array =  json_encode($items_array);
 
         curl_setopt($curl, CURLOPT_URL, $url_api_rates);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -59,10 +61,9 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $bill_addr = $order->getBillingAddress()->getData();
         $order_increment_id = $order->getIncrementId();
 
-
         $api_key = Mage::helper('shiphawk_shipping')->getApiKey();
         $api_url = Mage::helper('shiphawk_shipping')->getApiUrl();
-        $url_api = $api_url . 'shipments/book?api_key=' . $api_key;
+        $url_api = $api_url . 'shipments?api_key=' . $api_key;
 
         /* get shiphawk origin data from first product, because products are grouped by origin (or by zip code) and have same address */
         $origin_product = Mage::getModel('catalog/product')->load($products_ids['product_ids'][0]);
@@ -83,13 +84,15 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $origin_address = $this->getOriginAddress($origin_address_product, $default_origin_address);
 
-        Mage::log($url_api, null, 'shiphawk-book-v1.log');
+        Mage::log($url_api, null, 'shiphawk-book.log');
 
         $next_bussines_day = date('Y-m-d', strtotime('now +1 Weekday'));
         $items_array = array(
             'rate_id'=> $rate_id,
             'order_email'=> $order_email,
             'xid'=>$order_increment_id,
+            'self_packed'=>'true',
+            'insurance'=>'true',
             'origin_address' =>
                 $origin_address,
             'destination_address' =>
@@ -130,7 +133,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         );
 
-        Mage::log($items_array, null, 'shiphawk-book-v1.log');
+        Mage::log($items_array, null, 'shiphawk-book.log');
 
         $items_array =  json_encode($items_array);
 
@@ -147,7 +150,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
 
-        Mage::log($arr_res, null, 'shiphawk-book-v1.log');
+        Mage::log($arr_res, null, 'shiphawk-book.log');
 
         curl_close($curl);
 
@@ -262,8 +265,11 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                 $track_data = $this->toBook($order,$rate_id,$products_ids);
 
+                Mage::log($track_data, null, 'ResponceBook.log');
+                //todo if Erorr ?
+
                 // add track
-                if($track_number = $track_data->shipment_id) {
+                if($track_number = $track_data->details->id) {
                     $this->addTrackNumber($shipment, $track_number);
                     // subscribe automaticaly after book
                     $this->subscribeToTrackingInfo($shipment->getId());
@@ -380,8 +386,9 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 $shipment = Mage::getModel('sales/order_shipment')->load($shipment_id);
 
                 $shipment_id_track = $this->_getTrackNumber($shipment);
-
-                $subscribe_url = $helper->getApiUrl() . 'shipments/' . $shipment_id_track . '/subscribe?api_key=' . $api_key;
+                //todo v3 subscribe for tracking update
+                //PUT /api/v3/shipments/{id}/tracking
+                $subscribe_url = $helper->getApiUrl() . 'shipments/' . $shipment_id_track . '/tracking?api_key=' . $api_key;
                 $callback_url = $helper->getCallbackUrl($api_key);
 
                 $items_array = array(
@@ -392,7 +399,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 $items_array =  json_encode($items_array);
 
                 curl_setopt($curl, CURLOPT_URL, $subscribe_url);
-                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $items_array);
                 curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($curl, CURLOPT_HTTPHEADER, array(
@@ -475,8 +482,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
-
-        $subscribe_url = $helper->getApiUrl() . 'shipments/' . $shipment_id_track . '/status?api_key=' . $api_key;
+//GET /api/v3/shipments/{id}/tracking
+        $subscribe_url = $helper->getApiUrl() . 'shipments/' . $shipment_id_track . '/tracking?api_key=' . $api_key;
 
         $curl = curl_init();
 
