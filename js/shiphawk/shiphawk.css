@@ -28,3 +28,9 @@
     margin-top: 20px;
     padding: 2px;
 }
+
+label[for=shiphawk_origin_firstname]:after, label[for=shiphawk_origin_lastname]:after, label[for=shiphawk_origin_addressline1]:after, label[for=shiphawk_origin_city]:after,
+label[for=shiphawk_origin_state]:after, label[for=shiphawk_origin_zipcode]:after, label[for=shiphawk_origin_phonenum]:after, label[for=shiphawk_origin_email]:after{
+    color: red;
+    content: "*";
+}

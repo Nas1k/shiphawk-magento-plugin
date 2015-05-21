@@ -114,7 +114,8 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $responce_array = array();
         $responce = array();
 
-        if(($arr_res->error) || ($arr_res['error'])) {
+        //todo Notice: Trying to get property of non-object
+        if(($arr_res->error)) {
 
             Mage::log($arr_res->error, null, 'ShipHawk.log');
             $responce_html = '';
