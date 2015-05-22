@@ -152,7 +152,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
             $responce = '<select name="attributes[shiphawk_shipping_origins]" id="shiphawk_shipping_origins" disabled>';
         }
 
-        $responce .= '<option value="">default</option>';
+        $responce .= '<option value="">Primary origin</option>';
 
         foreach($origins_collection as $origin) {
             if ($origin_id != $origin->getId()) {

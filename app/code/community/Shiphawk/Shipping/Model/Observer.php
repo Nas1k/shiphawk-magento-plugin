@@ -23,6 +23,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
+
+
             //shiphawk_shipping_amount
             if($multi_zip_code == false) {
 
@@ -30,7 +32,14 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
                     $order->setShiphawkShippingAmount($method_data['price']);
                 }
+
+            }else{
+                //if multi origin shipping
+                $shiphawk_shipping_amount = Mage::getSingleton('core/session')->getSummPrice();
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
             }
+
+
 
             $order->setShiphawkBookId(serialize($shiphawk_book_id));
             $order->save();
@@ -44,6 +53,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         Mage::getSingleton('core/session')->unsShiphawkBookId();
         Mage::getSingleton('core/session')->unsMultiZipCode();
+        Mage::getSingleton('core/session')->unsSummPrice();
 
     }
 

@@ -180,19 +180,23 @@ class Shiphawk_Shipping_Model_Carrier
                         if($is_admin == false) {
                             $result->append($this->_getShiphawkRateObject($service['name'], $shipping_price, $service['price']));
                         }else{
-                            $result->append($this->_getShiphawkRateObject($service['carrier'] . ' - ' . $service['name'], $shipping_price, $service['price']));
+                            //todo more information for admin
+                            $result->append($this->_getShiphawkRateObject($service['carrier'] . ' - ' . $service['name'] . ' - ' . $service['delivery'] . ' - ' . $service['carrier_type'], $shipping_price, $service['price']));
                         }
 
                     }else{
                         if($is_admin == false) {
                             $name_service .= $service['name'] . ', ';
                         }else{
-                            $name_service .= $service['carrier'] . ' - ' . $service['name'] . ', ';
+                            //todo more information for admin
+                            $name_service .= $service['carrier'] . ' - ' . $service['name'] . ' - ' . $service['delivery'] . ' - ' . $service['carrier_type'] .  ', ';
                         }
                         //$name_service .= $service['name'] . ', ';
                         $summ_price += $service['price'];
                     }
                 }
+
+
 
                 //save rate_id info for Book
                 Mage::getSingleton('core/session')->setShiphawkBookId($toOrder);
@@ -208,6 +212,7 @@ class Shiphawk_Shipping_Model_Carrier
                     //add ShipHawk shipping
                     $name_service = 'Shipping from multiple locations';
                     $shipping_price = $helper->getDiscountShippingPrice($summ_price);
+                    Mage::getSingleton('core/session')->setSummPrice($summ_price);
                     $result->append($this->_getShiphawkRateObject($name_service, $shipping_price, $summ_price));
                 }
             }
@@ -399,13 +404,17 @@ class Shiphawk_Shipping_Model_Carrier
     }
 
     public function getServices($ship_responces) {
+
         $services = array();
         foreach($ship_responces as $ship_responce) {
             if(is_array($ship_responce)) {
                 foreach($ship_responce as $object) {
+                    Mage::log($object,  null, 'shipObject.log');
                     $services[$object->id]['name'] = $this->_getServiceName($object);
                     $services[$object->id]['price'] = $object->summary->price;
                     $services[$object->id]['carrier'] = $object->summary->carrier;
+                    $services[$object->id]['delivery'] = $object->summary->delivery;
+                    $services[$object->id]['carrier_type'] = $object->summary->carrier_type;
                 }
             }
         }
