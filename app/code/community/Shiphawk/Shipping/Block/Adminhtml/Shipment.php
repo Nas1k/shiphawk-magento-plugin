@@ -51,7 +51,12 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                 $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_, $rate_filter);
 
                 if(empty($checkattributes)) {
-                    $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
+
+                    /* get zipcode and location type from first item in grouped by origin (zipcode) products */
+                    $from_zip = $items_[0]['zip'];
+                    $location_type = $items_[0]['location_type'];
+                    $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type, $location_type);
+                    //$responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
                     $ship_responces[] = $responceObject;
 
                     if(is_object($responceObject)) {
@@ -120,7 +125,11 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                     $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_per_product, $rate_filter);
 
                     if(empty($checkattributes)) {
-                        $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_per_product, $rate_filter, $carrier_type);
+                        /* get zipcode and location type from first item in grouped by origin (zipcode) products */
+                        $from_zip = $items_per_product[0]['zip'];
+                        $location_type = $items_per_product[0]['location_type'];
+                        $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type, $location_type);
+                        //$responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_per_product, $rate_filter, $carrier_type);
                         $ship_responces[] = $responceObject;
 
                         if(is_object($responceObject)) {

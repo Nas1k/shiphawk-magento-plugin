@@ -26,18 +26,32 @@
 ?>
 <?php /** @var $this Mage_Shipping_Block_Tracking_Popup */ ?>
 <?php $_results = $this->getTrackingInfo();
-$shippingInfoModel = Mage::getModel('shipping/info')->loadByHash($this->getRequest()->getParam('hash'));
+/*$shippingInfoModel = Mage::getModel('shipping/info')->loadByHash($this->getRequest()->getParam('hash'));
 
-$shipment = Mage::getModel('sales/order_shipment')->load($shippingInfoModel->getData('ship_id'));
+$ship_id = $shippingInfoModel->getData('ship_id');
 
+if($ship_id) {
+    $shipment = Mage::getModel('sales/order_shipment')->load($ship_id);
+
+
+}else{
+//order view
+    foreach($_results as $key=>$value) {
+        //get only for first shippment
+        $shipment = Mage::getModel('sales/order_shipment')->loadByIncrementId($key);
+    }
+
+
+}
 $tracks = $shipment->getTracksCollection();
+
 
 $trackingNumbers = array();
 foreach ($tracks as $track){
     $trackingNumbers[] = $track->getNumber();
-}
+}*/
 
-$api =$api = Mage::getModel('shiphawk_shipping/api');
+$api = Mage::getModel('shiphawk_shipping/api');
 ?>
 <div class="page-title title-buttons">
     <h1><?php echo $this->__('Tracking Information'); ?></h1>
@@ -46,9 +60,18 @@ $api =$api = Mage::getModel('shiphawk_shipping/api');
 <?php if(sizeof($_results)>0): ?>
     <?php foreach($_results as $shipid => $_result): ?>
         <?php if($shipid): ?>
-            <h2 class="sub-title"><?php echo $this->__('Shipment #').$shipid; ?></h2>
+            <h2 class="sub-title"><?php echo $this->__('Shipment #') . $shipid; ?></h2>
         <?php endif; ?>
         <?php
+        $shipment = Mage::getModel('sales/order_shipment')->loadByIncrementId($shipid);
+
+        $tracks = $shipment->getTracksCollection();
+
+
+        $trackingNumbers = array();
+        foreach ($tracks as $track){
+            $trackingNumbers[] = $track->getNumber();
+        }
 
             foreach($trackingNumbers as $trackNumber) {
                 $trackResult = $api->getShipmentStatus($trackNumber);
