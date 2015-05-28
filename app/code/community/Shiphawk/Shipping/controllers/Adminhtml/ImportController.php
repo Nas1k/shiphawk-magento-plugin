@@ -6,10 +6,13 @@ class Shiphawk_Shipping_Adminhtml_ImportController extends Mage_Adminhtml_Contro
 
         $fileimport = Mage::getStoreConfig('carriers/shiphawk_shipping/file_import');
 
-        $urlpath = Mage::getBaseDir('var') . DS . 'uploads' . DS . $fileimport;
+        $urlpath = Mage::getBaseDir('var') . DS . 'shiphawk' . DS.'import' . DS . $fileimport;
+
+        Mage::log($fileimport);
+        Mage::log($urlpath);
 
         $row = 1;
-        if (($handle = fopen($urlpath, "r")) !== FALSE) {
+        if (($handle = fopen($urlpath, "r")) !== FALSE) { 
 
             while (($data = fgetcsv($handle, 1000, ",", '"')) !== FALSE) {
                 if($row == 1){ $row++; continue; }
