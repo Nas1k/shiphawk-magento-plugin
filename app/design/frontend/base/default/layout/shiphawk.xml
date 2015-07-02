@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <layout version="1.0.0">
-
     <shipping_tracking_popup translate="label">
         <reference name="content">
             <reference name="shipping.tracking.popup">
@@ -8,6 +7,55 @@
             </reference>
         </reference>
     </shipping_tracking_popup>
-
+    <checkout_onepage_index translate="label">
+        <reference name="head">
+            <action method="addCss"><file>shiphawk/css/sh-style.css</file></action>
+        </reference>
+        <reference name="checkout.onepage.billing">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/billing.phtml</template>
+            </action>
+        </reference>
+        <reference name="checkout.onepage.shipping">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/shipping.phtml</template>
+            </action>
+        </reference>
+    </checkout_onepage_index>
+    <checkout_onepage_shippingmethod>
+        <reference name="root">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/shipping_method/available.phtml</template>
+            </action>
+        </reference>
+    </checkout_onepage_shippingmethod>
+    <checkout_onepage_review translate="label">
+        <reference name="checkout.onepage.review.info.totals">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/review/totals.phtml</template>
+            </action>
+        </reference>
+    </checkout_onepage_review>
+    <checkout_onepage_progress_shipping_method>
+        <reference name="root">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/progress/shipping_method.phtml</template>
+            </action>
+        </reference>
+    </checkout_onepage_progress_shipping_method>
+    <checkout_onepage_progress_billing>
+        <reference name="root">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/progress/billing.phtml</template>
+            </action>
+        </reference>
+    </checkout_onepage_progress_billing>
+    <checkout_onepage_progress_shipping>
+        <reference name="root">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/onepage/progress/shipping.phtml</template>
+            </action>
+        </reference>
+    </checkout_onepage_progress_shipping>
 </layout>   
     

@@ -189,4 +189,24 @@ class Shiphawk_Shipping_Helper_Data extends
         return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
     }
 
+    public function getBOLurl($shipment_id) {
+
+        $api_key = $this->getApiKey();
+
+        $bol_url = $this->getApiUrl() . 'shipments/' . $shipment_id . '/bol?api_key=' . $api_key;
+
+        $curl = curl_init();
+
+        curl_setopt($curl, CURLOPT_URL, $bol_url);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+
+        $resp = curl_exec($curl);
+        $arr_res = json_decode($resp);
+
+        return $arr_res;
+
+    }
+
 }

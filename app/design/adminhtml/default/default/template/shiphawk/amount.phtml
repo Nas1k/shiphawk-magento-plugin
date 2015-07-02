@@ -77,7 +77,12 @@
                 <?php else: ?>
                     <?php echo $this->helper('sales')->__('No shipping information available'); ?>
                 <?php endif; ?>
-                <?php $shiphawk_shipping_amount = $_order->getShiphawkShippingAmount(); ?>
+                <?php
+                    $shiphawk_shipping_amount       = $_order->getShiphawkShippingAmount();
+                    $shiphawk_shipping_package_info = $_order->getShiphawkShippingPackageInfo();
+                    $shiphawkShippingAccessories    = $_order->getShiphawkShippingAccessories();
+                    $shiphawkShippingAccessories    = !empty($shiphawkShippingAccessories) ? json_decode($shiphawkShippingAccessories, true) : array();
+                ?>
                 <?php if ($shiphawk_shipping_amount) : ?>
                     <div class="entry-edit">
                         <div class="entry-edit-head">
@@ -97,8 +102,90 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="entry-edit-head">
+                            <h4 class="icon-head head-account"><?php echo Mage::helper('sales')->__('ShipHawk Shipping Package Info') ?></h4>
+                        </div>
+                        <div class="fieldset">
+                            <div class="hor-scroll">
+                                <table cellspacing="0" class="form-list">
+                                    <tr>
+                                        <td class="label"><label><?php echo Mage::helper('sales')->__('ShipHawk Shipping Package Info') ?></label></td>
+                                        <td class="value">
+                                            <?php echo $shiphawk_shipping_package_info; ?>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </div>
+                        </div>
+                        <div class="entry-edit-head">
+                            <h4 class="icon-head head-account"><?php echo Mage::helper('sales')->__('ShipHawk Shipping Accessorials') ?></h4>
+                        </div>
+                        <div class="fieldset">
+                            <div class="hor-scroll">
+                                <table cellspacing="0" class="form-list">
+                                    <tr>
+                                        <td class="label"><label><?php echo Mage::helper('sales')->__('ShipHawk Shipping Accessorials') ?></label></td>
+                                        <td class="value">
+                                            <?php
+                                                if (!empty($shiphawkShippingAccessories)) {
+                                                    foreach($shiphawkShippingAccessories as $type => $accessor) {
+                                                        echo '<span style="text-transform: capitalize; font-weight: bold;">' .  Mage::helper('sales')->__(str_replace("'", '', $type) . ':') . '</span>';
+                                                        echo '<ul>';
+
+                                                        foreach($accessor as $values) {
+                                                            echo '<li>' . str_replace("'", '', $values['name']) . ' - ' . $currensy_symbol . $values['value'] . '</li>';
+                                                        }
+
+                                                        echo '</ul>';
+                                                        echo '<br/>';
+                                                    }
+                                                } else {
+                                                    echo Mage::helper('sales')->__('Accessorials are not selected.');
+                                                }
+                                            ?>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </div>
+                        </div>
+                        <div class="entry-edit-head">
+                            <h4 class="icon-head head-account"><?php echo Mage::helper('sales')->__('ShipHawk Location Type') ?></h4>
+                        </div>
+                        <div class="fieldset">
+                            <div class="hor-scroll">
+                                <table cellspacing="0" class="form-list">
+                                    <tr>
+                                        <td class="label"><label><?php echo Mage::helper('sales')->__('Location Type') ?></label></td>
+                                        <td class="value">
+                                            <?php echo $_order->getShiphawkLocationType();?>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 <?php endif; ?>
+                <?php
+                if (!$_order->canShip()) {
+
+                    foreach($_order->getShipmentsCollection() as $shipment)
+                    {
+                        foreach($shipment->getAllTracks() as $tracknum)
+                        {
+                            $tracknums[]=$tracknum->getNumber();
+                        }
+
+                    }
+                ?>
+                <ul>
+                    <?php foreach($tracknums as $ship_num) { ?>
+                        <li><a onclick="bolpdf(this)" class="bol_link" style="cursor: pointer" id="<?php echo $ship_num; ?>">Get BOL PDF for <?php echo $ship_num ?> shipment</a></li>
+                    <?php } ?>
+                </ul>
+                <?php } ?>
+
             </fieldset>
         </div>
     </div>
@@ -153,5 +240,48 @@
             return contentLines.join('<br/>');
         }
         giftOptionsTooltip.setTooltipContentLoaderFunction(getGiftOptionsTooltipContent);
+
+        function bolpdf(element) {
+
+            var url = 'shiphawk/index/getbol';
+
+            url = baseMagentoUrl + url;
+
+            var parameters = {
+                shipments_id: element.id
+            };
+
+            new Ajax.Request(url, {
+                method: 'post',
+                parameters: parameters,
+                onSuccess: function(transport)  {
+
+                    responce_html  = JSON.parse(transport.responseText);
+
+
+                    if(responce_html.shiphawk_error) {
+
+                        var error_html = 'ERROR: ' + responce_html.shiphawk_error;
+                        alert(error_html);
+                    }else{
+                        if(responce_html.bol_url) {
+
+                           // alert(responce_html.bol_url);
+                            //window.location = responce_html.bol_url;
+
+                            window.open(
+                                responce_html.bol_url,
+                                '_blank' // <- This is what makes it open in a new window.
+                            );
+
+                        }
+                    }
+
+                },
+                onLoading:function(transport)
+                {
+                }
+            });
+        }
         //]]>
     </script>

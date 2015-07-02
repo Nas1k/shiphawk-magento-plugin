@@ -70,6 +70,9 @@
             </action>
 
         </reference>
+        <reference name="content">
+            <block type="core/template" name="shiphawkjsfile" template="shiphawk/shiphawkjsfile.phtml"/>
+        </reference>
     </adminhtml_sales_order_view>
 
     <adminhtml_origins_index>
@@ -103,7 +106,22 @@
     </adminhtml_sales_order_view>
 
     <adminhtml_sales_order_shipment_view>
-
+        <reference name="form">
+            <action method="setTemplate">
+                <template>shiphawk/shipping/form.phtml</template>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="core/template" name="shiphawkjsfile" template="shiphawk/shiphawkjsfile.phtml"/>
+        </reference>
     </adminhtml_sales_order_shipment_view>
 
+    <adminhtml_sales_order_create_index>
+        <reference name="head">
+            <action method="addItem">
+                <type>js</type>
+                <name>shiphawk/shiphawk_order.js</name>
+            </action>
+        </reference>
+    </adminhtml_sales_order_create_index>
 </layout>

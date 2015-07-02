@@ -14,6 +14,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         try {
             $order = Mage::getModel('sales/order')->load($orderId);
 
+            $shLocationType = $order->getShiphawkLocationType();
+
             $shiphawk_rate_data = unserialize($order->getData('shiphawk_book_id')); //rate id
 
             $api = Mage::getModel('shiphawk_shipping/api');
@@ -33,23 +35,42 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                 $rate_filter = 'best';
             }
 
+            $accessories = array();
+
             foreach($shiphawk_rate_data as $rate_id=>$products_ids) {
                     $is_rate = false;
 
                     if(($is_multi_zip)||($rate_filter == 'best')) {
-                        $responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
+                        /* get zipcode and location type from first item in grouped by origin (zipcode) products */
+                        $from_zip = $products_ids['items'][0]['zip'];
+                        $location_type = $products_ids['items'][0]['location_type'];
+
+                        //$responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
+                        $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
                     // get only one method for each group of product
-                        $rate_id = $responceObject[0]->id;
-                        $is_rate = true;
+                        if($responceObject->error) {
+                            $is_rate = false;
+                        }else{
+                            $rate_id        = $responceObject[0]->id;
+                            $accessories    = $responceObject[0]->shipping->carrier_accessorial;
+                            $is_rate = true;
+                        }
 
                     }else{
-                        $responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
+                        /* get zipcode and location type from first item in grouped by origin (zipcode) products */
+                        $from_zip = $products_ids['items'][0]['zip'];
+                        $location_type = $products_ids['items'][0]['location_type'];
 
-                        $original_shipping_price = $order->getShiphawkShippingAmount();
+                        $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
+                        //$responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
+
+                        $original_shipping_price = floatval($order->getShiphawkShippingAmount());
                         foreach ($responceObject as $responce) {
+
                             $shipping_price = $helper->getSummaryPrice($responce);
-                            if( $original_shipping_price == $shipping_price ) {
-                                $rate_id = $responce->id;
+                            if(round($original_shipping_price,3) == round($shipping_price,3)) {
+                                $rate_id        = $responce->id;
+                                $accessories    = $responce->shipping->carrier_accessorial;
                                 $is_rate = true;
                                 break;
                           }
@@ -58,16 +79,20 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                     if($is_rate == true) {
                         // add book
+                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false);
 
-                        $track_data = $api->toBook($order,$rate_id,$products_ids);
+                        if ($track_data->error) {
+                            Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                            continue;
+                        }
 
                         $shipment = $api->_initShipHawkShipment($order,$products_ids);
                         $shipment->register();
                         $api->_saveShiphawkShipment($shipment);
 
                         // add track
-                        if($track_number = $track_data->details->id) {
-                            $api->addTrackNumber($shipment, $track_number);
+                        if($track_data->details->id) {
+                            $api->addTrackNumber($shipment, $track_data->details->id);
 
                             $api->subscribeToTrackingInfo($shipment->getId());
                         }
@@ -154,6 +179,12 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                     if($is_multi == 0) {
                         if($shiphawk_rate_id == $rate_id) {
                             $track_data = $api->toBook($order,$rate_id,$products_ids);
+
+                            if ($track_data->error) {
+                                Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                                continue;
+                            }
+
                             $order->setShiphawkShippingAmount($products_ids['price']);
                             $order->save();
 
@@ -162,7 +193,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             $api->_saveShiphawkShipment($shipment);
 
                             // add track
-                            $track_number = $track_data->shipment_id;
+                            $track_number = $track_data->details->id;
 
                             $api->addTrackNumber($shipment, $track_number);
                             $api->subscribeToTrackingInfo($shipment->getId());
@@ -173,6 +204,11 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                     }else{
                         $track_data = $api->toBook($order,$rate_id,$products_ids);
 
+                        if ($track_data->error) {
+                            Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                            continue;
+                        }
+
                         $order->setShiphawkShippingAmount($multi_price);
                         $order->save();
 
@@ -181,7 +217,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $api->_saveShiphawkShipment($shipment);
 
                         // add track
-                        $track_number = $track_data->shipment_id;
+                        $track_number = $track_data->details->id;
 
                         $api->addTrackNumber($shipment, $track_number);
                         $api->subscribeToTrackingInfo($shipment->getId());
@@ -205,4 +241,23 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         $this->getResponse()->setBody( json_encode($shipmentCreatedMessage) );
     }
 
+    /**
+     * For set Shiphawk location type value to session
+     *
+     * @version 20150701
+     */
+    public function setlocationtypeAction() {
+        $locationType = $this->getRequest()->getPost('location_type');
+
+        if (empty($locationType)) {
+            $this->getResponse()->setBody('Result: location type is empty.');
+            return;
+        }
+
+        $locationType = $locationType != 'residential' && $locationType != 'commercial' ? 'residential' : $locationType;
+
+        Mage::getSingleton('checkout/session')->setData('shiphawk_location_type_shipping', $locationType);
+
+        $this->getResponse()->setBody('Result: ok.');
+    }
 }

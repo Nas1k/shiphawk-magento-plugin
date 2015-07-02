@@ -1,14 +1,12 @@
 <?php
 class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 {
-    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type = '') {
+    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType) {
 
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
         //$url_api_rates = $helper->getApiUrl() . 'rates/full?api_key=' . $api_key;
         $url_api_rates = $helper->getApiUrl() . 'rates?api_key=' . $api_key;
-
-        $from_type  = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_location_type');
 
         $curl = curl_init();
 
@@ -18,8 +16,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'to_zip'=> $to_zip,
                 'rate_filter' => $rate_filter,
                 'items' => $items,
-                'from_type' => $from_type,
-                'to_type' => 'residential',
+                'from_type' => $location_type,
+                'to_type' => $shLocationType,
             );
         }else{
             $items_array = array(
@@ -28,12 +26,10 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'rate_filter' => $rate_filter,
                 'carrier_type' => $carrier_type,
                 'items' => $items,
-                'from_type' => $from_type,
-                'to_type' => 'residential',
+                'from_type' => $location_type,
+                'to_type' => $shLocationType,
             );
         }
-
-        Mage::log($items_array, null, 'Items.log');
 
        $items_array =  json_encode($items_array);
 
@@ -51,11 +47,13 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $arr_res = json_decode($resp);
 
+        Mage::log($arr_res, null, 'ResponceV3.log');
+
         curl_close($curl);
         return $arr_res;
     }
 
-    public function toBook($order,$rate_id,$products_ids)
+    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false)
     {
         $ship_addr = $order->getShippingAddress()->getData();
         $bill_addr = $order->getBillingAddress()->getData();
@@ -82,9 +80,23 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             $order_email = ($administrator_email) ? $administrator_email : $ship_addr['email'];
         }
 
-        $origin_address = $this->getOriginAddress($origin_address_product, $default_origin_address);
+        $origin_address = (empty($origin_address_product)) ? $default_origin_address : $origin_address_product;
 
         Mage::log($url_api, null, 'shiphawk-book.log');
+
+        /* For accessories */
+        $orderAccessories = $order->getShiphawkShippingAccessories();
+
+        if ($is_auto) {
+            $orderAccessories = json_decode($orderAccessories, true);
+            foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
+                foreach($orderAccessor as $key => $orderAccessorValues) {
+                    $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+                }
+            }
+        } else {
+            $itemsAccessories = $this->getAccessoriesForBook($accessories, $orderAccessories);
+        }
 
         $next_bussines_day = date('Y-m-d', strtotime('now +1 Weekday'));
         $items_array = array(
@@ -129,7 +141,9 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     )
                 ),
 
-            'accessorials' => array()
+            'accessorials' => $itemsAccessories
+            //  'accessorials' => array('id' => '0e9b265c-887d-4eff-813f-33bf6ee605c3') //wrong, get [error] => API Call: accessorials is invalid
+
 
         );
 
@@ -161,15 +175,15 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     protected function _getDefaultOriginData() {
         $origin_address = array();
 
-        $origin_address['origin_first_name'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_first_name');
-        $origin_address['origin_last_name'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_last_name');
-        $origin_address['origin_address'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_address');
-        $origin_address['origin_address2'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_address2');
-        $origin_address['origin_state'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_state');
-        $origin_address['origin_city'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_city');
-        $origin_address['default_origin_zip'] = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
-        $origin_address['origin_phone'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_phone');
-        $origin_address['origin_email'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_email');
+        $origin_address['first_name'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_first_name');
+        $origin_address['last_name'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_last_name');
+        $origin_address['address_line_1'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_address');
+        $origin_address['address_line_2'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_address2');
+        $origin_address['state'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_state');
+        $origin_address['city'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_city');
+        $origin_address['zipcode'] = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
+        $origin_address['phone_num'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_phone');
+        $origin_address['email'] = Mage::getStoreConfig('carriers/shiphawk_shipping/origin_email');
 
         return $origin_address;
     }
@@ -183,34 +197,36 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             $origin_product = Mage::getModel('catalog/product')->load($products_id);
 
             $shipping_origin_id = $origin_product->getData('shiphawk_shipping_origins');
-            /* if product have origin id, then get origin address from origin model */
-            if($shipping_origin_id) {
 
-                $shipping_origin = Mage::getModel('shiphawk_shipping/origins')->load($shipping_origin_id);
 
-                $origin_address_product['origin_first_name'] = $shipping_origin->getData('shiphawk_origin_firstname');
-                $origin_address_product['origin_last_name'] = $shipping_origin->getData('shiphawk_origin_lastname');
-                $origin_address_product['origin_address'] = $shipping_origin->getData('shiphawk_origin_addressline1');
-                $origin_address_product['origin_address2'] = $shipping_origin->getData('shiphawk_origin_addressline2');
-                $origin_address_product['origin_state'] = $shipping_origin->getData('shiphawk_origin_state');
-                $origin_address_product['origin_city'] = $shipping_origin->getData('shiphawk_origin_city');
-                $origin_address_product['default_origin_zip'] = $shipping_origin->getData('shiphawk_origin_zipcode');
-                $origin_address_product['origin_phone'] = $shipping_origin->getData('shiphawk_origin_phonenum');
-                $origin_address_product['origin_email'] = $shipping_origin->getData('shiphawk_origin_email');
+            /* if product origin id == default (origin id == '') and product have all per product origin attribute
+            than get origin address from first product in origin group */
+            if($per_product == true) {
+
+                $origin_address_product['first_name'] = $origin_product->getData('shiphawk_origin_firstname');
+                $origin_address_product['last_name'] = $origin_product->getData('shiphawk_origin_lastname');
+                $origin_address_product['address_line_1'] = $origin_product->getData('shiphawk_origin_addressline1');
+                $origin_address_product['address_line_2'] = $origin_product->getData('shiphawk_origin_addressline2');
+                $origin_address_product['state'] = $origin_product->getData('shiphawk_origin_state');
+                $origin_address_product['city'] = $origin_product->getData('shiphawk_origin_city');
+                $origin_address_product['zipcode'] = $origin_product->getData('shiphawk_origin_zipcode');
+                $origin_address_product['phone_num'] = $origin_product->getData('shiphawk_origin_phonenum');
+                $origin_address_product['email'] = $origin_product->getData('shiphawk_origin_email');
             }else{
-                /* if product origin id == default (origin id == '') and product have all per product origin attribute
-                than get origin address from first product in origin group */
-                if($per_product == true) {
+                if($shipping_origin_id) {
+                    /* if product have origin id, then get origin address from origin model */
+                    $shipping_origin = Mage::getModel('shiphawk_shipping/origins')->load($shipping_origin_id);
 
-                    $origin_address_product['origin_first_name'] = $origin_product->getData('shiphawk_origin_firstname');
-                    $origin_address_product['origin_last_name'] = $origin_product->getData('shiphawk_origin_lastname');
-                    $origin_address_product['origin_address'] = $origin_product->getData('shiphawk_origin_addressline1');
-                    $origin_address_product['origin_address2'] = $origin_product->getData('shiphawk_origin_addressline2');
-                    $origin_address_product['origin_state'] = $origin_product->getData('shiphawk_origin_state');
-                    $origin_address_product['origin_city'] = $origin_product->getData('shiphawk_origin_city');
-                    $origin_address_product['default_origin_zip'] = $origin_product->getData('shiphawk_origin_zipcode');
-                    $origin_address_product['origin_phone'] = $origin_product->getData('shiphawk_origin_phonenum');
-                    $origin_address_product['origin_email'] = $origin_product->getData('shiphawk_origin_email');
+                    $origin_address_product['first_name'] = $shipping_origin->getData('shiphawk_origin_firstname');
+                    $origin_address_product['last_name'] = $shipping_origin->getData('shiphawk_origin_lastname');
+                    $origin_address_product['address_line_1'] = $shipping_origin->getData('shiphawk_origin_addressline1');
+                    $origin_address_product['address_line_2'] = $shipping_origin->getData('shiphawk_origin_addressline2');
+                    $origin_address_product['state'] = $shipping_origin->getData('shiphawk_origin_state');
+                    $origin_address_product['city'] = $shipping_origin->getData('shiphawk_origin_city');
+                    $origin_address_product['zipcode'] = $shipping_origin->getData('shiphawk_origin_zipcode');
+                    $origin_address_product['phone_num'] = $shipping_origin->getData('shiphawk_origin_phonenum');
+                    $origin_address_product['email'] = $shipping_origin->getData('shiphawk_origin_email');
+
                 }
             }
 
@@ -225,19 +241,18 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
     protected function getOriginAddress($origin_address_product, $default_origin_address) {
 
-        $origin_address = array(
-            'first_name' => $origin_address_product['origin_first_name'] ? $origin_address_product['origin_first_name'] : $default_origin_address['origin_first_name'],
-            'last_name' => $origin_address_product['origin_last_name'] ? $origin_address_product['origin_last_name'] : $default_origin_address['origin_last_name'],
-            'address_line_1' => $origin_address_product['origin_address'] ? $origin_address_product['origin_address'] : $default_origin_address['origin_address'],
-            'address_line_2' => $origin_address_product['origin_address2'] ? $origin_address_product['origin_address2'] : '',
-            'phone_num' => $origin_address_product['origin_phone'] ? $origin_address_product['origin_phone'] : $default_origin_address['origin_phone'],
-            'city' => $origin_address_product['origin_city'] ? $origin_address_product['origin_city'] : $default_origin_address['origin_city'],
-            'state' => $origin_address_product['origin_state'] ? $origin_address_product['origin_state'] : $default_origin_address['origin_state'],
-            'zipcode' => $origin_address_product['default_origin_zip'] ? $origin_address_product['default_origin_zip'] : $default_origin_address['default_origin_zip'],
-            'email' => $origin_address_product['origin_email'] ? $origin_address_product['origin_email'] : '',
-        );
 
-        return $origin_address;
+        foreach($origin_address_product as $key=>$value) {
+
+            if($key != 'origin_address2') {
+                if(empty($value)) {
+                   return $default_origin_address;
+                }
+            }
+        }
+
+        return $origin_address_product;
+
     }
 
 
@@ -263,10 +278,15 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                 // add book
 
-                $track_data = $this->toBook($order,$rate_id,$products_ids);
+                $track_data = $this->toBook($order, $rate_id, $products_ids, array(), true);
 
                 Mage::log($track_data, null, 'ResponceBook.log');
+
                 //todo if Erorr ?
+                if ($track_data->error) {
+                    Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                    return;
+                }
 
                 // add track
                 if($track_number = $track_data->details->id) {
@@ -497,6 +517,54 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         return $arr_res;
 
+    }
+
+    /**
+     * For book shipping with accessories
+     *
+     * @param $accessories
+     * @param $orderAccessories
+     * @return array
+     *
+     * @version 20150624, WhideGroup
+     */
+    public function getAccessoriesForBook($accessories, $orderAccessories) {
+
+        if (empty($accessories) || empty($orderAccessories)) {
+            return array();
+        }
+
+        $orderAccessories = json_decode($orderAccessories, true);
+        $itemsAccessories = array();
+
+        foreach ($accessories as $accessoriesType => $accessor) {
+            foreach($accessor as $accessorRow) {
+                foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
+                    foreach($orderAccessor as $orderAccessorValues) {
+                        $orderAccessorValuesName = str_replace("'", '', $orderAccessorValues['name']);
+                        $orderAccessorValuesName = trim($orderAccessorValuesName);
+
+                        $accessorName = (string)$accessorRow->accessorial_type . ' (' . (string)$accessorRow->accessorial_options . ')';
+                        $accessorName = trim($accessorName);
+
+                        if (str_replace("'", '', $orderAccessoriesType) == $accessoriesType && $accessorName == $orderAccessorValuesName) {
+                            $itemsAccessories[] = array('id' => $accessorRow->id);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (empty($itemsAccessories)) {
+            Mage::log('Empty accessories!', null, 'shiphawk-book.log');
+            Mage::log($accessories, null, 'shiphawk-book.log');
+            Mage::log($orderAccessories, null, 'shiphawk-book.log');
+        } else {
+            Mage::log('Accessories!', null, 'shiphawk-book.log');
+            Mage::log($itemsAccessories, null, 'shiphawk-book.log');
+        }
+
+        return $itemsAccessories;
     }
 
 }

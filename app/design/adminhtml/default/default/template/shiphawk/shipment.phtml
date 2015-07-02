@@ -35,12 +35,12 @@
             <?php if ($rate_filter == 'best') { ?>
         <li>
             <input name="shipping_method" checked type="radio" value="<?php echo $rate_id ?>" id="<?php echo $shipment_id ?>" class="radio">
-            <label for="<?php echo $shipment_id ?>"><?php echo  $shipments_data['carrier'] . ' - ' . $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' ' . $currensy_symbol . $shipping_price ?></span></label>
+            <label for="<?php echo $shipment_id ?>"><?php echo  $shipments_data['carrier'] . ' - ' . $shipments_data['packege_info'] . ' - ' . $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' ' . $currensy_symbol . $shipping_price ?></span></label>
         </li>
                 <?php }else { ?>
                 <li>
                     <input name="shipping_method" type="radio" value="<?php echo $rate_id ?>" id="<?php echo $shipment_id ?>" class="radio">
-                    <label for="<?php echo $shipment_id ?>"><?php echo $shipments_data['carrier'] . ' - ' . $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' ' . $currensy_symbol . $shipping_price ?></span></label>
+                    <label for="<?php echo $shipment_id ?>"><?php echo $shipments_data['carrier'] . ' - ' . $shipments_data['packege_info'] . ' - ' . $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' ' . $currensy_symbol . $shipping_price ?></span></label>
                 </li>
             <?php } ?>
         <?php } ?>

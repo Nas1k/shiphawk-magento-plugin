@@ -1,0 +1,11 @@
+.shipping-ratio-origins {
+    display: none;
+}
+
+.shipping-ratio-origins-label {
+    background-color: transparent!important;
+}
+
+.shipping-ratio-origins-type {
+    text-transform: capitalize;
+}

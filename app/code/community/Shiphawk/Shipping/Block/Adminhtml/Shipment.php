@@ -7,6 +7,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         $api = Mage::getModel('shiphawk_shipping/api');
         $helper = Mage::helper('shiphawk_shipping');
 
+        $shLocationType = $order->getShiphawkLocationType();
+
         $result = array();
 
         $items = $carrier->getShiphawkItems($order);
@@ -51,7 +53,12 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                 $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_, $rate_filter);
 
                 if(empty($checkattributes)) {
-                    $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
+
+                    /* get zipcode and location type from first item in grouped by origin (zipcode) products */
+                    $from_zip = $items_[0]['zip'];
+                    $location_type = $items_[0]['location_type'];
+                    $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type, $location_type, $shLocationType);
+                    //$responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
                     $ship_responces[] = $responceObject;
 
                     if(is_object($responceObject)) {
@@ -70,6 +77,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                             $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
                             $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
                             $toOrder[$responceObject[0]->id]['carrier'] = $carrier->getCarrierName($responceObject[0]);
+                            $toOrder[$responceObject[0]->id]['packege_info'] = $carrier->getPackeges($responceObject[0]);
                         }else{
                             Mage::getSingleton('core/session')->setMultiZipCode(false);
                             foreach ($responceObject as $responce) {
@@ -80,6 +88,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                                 $toOrder[$responce->id]['from_zip'] = $from_zip;
                                 $toOrder[$responce->id]['to_zip'] = $to_zip;
                                 $toOrder[$responce->id]['carrier'] = $carrier->getCarrierName($responce);
+                                $toOrder[$responce->id]['packege_info'] = $carrier->getPackeges($responce);
                             }
                         }
                     }
@@ -120,9 +129,12 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                     $checkattributes = $helper->checkShipHawkAttributes($from_zip, $to_zip, $items_per_product, $rate_filter);
 
                     if(empty($checkattributes)) {
-                        $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_per_product, $rate_filter, $carrier_type);
+                        /* get zipcode and location type from first item in grouped by origin (zipcode) products */
+                        $from_zip = $items_per_product[0]['zip'];
+                        $location_type = $items_per_product[0]['location_type'];
+                        $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type, $location_type, $shLocationType);
+                        //$responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_per_product, $rate_filter, $carrier_type);
                         $ship_responces[] = $responceObject;
-
                         if(is_object($responceObject)) {
                             $api_error = true;
 
@@ -140,6 +152,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                                 $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
                                 $toOrder[$responceObject[0]->id]['to_zip'] = $to_zip;
                                 $toOrder[$responceObject[0]->id]['carrier'] = $carrier->getCarrierName($responceObject[0]);
+                                $toOrder[$responceObject[0]->id]['packege_info'] = $carrier->getPackeges($responceObject[0]);
                             }else{
                                 Mage::getSingleton('core/session')->setMultiZipCode(false);
                                 foreach ($responceObject as $responce) {
@@ -150,6 +163,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                                     $toOrder[$responce->id]['from_zip'] = $from_zip;
                                     $toOrder[$responce->id]['to_zip'] = $to_zip;
                                     $toOrder[$responce->id]['carrier'] = $carrier->getCarrierName($responce);
+                                    $toOrder[$responce->id]['packege_info'] = $carrier->getPackeges($responce);
                                 }
                             }
                         }
@@ -167,6 +181,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                         if (!empty($checkattributes['to_zip'])) {
                             echo 'To Zip' . '<br />';
                         }
+
                         if (!empty($checkattributes['rate_filter'])) {
                             echo 'Rate Filter' . '<br />';
                         }

@@ -1,0 +1,24 @@
+<?php
+/**
+ *
+ * @var $this Shiphawk_Shipping_Block_Adminhtml_System_Config_Form_Button
+ */
+?>
+<script type="text/javascript">
+    //<![CDATA[
+
+    function importcsv() {
+        new Ajax.Request('<?php echo $this->getAjaxCheckUrl() ?>', {
+            method:     'get',
+            onSuccess: function(transport){
+
+                if (transport.responseText){
+                    alert(transport.responseText);
+                }
+            }
+        });
+    }
+    //]]>
+</script>
+
+<?php echo $this->getButtonHtml() ?>

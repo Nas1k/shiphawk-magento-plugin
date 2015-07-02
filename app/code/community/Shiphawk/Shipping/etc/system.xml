@@ -10,6 +10,15 @@
                     <show_in_website>0</show_in_website>
                     <show_in_store>0</show_in_store>
                     <fields>
+                        <extensions translate="label">
+                            <label>Installed aheadWorks Extensions</label>
+                            <frontend_type>text</frontend_type>
+                            <frontend_model>shiphawk_shipping/version</frontend_model>
+                            <sort_order>10</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </extensions>
                         <active translate="label">
                             <label>Enabled</label>
                             <frontend_type>select</frontend_type>
@@ -28,6 +37,15 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </hide_on_frontend>
+                        <hide_accessories_on_frontend translate="label">
+                            <label>Accessorials: Hide on frontend?</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>12</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </hide_accessories_on_frontend>
                         <api_key translate="label">
                             <label>Api Key</label>
                             <frontend_type>text</frontend_type>
@@ -226,19 +244,11 @@
                             <label>Origin State</label>
                             <frontend_type>text</frontend_type>
                             <comment>2 letter abbrev.</comment>
-                            <sort_order>84</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                        </origin_state>
-                        <origin_city translate="label">
-                            <label>Origin City</label>
-                            <frontend_type>text</frontend_type>
                             <sort_order>85</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </origin_city>
+                        </origin_state>
                         <default_origin translate="label">
                             <label>Default Origin Zipcode </label>
                             <frontend_type>text</frontend_type>

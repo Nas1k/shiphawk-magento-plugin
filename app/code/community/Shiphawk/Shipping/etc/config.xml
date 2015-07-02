@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.0.7</version>
+            <version>1.0.12</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -61,13 +61,48 @@
                     </shiphawk_shipping_order_place>
                 </observers>
             </sales_order_place_after>
+            <sales_quote_address_collect_totals_after>
+                <observers>
+                    <shiphawk_recalculation_totals>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>recalculationTotals</method>
+                    </shiphawk_recalculation_totals>
+                </observers>
+            </sales_quote_address_collect_totals_after>
+            <checkout_controller_onepage_save_shipping_method>
+                <observers>
+                    <shiphawk_onepage_save_shipping_method>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>setAccessories</method>
+                    </shiphawk_onepage_save_shipping_method>
+                </observers>
+            </checkout_controller_onepage_save_shipping_method>
+            <checkout_type_onepage_save_order>
+                <observers>
+                    <shiphawk_recalculation_totals>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>saveAccessoriesInOrder</method>
+                    </shiphawk_recalculation_totals>
+                </observers>
+            </checkout_type_onepage_save_order>
         </events>
         <fieldsets>
             <sales_convert_quote>
                 <shiphawk_api_id>
                     <to_order>*</to_order>
                 </shiphawk_api_id>
+                <shiphawk_shipping_accessories>
+                    <to_order>*</to_order>
+                </shiphawk_shipping_accessories>
             </sales_convert_quote>
+            <sales_convert_order>
+                <shiphawk_shipping_accessories>
+                    <to_order>*</to_order>
+                </shiphawk_shipping_accessories>
+            </sales_convert_order>
             <sales_convert_quote_item>
                 <shiphawk_api_id>
                     <to_order_item>*</to_order_item>
@@ -101,6 +136,26 @@
                 </shiphawk_shipping>
             </updates>
         </layout>
+        <events>
+            <core_block_abstract_to_html_before>
+                <observers>
+                    <shiphawk_change_create_order_sipping_method_template>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>changeSippingMethodTemplate</method>
+                    </shiphawk_change_create_order_sipping_method_template>
+                </observers>
+            </core_block_abstract_to_html_before>
+            <sales_order_place_after>
+                <observers>
+                    <shiphawk_override_shipping_cost>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>overrideShippingCost</method>
+                    </shiphawk_override_shipping_cost>
+                </observers>
+            </sales_order_place_after>
+        </events>
     </adminhtml>
     <admin>
         <routers>

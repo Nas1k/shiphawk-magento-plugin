@@ -12,7 +12,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
         if($api_key_from_url == $api_key) {
             try {
-            $track_number = $data_from_shiphawk->shipment_id;
+            $track_number = $data_from_shiphawk->details->id;
             $shipment_track = Mage::getResourceModel('sales/order_shipment_track_collection')->addAttributeToFilter('track_number', $track_number)->getFirstItem();
             $shipment = Mage::getModel('sales/order_shipment')->load($shipment_track->getParentId());
 
@@ -115,6 +115,8 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $responce_array = array();
         $responce = array();
 
+
+        //todo Notice: Trying to get property of non-object
         if(($arr_res->error)) {
             Mage::log($arr_res->error, null, 'ShipHawk.log');
             $responce_html = '';
@@ -151,7 +153,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
             $responce = '<select name="attributes[shiphawk_shipping_origins]" id="shiphawk_shipping_origins" disabled>';
         }
 
-        $responce .= '<option value="">default</option>';
+        $responce .= '<option value="">Primary origin</option>';
 
         foreach($origins_collection as $origin) {
             if ($origin_id != $origin->getId()) {
@@ -164,5 +166,35 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $responce .='</select>';
 
         $this->getResponse()->setBody( json_encode($responce) );
+    }
+
+    public function getbolAction() {
+
+        $shipments_id = $this->getRequest()->getPost('shipments_id');
+
+        $responce_BOL = Mage::helper('shiphawk_shipping')->getBOLurl($shipments_id);
+
+        if ($responce_BOL->url) {
+            //$io = new Varien_Io_File();
+            $path_to_save_bol_pdf = Mage::getBaseDir('media'). DS .'shiphawk'. DS .'bol';
+            $BOLpdf = $path_to_save_bol_pdf . DS .  $shipments_id . '.pdf';
+
+            if (file_get_contents($BOLpdf)) {
+                $responce['bol_url'] = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB) . 'media' . DS . 'shiphawk'. DS .'bol' . DS . $shipments_id . '.pdf';
+                $this->getResponse()->setBody( json_encode($responce) );
+            }else{
+
+                file_put_contents($BOLpdf, file_get_contents($responce_BOL->url));
+                //$responce = file_get_contents($BOLpdf);
+                $responce['bol_url'] = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB) . 'media' . DS . 'shiphawk'. DS .'bol' . DS . $shipments_id . '.pdf';
+
+                $this->getResponse()->setBody( json_encode($responce) );
+            }
+
+        }else{
+            $responce['shiphawk_error'] = $responce_BOL->error;
+            $this->getResponse()->setBody( json_encode($responce) );
+        }
+
     }
 }
