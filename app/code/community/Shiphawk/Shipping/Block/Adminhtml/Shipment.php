@@ -30,7 +30,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         }
 
         $is_admin = $helper->checkIsAdmin();
-        $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin);
+        $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin, $order);
         $carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
 
         $result['error'] = '';

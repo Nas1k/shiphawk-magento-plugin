@@ -74,7 +74,6 @@ class Shiphawk_Shipping_Model_Carrier
             $is_multi_zip = true;
         }
 
-
         $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin);
 
         $carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
@@ -242,6 +241,8 @@ class Shiphawk_Shipping_Model_Carrier
                 //save rate_id info for Book
                 Mage::getSingleton('core/session')->setShiphawkBookId($toOrder);
 
+                //save rate filter to order
+                Mage::getSingleton('core/session')->setShiphawkRateFilter($rate_filter);
 
                 //remove last comma
                 if(strlen($name_service) >2) {
@@ -264,6 +265,12 @@ class Shiphawk_Shipping_Model_Carrier
 
 
                     $result->append($this->_getShiphawkRateObject($name_service, $shipping_price, $summ_price, null));
+                }
+
+                //for save shiphawk amount in order with rate_filter = best
+                if ($rate_filter == 'best') {
+                    Mage::getSingleton('core/session')->setSummPrice($shipping_price);
+                    Mage::getSingleton('core/session')->setPackageInfo($this->getPackeges($responceObject[0]));
                 }
             }
 

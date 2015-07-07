@@ -46,7 +46,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $resp = curl_exec($curl);
 
         $arr_res = json_decode($resp);
-
+        Mage::log($items_array, null, 'ResponceV3.log');
         Mage::log($arr_res, null, 'ResponceV3.log');
 
         curl_close($curl);

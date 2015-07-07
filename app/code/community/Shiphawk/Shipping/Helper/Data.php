@@ -23,10 +23,14 @@ class Shiphawk_Shipping_Helper_Data extends
         return Mage::getUrl('shiphawk/index/tracking', array('api_key' => $api_key));
     }
 
-    public function getRateFilter($is_admin = false)
+    public function getRateFilter($is_admin = false, $order = array())
     {
         if ($is_admin == true) {
-            return Mage::getStoreConfig('carriers/shiphawk_shipping/admin_rate_filter');
+            if (empty($order)) {
+                return Mage::getStoreConfig('carriers/shiphawk_shipping/admin_rate_filter');
+            } else {
+                return $order->getShiphawkRateFilter();
+            }
         }
         return Mage::getStoreConfig('carriers/shiphawk_shipping/rate_filter');
     }

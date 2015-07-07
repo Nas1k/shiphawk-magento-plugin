@@ -21,6 +21,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $shipping_description = $order->getShippingDescription();
         $check_shiphawk = Mage::helper('shiphawk_shipping')->isShipHawkShipping($shipping_code);
         if($check_shiphawk !== false) {
+
             /* For location type */
             $shLocationType = Mage::getSingleton('checkout/session')->getData('shiphawk_location_type_shipping');
 
@@ -30,6 +31,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
+
+            // set ShipHawk rate filter
+            $shiphawkRateFilter = Mage::getSingleton('core/session')->getShiphawkRateFilter();
+            $order->setShiphawkRateFilter($shiphawkRateFilter);
 
             //shiphawk_shipping_amount
             if($multi_zip_code == false) {
