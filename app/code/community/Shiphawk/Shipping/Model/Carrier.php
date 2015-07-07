@@ -208,15 +208,16 @@ class Shiphawk_Shipping_Model_Carrier
             }
 
             if(!$api_error) {
-                $services = $this->getServices($ship_responces);
-                $name_service = '';
-                $summ_price = 0;
-                $package_info = '';
+                $services               = $this->getServices($ship_responces);
+                $name_service           = '';
+                $summ_price             = 0;
+                $package_info           = '';
+                $multi_shipping_price   = 0;
 
                 foreach ($services as $id_service=>$service) {
                     if (!$is_multi_zip) {
                         //add ShipHawk shipping
-                        $shipping_price = $helper->getDiscountShippingPrice($service['price']);
+                        $shipping_price = $helper->getTotalDiscountShippingPrice($service['price'], $toOrder[$id_service]);
 
                         if($is_admin == false) {
                             $result->append($this->_getShiphawkRateObject($service['name'], $shipping_price, $service['price'], $service['accessorial']));
@@ -235,6 +236,7 @@ class Shiphawk_Shipping_Model_Carrier
 //                        }
                         $name_service .= $service['name'] . ', ';
                         $summ_price += $service['price'];
+                        $multi_shipping_price += $helper->getTotalDiscountShippingPrice($service['price'], $toOrder[$id_service]);
                     }
                 }
 
@@ -253,8 +255,8 @@ class Shiphawk_Shipping_Model_Carrier
 
                 if($is_multi_zip) {
                     //add ShipHawk shipping
-                    $name_service = 'Shipping from multiple locations';
-                    $shipping_price = $helper->getDiscountShippingPrice($summ_price);
+                    $name_service   = 'Shipping from multiple locations';
+                    $shipping_price = $multi_shipping_price;
                     Mage::getSingleton('core/session')->setSummPrice($summ_price);
 
                     foreach($toOrder  as $rateid=>$rate_data) {

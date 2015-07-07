@@ -213,4 +213,73 @@ class Shiphawk_Shipping_Helper_Data extends
 
     }
 
+    /**
+     * For get shipping price with personal product shipping discount
+     *
+     * @param $price
+     * @param $orderData
+     * @return int
+     *
+     * @version 20150706
+     */
+    public function getTotalDiscountShippingPrice($price, $orderData) {
+        $items  = $orderData['items'];
+        $result = 0;
+
+        if (empty($items)) {
+            return $result;
+        }
+
+        $productModel = Mage::getModel('catalog/product');
+
+        // if one items in pack get discount from product, if it empty then for sys. config
+        if (count($items) == 1) {
+            $product                    = $productModel->load($items[0]['product_id']);
+            $shiphawkDiscountPercentage = $product->getShiphawkDiscountPercentage();
+            $shiphawkDiscountFixed      = $product->getShiphawkDiscountFixed();
+
+            if (empty($shiphawkDiscountPercentage) && empty($shiphawkDiscountFixed)) {
+                return $this->getDiscountShippingPrice($price);
+            }
+
+            $result = $price + ($price * ($shiphawkDiscountPercentage/100));
+            $result = $result + ($shiphawkDiscountFixed);
+
+            if($result <= 0) {
+                return 0;
+            }
+        } else {
+            $discount_arr = array();
+            foreach($items as $item) {
+                $product                    = $productModel->load($item['product_id']);
+                $shiphawkDiscountPercentage = $product->getShiphawkDiscountPercentage();
+                $shiphawkDiscountFixed      = $product->getShiphawkDiscountFixed();
+
+                if (empty($shiphawkDiscountFixed) && empty($shiphawkDiscountPercentage)) {
+                    $discount_arr['empty_val'] = array('percentage' => 0, 'fixed' => 0);
+                } else {
+                    $discount_arr[$shiphawkDiscountPercentage . '_' . $shiphawkDiscountFixed] = array(
+                        'percentage' => $shiphawkDiscountPercentage,
+                        'fixed' => $shiphawkDiscountFixed
+                    );
+                }
+            }
+
+            if (count($discount_arr) == 1 && !empty($discount_arr['empty_val'])) {
+                return $this->getDiscountShippingPrice($price);
+            }
+
+            if (count($discount_arr) > 1) {
+                return $price;
+            }
+
+            foreach($discount_arr as $discount) {
+                $result = $price + ($price * ($discount['percentage']/100));
+                $result = $result + ($discount['fixed']);
+                break;
+            }
+        }
+
+        return $result;
+    }
 }

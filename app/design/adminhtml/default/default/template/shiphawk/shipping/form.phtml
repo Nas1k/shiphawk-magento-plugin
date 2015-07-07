@@ -24,153 +24,184 @@
  * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 ?>
-<?php  $_order = $this->getShipment()->getOrder() ?>
-<?php echo $this->getChildHtml('order_info') ?>
+<?php /** @var $this Mage_Adminhtml_Block_Sales_Order_Create_Shipping_Method_Form */ ?>
+<?php $_shippingRateGroups = $this->getShippingRates(); ?>
+<?php if ($_shippingRateGroups): ?>
+    <div id="order-shipping-method-choose" style="display:none">
+        <dl class="shipment-methods">
+            <?php foreach ($_shippingRateGroups as $code => $_rates): ?>
+                <dt><strong><?php echo $this->escapeHtml($this->getCarrierName($code)) ?></strong></dt>
+                <dd>
+                    <ul>
+                        <?php foreach ($_rates as $_rate): ?>
+<?php
+//                $_radioProperty = 'name="order[shipping_method]" type="radio" onclick="order.setShippingMethod(this.value)"'
+                            $_radioProperty = 'name="order[shipping_method]" type="radio" class="shipping-ratios" data-rate="' .$_rate->getRateId() . '"';
+                            ?>
+                            <?php $_code=$_rate->getCode() ?>
+                            <li>
+                                <?php if ($_rate->getErrorMessage()): ?>
+                                    <ul class="messages">
+                                        <li class="error-msg"><?php echo $this->escapeHtml($_rate->getErrorMessage()) ?></li>
+                                    </ul>
+                                <?php else: ?>
+                                    <?php $_checked = $this->isMethodActive($_code) ? 'checked="checked"' : '' ?>
+                                    <input <?php echo $_radioProperty ?> value="<?php echo $_code ?>" id="s_method_<?php echo $_code ?>" <?php echo $_checked ?>/>
+                                    <label class="normal" for="s_method_<?php echo $_code ?>">
+                                        <?php echo $this->escapeHtml($_rate->getMethodTitle() ? $_rate->getMethodTitle() : $_rate->getMethodDescription()) ?> -
+                                        <strong>
+                                            <?php $_excl = $this->getShippingPrice($_rate->getPrice(), $this->helper('tax')->displayShippingPriceIncludingTax()); ?>
+                                            <?php $_incl = $this->getShippingPrice($_rate->getPrice(), true); ?>
 
-<div class="box-left">
-    <!--Billing Address-->
-    <div class="entry-edit">
-        <div class="entry-edit-head">
-            <h4 class="icon-head head-payment-method"><?php echo $this->helper('sales')->__('Payment Information') ?></h4>
+                                            <?php echo $_excl; ?>
+                                            <?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
+                                                (<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
+                                            <?php endif; ?>
+                                        </strong>
+                                    </label>
+                                <?php endif ?>
+                            </li>
+                            <!-- For ShipHawk accessories -->
+                            <?php $shipHawkDescription = $_rate->getMethodDescription();?>
+                            <?php if ($shipHawkDescription): ?>
+                                <?php foreach ($shipHawkDescription as $type => $accessories): ?>
+                                    <span style="text-transform: capitalize; font-weight: bold; display: none;"
+                                          class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId(); ?>-origins"><?php echo $type ?></span>
+                                    <?php foreach ($accessories as $accessor): ?>
+                                        <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId(); ?>-origins"
+                                            style="display: none;">
+                                            <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
+                                                   type="checkbox" value="<?php echo $accessor->price ?>"
+                                                   name="accessories[<?php echo $type ?>]['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
+                                                   class="checkbox"/>
+                                            <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
+                                                   class="shipping-ratio-origins-label"><?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
+                                        </li>
+                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            <?php endif ?>
+                        <?php endforeach; ?>
+                    </ul>
+                </dd>
+            <?php endforeach; ?>
+        </dl>
+        <div>
+            <table class="form-list" cellspacing="0">
+                <tr>
+                    <td class="label"><label for="sh-override-shipping-cost">Override Shipping Cost:</label></td>
+                    <td class="value"><input id="sh-override-shipping-cost" type="text" value="" class="input-text validate-number" name="sh_override_shipping_cost" placeholder="Enter Dollar Amount"/></td>
+                </tr>
+            </table>
         </div>
-        <fieldset>
-            <div><?php echo $this->getChildHtml('order_payment') ?></div>
-            <div><?php echo Mage::helper('sales')->__('Order was placed using %s', $_order->getOrderCurrencyCode()) ?></div>
-        </fieldset>
+        <!--        <div class="form-buttons" style="float: none; text-align: right;">-->
+        <!--            <button class="add" type="button" onclick="order.setShippingMethod($$('input.shipping-ratios:checked').invoke('readAttribute' ,'value'))"><span>--><?php //echo Mage::helper('sales')->__('Update Changes');?><!--</span></button>-->
+        <!--        </div>-->
     </div>
-</div>
-<div class="box-right">
-    <!--Shipping Address-->
-    <div class="entry-edit">
-        <div class="entry-edit-head">
-            <h4 class="icon-head head-shipping-method"><?php echo $this->helper('sales')->__('Shipping and Tracking Information') ?></h4>
-        </div>
-        <fieldset>
-            <div>
-                <?php if($this->getShipment()->getTracksCollection()->count()): ?>
-                    <a href="#" id="linkId" onclick="popWin('<?php echo $this->helper('shipping')->getTrackingPopupUrlBySalesModel($this->getShipment()) ?>','trackshipment','width=800,height=600,resizable=yes,scrollbars=yes')" title="<?php echo $this->__('Track this shipment') ?>"><?php echo $this->__('Track this shipment') ?></a>
-                    <br/>
-                <?php endif; ?>
-                <strong><?php echo $this->escapeHtml($_order->getShippingDescription()) ?></strong>
-                <?php echo $this->helper('sales')->__('Total Shipping Charges'); ?>:
-
-                <?php if ($this->helper('tax')->displayShippingPriceIncludingTax()): ?>
-                    <?php $_excl = $this->displayShippingPriceInclTax($_order); ?>
-                <?php else: ?>
-                    <?php $_excl = $this->displayPriceAttribute('shipping_amount', false, ' '); ?>
-                <?php endif; ?>
-                <?php $_incl = $this->displayShippingPriceInclTax($_order); ?>
+    <?php if ($_rate = $this->getActiveMethodRate()): ?>
+        <div id="order-shipping-method-info">
+            <strong><?php echo $this->escapeHtml($this->getCarrierName($_rate->getCarrier())) ?></strong><br/>
+            <?php echo $this->escapeHtml($_rate->getMethodTitle() ? $_rate->getMethodTitle() : $_rate->getMethodDescription()) ?> -
+            <strong>
+                <?php $_excl = $this->getShippingPrice($_rate->getPrice(), $this->helper('tax')->displayShippingPriceIncludingTax()); ?>
+                <?php $_incl = $this->getShippingPrice($_rate->getPrice(), true); ?>
 
                 <?php echo $_excl; ?>
                 <?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
                     (<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
                 <?php endif; ?>
-            </div>
-            <?php if ($this->canCreateShippingLabel()): ?>
-                <div style="text-align: center; margin: 10px 0;">
-                    <?php echo $this->getCreateLabelButton()?>
-                    <?php if ($this->getShipment()->getShippingLabel()): ?>
-                        <?php echo $this->getPrintLabelButton() ?>
-                    <?php endif ?>
-                    <?php if ($this->getShipment()->getPackages()): ?>
-                        <?php echo $this->getShowPackagesButton() ?>
-                    <?php endif ?>
-                </div>
-            <?php endif ?>
+            </strong>
+            <!--input type="text" class="input-text" style="width:70px"/-->
+            <br/>
+            <a href="#" onclick="$('order-shipping-method-info').hide();$('order-shipping-method-choose').show();return false">
+                <?php echo Mage::helper('sales')->__('Click to change shipping method') ?>
+            </a>
+        </div>
+    <?php else: ?>
+        <script type="text/javascript">$('order-shipping-method-choose').show();</script>
+    <?php endif; ?>
+<?php elseif($this->getIsRateRequest()): ?>
+    <strong><?php echo Mage::helper('sales')->__('Sorry, no quotes are available for this order at this time.') ?></strong>
+<?php else: ?>
+    <div id="order-shipping-method-summary">
+        <a href="#" onclick="order.loadShippingRates();return false">
+            <?php echo Mage::helper('sales')->__('Get shipping methods and rates') ?>
+        </a>
+        <input type="hidden" name="order[has_shipping]" value="" class="required-entry" />
+    </div>
+<?php endif; ?>
+<!--For reload accessories-->
+<div id="order-shipping-method-summary-hidden" style="display: none;">
+    <a href="#" onclick="order.loadShippingRates();return false">
+        <?php echo Mage::helper('sales')->__('Get shipping methods and rates') ?>
+    </a>
+</div>
+<div style="display:none;" id="shipping-method-overlay" class="overlay"><span><?php echo $this->__('Shipping method selection is not applicable') ?></span></div>
+<script type="text/javascript">
+    order.overlay('shipping-method-overlay', <?php if ($this->getQuote()->isVirtual()): ?>false<?php else: ?>true<?php endif; ?>);
+    order.overlay('address-shipping-overlay', <?php if ($this->getQuote()->isVirtual()): ?>false<?php else: ?>true<?php endif; ?>);
 
-            <?php
-            $shipment = $this->getShipment();
-            foreach($shipment->getAllTracks() as $tracknum)
+    /* For couple rates */
+
+    $$("input.shipping-ratios").invoke('observe', 'change', function() {
+        $$('.shipping-ratio-origins').invoke('hide');
+        $$('.shipping-ratio-origins input[type=checkbox]').invoke('setValue', false);
+
+        var ratioId = $$("input.shipping-ratios:checked").invoke('readAttribute' ,'data-rate');
+        showOrigins(ratioId);
+    });
+
+    /* For checked rate */
+
+    if ($$("input.shipping-ratios:checked").length > 0) {
+        var ratioId = $$("input.shipping-ratios:checked").invoke('readAttribute' ,'data-rate');
+        showOrigins(ratioId);
+    }
+
+    function showOrigins(id) {
+        $$('.shipping-ratio-' + id + '-origins').invoke('show');
+    }
+
+    var ajaxUrl = '<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB); ?>';
+
+    /* fol location type */
+    var locationSelect = '<tr>' +
+        '<td class="label"><label for="shiphawk-shipping-location-type">Location Type<span class="required">*</span></label></td>' +
+        '<td class="value">' +
+        '<select id="shiphawk-shipping-location-type" class="select required-entry validate-select" onchange="setShiphawkLocationType();">' +
+        '<option value="residential">Residential</option>' +
+        '<option value="commercial">Commercial</option>' +
+        '</select>' +
+        '</td>' +
+        '</tr>';
+
+    if ($('shiphawk-shipping-location-type') === null) {
+        $$('#order-shipping_address_fields .content .form-list tbody')[0].insert({before: locationSelect});
+    }
+
+    setShiphawkLocationType();
+
+    function setShiphawkLocationType() {
+        var element     = $('shiphawk-shipping-location-type');
+        var index       = element.selectedIndex;
+        var indexVal    = element.options[index].value;
+
+        var url         = ajaxUrl + 'index.php/adminshiphawk/adminhtml_shipment/setlocationtype';
+
+        var parameters = {
+            location_type: indexVal
+        };
+
+        new Ajax.Request(url, {
+            method: 'post',
+            parameters: parameters,
+            onSuccess: function(transport)  {
+
+            },
+            onLoading:function(transport)
             {
-                $tracknums[]=$tracknum->getNumber();
             }
+        });
 
-
-            ?>
-            <ul>
-                <?php foreach($tracknums as $ship_num) { ?>
-                    <li><a onclick="bolpdf(this)" class="bol_link" style="cursor: pointer" id="<?php echo $ship_num; ?>">Get BOL PDF for <?php echo $ship_num ?> shipment</a></li>
-                <?php } ?>
-            </ul>
-
-
-
-            <div><?php echo $this->getChildHtml('shipment_tracking') ?></div>
-        </fieldset>
-        <?php echo $this->getChildHtml('shipment_packaging') ?>
-        <script type="text/javascript">
-            //<![CDATA[
-            function bolpdf(element) {
-
-                var url = 'shiphawk/index/getbol';
-
-                url = baseMagentoUrl + url;
-
-                var parameters = {
-                    shipments_id: element.id
-                };
-
-                new Ajax.Request(url, {
-                    method: 'post',
-                    parameters: parameters,
-                    onSuccess: function(transport)  {
-
-                        responce_html  = JSON.parse(transport.responseText);
-
-                        if(responce_html.shiphawk_error) {
-
-                            var error_html = 'ERROR: ' + responce_html.shiphawk_error;
-                            alert(error_html);
-                        }else{
-                            if(responce_html.bol_url) {
-
-                                // alert(responce_html.bol_url);
-                                //window.location = responce_html.bol_url;
-
-                                window.open(
-                                    responce_html.bol_url,
-                                    '_blank' // <- This is what makes it open in a new window.
-                                );
-
-                            }
-                        }
-
-                    },
-                    onLoading:function(transport)
-                    {
-                    }
-                });
-            }
-            document.observe("dom:loaded", function() {
-                setTimeout(function(){
-                    packaging.setConfirmPackagingCallback(function(){
-                        packaging.sendCreateLabelRequest();
-                    });
-                    packaging.setLabelCreatedCallback(function(response){
-                        setLocation("<?php echo $this->getUrl(
-                        '*/sales_order_shipment/view',
-                        array('shipment_id' => $this->getShipment()->getId())
-                    ); ?>");
-                    });
-                }, 500);
-            });
-            //]]>
-        </script>
-    </div>
-</div>
-<div class="clear"></div>
-
-<div class="entry-edit">
-    <div class="entry-edit-head">
-        <h4 class="icon-head head-products"><?php echo $this->helper('sales')->__('Items Shipped') ?></h4>
-    </div>
-</div>
-
-<?php echo $this->getChildHtml('shipment_items') ?>
-<?php echo $this->getChildHtml('shipment_packed') ?>
-
-<div class="box-left entry-edit">
-    <div class="entry-edit-head"><h4><?php echo $this->__('Shipment History') ?></h4></div>
-    <fieldset><?php echo $this->getChildHtml('order_comments') ?></fieldset>
-</div>
-<div class="clear"></div>
+        return;
+    }
+</script>
