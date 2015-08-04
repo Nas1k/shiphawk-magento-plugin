@@ -31,7 +31,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             $is_admin = $helper->checkIsAdmin();
 
             $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin, $order);
-            $carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
+
+            //$carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
+
             if($is_multi_zip) {
                 $rate_filter = 'best';
             }
@@ -46,11 +48,25 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $from_zip = $products_ids['items'][0]['zip'];
                         $location_type = $products_ids['items'][0]['location_type'];
 
+                        $carrier_type = $products_ids['carrier_type'];
+                        Mage::log('$from_zip'.$from_zip, null, 'ITEMS-book.log');
+                        Mage::log('to zip'.$products_ids['to_zip'], null, 'ITEMS-book.log');
+                        Mage::log($products_ids['items'], null, 'ITEMS-book.log');
+                        Mage::log($rate_filter, null, 'ITEMS-book.log');
+                        Mage::log($carrier_type, null, 'ITEMS-book.log');
+                        Mage::log($location_type, null, 'ITEMS-book.log');
+                        Mage::log($shLocationType, null, 'ITEMS-book.log');
+                        Mage::log('------------------------------------------------------------------', null, 'ITEMS-book.log');
+
                         //$responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
                         $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
                         // get only one method for each group of product
-                        if($responceObject->error) {
-                            $is_rate = false;
+                        if(is_object($responceObject)) {
+                            if($responceObject->error) {
+                                $shiphawk_error = $responceObject->error;
+                                Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                $is_rate = false;
+                            }
                         }else{
                             $rate_id        = $responceObject[0]->id;
                             $accessories    = $responceObject[0]->shipping->carrier_accessorial;
@@ -61,6 +77,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         /* get zipcode and location type from first item in grouped by origin (zipcode) products */
                         $from_zip = $products_ids['items'][0]['zip'];
                         $location_type = $products_ids['items'][0]['location_type'];
+
+                        $carrier_type = $products_ids['carrier_type'];
 
                         $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
                         //$responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
@@ -84,6 +102,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         if ($track_data->error) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                            Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
                             continue;
                         }
 
@@ -183,6 +202,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                             if ($track_data->error) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                                Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
                                 continue;
                             }
 
@@ -207,6 +227,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         if ($track_data->error) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                            Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
                             continue;
                         }
 

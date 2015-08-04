@@ -23,15 +23,18 @@ class Shiphawk_Shipping_Helper_Data extends
         return Mage::getUrl('shiphawk/index/tracking', array('api_key' => $api_key));
     }
 
-    public function getRateFilter($is_admin = false, $order = array())
+    public function getRateFilter($is_admin = false, $order = null)
     {
-        if ($is_admin == true) {
-            if (empty($order)) {
-                return Mage::getStoreConfig('carriers/shiphawk_shipping/admin_rate_filter');
-            } else {
+        if($order) {
+            if($order->getShiphawkRateFilter()) {
                 return $order->getShiphawkRateFilter();
             }
         }
+
+        if ($is_admin == true) {
+            return Mage::getStoreConfig('carriers/shiphawk_shipping/admin_rate_filter');
+        }
+
         return Mage::getStoreConfig('carriers/shiphawk_shipping/rate_filter');
     }
 
@@ -281,5 +284,33 @@ class Shiphawk_Shipping_Helper_Data extends
         }
 
         return $result;
+    }
+
+    public function getProductCarrierType($product) {
+        $carrier_type =  $product->getAttributeText('shiphawk_carrier_type');
+
+        if(($carrier_type == 'All')||(!$carrier_type)) {
+            return '';
+        }
+
+        return $carrier_type;
+
+    }
+
+    public function getProductDiscountMarkupPrice($shipping_price, $shiphawk_discount_percentage, $shiphawk_discount_fixed) {
+
+        if(!empty($shiphawk_discount_percentage)) {
+            $shipping_price = $shipping_price + ($shipping_price * ($shiphawk_discount_percentage/100));
+        }
+
+        if(!empty($shiphawk_discount_fixed)) {
+            $shipping_price = $shipping_price + ($shiphawk_discount_fixed);
+        }
+
+        if($shipping_price <= 0) {
+            return 0;
+        }
+
+        return $shipping_price;
     }
 }

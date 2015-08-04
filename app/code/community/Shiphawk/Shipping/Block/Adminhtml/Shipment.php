@@ -33,6 +33,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin, $order);
         $carrier_type = Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
 
+        //todo carrier type
+
         $result['error'] = '';
         //default origin zip code
         $from_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
@@ -63,8 +65,9 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
 
                     if(is_object($responceObject)) {
                         $api_error = true;
-                        Mage::log('ShipHawk response: ' . $responceObject->error, null, 'ShipHawk.log');
-                        $result['error'] = 'ShipHawk response: ' . $responceObject->error;
+                        $shiphawk_error = (string) $responceObject->error;
+                        Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
+                        $result['error'] = 'ShipHawk response: ' . $shiphawk_error;
                         return $result;
                     }else{
                         // if $rate_filter = 'best' then it is only one rate
@@ -137,9 +140,9 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                         $ship_responces[] = $responceObject;
                         if(is_object($responceObject)) {
                             $api_error = true;
-
-                            Mage::log('ShipHawk response: ' . $responceObject->error, null, 'ShipHawk.log');
-                            $result['error'] = 'ShipHawk response: ' . $responceObject->error;
+                            $shiphawk_error = (string) $responceObject->error;
+                            Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
+                            $result['error'] = 'ShipHawk response: ' . $shiphawk_error;
                             return $result;
                         }else{
                             // if $rate_filter = 'best' then it is only one rate
