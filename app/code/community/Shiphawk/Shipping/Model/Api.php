@@ -56,6 +56,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $ship_addr = $order->getShippingAddress()->getData();
         $bill_addr = $order->getBillingAddress()->getData();
         $order_increment_id = $order->getIncrementId();
+        $helper = Mage::helper('shiphawk_shipping');
 
         $api_key = Mage::helper('shiphawk_shipping')->getApiKey();
         $api_url = Mage::helper('shiphawk_shipping')->getApiUrl();
@@ -80,7 +81,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $origin_address = (empty($origin_address_product)) ? $default_origin_address : $origin_address_product;
 
-        Mage::log($url_api, null, 'shiphawk-book.log');
+        //Mage::log($url_api, null, 'shiphawk-book.log');
+        $helper->shlog($url_api, 'shiphawk-book.log');
 
         /* For accessories */
         $orderAccessories = $order->getShiphawkShippingAccessories();
@@ -145,7 +147,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         );
 
-        Mage::log($items_array, null, 'shiphawk-book.log');
+        //Mage::log($items_array, null, 'shiphawk-book.log');
+        $helper->shlog($items_array, 'shiphawk-book.log');
 
         $items_array =  json_encode($items_array);
 
@@ -162,7 +165,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
 
-        Mage::log($arr_res, null, 'shiphawk-book.log');
+        //Mage::log($arr_res, null, 'shiphawk-book.log');
+        $helper->shlog($arr_res, 'shiphawk-book.log');
 
         curl_close($curl);
 
@@ -195,6 +199,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             $origin_product = Mage::getModel('catalog/product')->load($products_id);
 
             $shipping_origin_id = $origin_product->getData('shiphawk_shipping_origins');
+            $helper = Mage::helper('shiphawk_shipping');
 
 
             /* if product origin id == default (origin id == '') and product have all per product origin attribute
@@ -264,6 +269,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     {
         try {
             $order = Mage::getModel('sales/order')->load($orderId);
+            $helper = Mage::helper('shiphawk_shipping');
 
             $shiphawk_rate_data = unserialize($order->getData('shiphawk_book_id')); //rate id
 
@@ -275,14 +281,15 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 $this->_saveShiphawkShipment($shipment);
 
                 // add book
-
                 $track_data = $this->toBook($order, $rate_id, $products_ids, array(), true);
 
-                Mage::log($track_data, null, 'ResponceBook.log');
+                //Mage::log($track_data, null, 'ResponceBook.log');
+                $helper->shlog($track_data, 'shiphawk-book.log');
 
                 if ($track_data->error) {
                     Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                    Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                    //Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                    $helper->shlog('ShipHawk response: '.$track_data->error);
                     return;
                 }
 
@@ -366,7 +373,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     {
         try {
             $carrier = 'shiphawk_shipping';
-
+            $helper = Mage::helper('shiphawk_shipping');
             $title  = 'ShipHawk Shipping';
             if (empty($carrier)) {
                 Mage::throwException($this->__('The carrier needs to be specified.'));
@@ -384,12 +391,14 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     ->save();
 
             } else {
-                Mage::log('Cannot initialize shipment for adding tracking number.');
+                //Mage::log('Cannot initialize shipment for adding tracking number.');
+                $helper->shlog('Cannot initialize shipment for adding tracking number.', 'shiphawk-tracking.log');
             }
         } catch (Mage_Core_Exception $e) {
             Mage::log($e->getMessage());
         } catch (Exception $e) {
-            Mage::log('Cannot add tracking number.');
+            //Mage::log('Cannot add tracking number.');
+            $helper->shlog('Cannot add tracking number.', 'shiphawk-tracking.log');
         }
 
     }
@@ -532,6 +541,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             return array();
         }
 
+        $helper = Mage::helper('shiphawk_shipping');
+
         $orderAccessories = json_decode($orderAccessories, true);
         $itemsAccessories = array();
 
@@ -554,12 +565,17 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         }
 
         if (empty($itemsAccessories)) {
-            Mage::log('Empty accessories!', null, 'shiphawk-book.log');
-            Mage::log($accessories, null, 'shiphawk-book.log');
-            Mage::log($orderAccessories, null, 'shiphawk-book.log');
+            //Mage::log('Empty accessories!', null, 'shiphawk-book.log');
+            $helper->shlog('Empty accessories!', 'shiphawk-book.log');
+            //Mage::log($accessories, null, 'shiphawk-book.log');
+            $helper->shlog($accessories, 'shiphawk-book.log');
+            //Mage::log($orderAccessories, null, 'shiphawk-book.log');
+            $helper->shlog($orderAccessories, 'shiphawk-book.log');
         } else {
-            Mage::log('Accessories!', null, 'shiphawk-book.log');
-            Mage::log($itemsAccessories, null, 'shiphawk-book.log');
+            //Mage::log('Accessories!', null, 'shiphawk-book.log');
+            $helper->shlog('Accessories!', 'shiphawk-book.log');
+            //Mage::log($itemsAccessories, null, 'shiphawk-book.log');
+            $helper->shlog($itemsAccessories, 'shiphawk-book.log');
         }
 
         return $itemsAccessories;

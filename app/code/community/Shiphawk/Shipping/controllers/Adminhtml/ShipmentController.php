@@ -49,14 +49,6 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $location_type = $products_ids['items'][0]['location_type'];
 
                         $carrier_type = $products_ids['carrier_type'];
-                        Mage::log('$from_zip'.$from_zip, null, 'ITEMS-book.log');
-                        Mage::log('to zip'.$products_ids['to_zip'], null, 'ITEMS-book.log');
-                        Mage::log($products_ids['items'], null, 'ITEMS-book.log');
-                        Mage::log($rate_filter, null, 'ITEMS-book.log');
-                        Mage::log($carrier_type, null, 'ITEMS-book.log');
-                        Mage::log($location_type, null, 'ITEMS-book.log');
-                        Mage::log($shLocationType, null, 'ITEMS-book.log');
-                        Mage::log('------------------------------------------------------------------', null, 'ITEMS-book.log');
 
                         //$responceObject = $api->getShiphawkRate($products_ids['from_zip'], $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type);
                         $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
@@ -64,7 +56,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         if(is_object($responceObject)) {
                             if($responceObject->error) {
                                 $shiphawk_error = $responceObject->error;
-                                Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                $helper->shlog('ShipHawk response: '. $shiphawk_error);
                                 $is_rate = false;
                             }
                         }else{
@@ -102,7 +95,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         if ($track_data->error) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                            Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                            //Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                            $helper->shlog('ShipHawk response: '.$track_data->error);
                             continue;
                         }
 
@@ -193,6 +187,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                 $rate_filter = 'best';
             }*/
 
+            $helper = Mage::helper('shiphawk_shipping');
+
             foreach($shiphawk_rate_data as $rate_id=>$products_ids) {
 
                     // add book
@@ -202,7 +198,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                             if ($track_data->error) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                                Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                                //Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                                $helper->shlog('ShipHawk response: '.$track_data->error);
                                 continue;
                             }
 
@@ -227,7 +224,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         if ($track_data->error) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                            Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                            //Mage::log('ShipHawk response: '.$track_data->error, null, 'ShipHawk.log');
+                            $helper->shlog('ShipHawk response: '.$track_data->error);
                             continue;
                         }
 

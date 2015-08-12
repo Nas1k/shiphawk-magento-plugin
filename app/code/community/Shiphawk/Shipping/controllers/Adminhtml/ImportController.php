@@ -8,9 +8,6 @@ class Shiphawk_Shipping_Adminhtml_ImportController extends Mage_Adminhtml_Contro
 
         $urlpath = Mage::getBaseDir('var') . DS . 'shiphawk' . DS.'import' . DS . $fileimport;
 
-        Mage::log($fileimport);
-        Mage::log($urlpath);
-
         $row = 1;
         if (($handle = fopen($urlpath, "r")) !== FALSE) {
 

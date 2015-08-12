@@ -121,12 +121,18 @@ class Shiphawk_Shipping_Model_Carrier
                                     // 1. multi carrier, multi origin, not origin per product
                                     $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
 
+                                    $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
+                                    $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
+                                    $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
+
+
                                     $ship_responces[] = $responceObject;
 
                                     if(is_object($responceObject)) {
                                         $api_error = true;
                                         $shiphawk_error = (string) $responceObject->error;
-                                        Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                        //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                        $helper->shlog('ShipHawk response: '. $shiphawk_error);
                                     }else{
                                         // if $rate_filter = 'best' then it is only one rate
                                         if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -154,7 +160,8 @@ class Shiphawk_Shipping_Model_Carrier
                             }else{
                                 $api_error = true;
                                 foreach($checkattributes as $rate_error) {
-                                    Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                    //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                    $helper->shlog('ShipHawk error: '.$rate_error);
                                 }
                             }
                         }else{ // product items has all required shipping origin fields
@@ -188,13 +195,17 @@ class Shiphawk_Shipping_Model_Carrier
 
                                         // 2. multi carrier, multi origin, origin per product
                                         $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
+                                        $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
+                                        $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
+                                        $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
 
                                         $ship_responces[] = $responceObject;
 
                                         if(is_object($responceObject)) {
                                             $api_error = true;
                                             $shiphawk_error = (string) $responceObject->error;
-                                            Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                            //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                            $helper->shlog('ShipHawk response: '. $shiphawk_error);
                                         }else{
                                             // if $rate_filter = 'best' then it is only one rate
                                             if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -220,7 +231,8 @@ class Shiphawk_Shipping_Model_Carrier
                                 }else{
                                     $api_error = true;
                                     foreach($checkattributes as $rate_error) {
-                                        Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                        //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                        $helper->shlog('ShipHawk error: '.$rate_error);
                                     }
                                 }
 
@@ -268,6 +280,9 @@ class Shiphawk_Shipping_Model_Carrier
 
                                 // 3. one carrier, multi origin, not origin per product
                                 $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
+                                $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
+                                $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
+                                $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
 
                                 $ship_responces[] = $responceObject;
 
@@ -275,7 +290,8 @@ class Shiphawk_Shipping_Model_Carrier
                                 if(is_object($responceObject)) {
                                     $api_error = true;
                                     $shiphawk_error = (string) $responceObject->error;
-                                    Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                    //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                    $helper->shlog('ShipHawk response: '. $shiphawk_error);
                                 }else{
                                     // if $rate_filter = 'best' then it is only one rate
                                     if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -312,7 +328,8 @@ class Shiphawk_Shipping_Model_Carrier
                         }else{
                             $api_error = true;
                             foreach($checkattributes as $rate_error) {
-                                Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                $helper->shlog('ShipHawk error: '.$rate_error);
                             }
                         }
                     }else{
@@ -344,24 +361,19 @@ class Shiphawk_Shipping_Model_Carrier
                                     $from_zip = $discount_items[0]['zip'];
                                     $location_type = $discount_items[0]['location_type'];
 
-                                    Mage::log($from_zip, null, 'ITEMS-rate.log');
-                                    Mage::log($to_zip, null, 'ITEMS-rate.log');
-                                    Mage::log($items_per_product, null, 'ITEMS-rate.log');
-                                    Mage::log($rate_filter, null, 'ITEMS-rate.log');
-                                    Mage::log($carrier_type, null, 'ITEMS-rate.log');
-                                    Mage::log($location_type, null, 'ITEMS-rate.log');
-                                    Mage::log($shLocationType, null, 'ITEMS-rate.log');
-                                    Mage::log('------------------------------------------------------------------', null, 'ITEMS-rate.log');
-
                                     // 4. one carrier, multi origin, origin per product
                                     $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
+                                    $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
+                                    $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
+                                    $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
 
                                     $ship_responces[] = $responceObject;
 
                                     if(is_object($responceObject)) {
                                         $api_error = true;
                                         $shiphawk_error = (string) $responceObject->error;
-                                        Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                        //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
+                                        $helper->shlog('ShipHawk response: '. $shiphawk_error);
                                     }else{
                                         // if $rate_filter = 'best' then it is only one rate
                                         if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -398,7 +410,8 @@ class Shiphawk_Shipping_Model_Carrier
                             }else{
                                 $api_error = true;
                                 foreach($checkattributes as $rate_error) {
-                                    Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                    //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
+                                    $helper->shlog('ShipHawk error: '.$rate_error);
                                 }
                             }
 
@@ -470,10 +483,10 @@ class Shiphawk_Shipping_Model_Carrier
                 }
 
                 //for save shiphawk amount in order with rate_filter = best
-                if ($rate_filter == 'best') {
-                    Mage::getSingleton('core/session')->setSummPrice($shipping_price);
+                /*if ($rate_filter == 'best') {
+                    Mage::getSingleton('core/session')->setSummPrice($summ_price);
                     Mage::getSingleton('core/session')->setPackageInfo($this->getPackeges($responceObject[0]));
-                }
+                }*/
             }
 
         }catch (Mage_Core_Exception $e) {

@@ -10,6 +10,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         //curl -X POST -H Content-Type:application/json -d '{"event":"shipment.status_update","status":"in_transit","updated_at":"2015-01-14T10:43:16.702-08:00","shipment_id":1010226}' http://shiphawk.devigor.wdgtest.com/index.php/shiphawk/index/tracking?api_key=3331b35952ec7d99338a1cc5c496b55c
         //curl -X POST -H Content-Type:application/json -d '{"event":"shipment.status_update","status":"in_transit","updated_at":"2015-01-14T10:43:16.702-08:00","shipment_id":1015967}' http://shiphawk.devigor.wdgtest.com/index.php/shiphawk/index/tracking?api_key=e1919f54fb93f63866f06049d6d45751
 
+        $helper = Mage::helper('shiphawk_shipping');
         if($api_key_from_url == $api_key) {
             try {
             $track_number = $data_from_shiphawk->details->id;
@@ -18,7 +19,8 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
             $data_from_shiphawk = (array) $data_from_shiphawk;
 
-            Mage::log($data_from_shiphawk, null, 'TrackingData.log');
+            //Mage::log($data_from_shiphawk, null, 'TrackingData.log');
+            $helper->shlog($data_from_shiphawk, 'shiphawk-tracking.log');
 
             $shipment_status_updates = Mage::getStoreConfig('carriers/shiphawk_shipping/shipment_status_updates');
             $updates_tracking_url =    Mage::getStoreConfig('carriers/shiphawk_shipping/updates_tracking_url');
@@ -115,11 +117,12 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $responce_array = array();
         $responce = array();
 
+        $helper = Mage::helper('shiphawk_shipping');
 
-        //todo Notice: Trying to get property of non-object
         if(is_object($arr_res)) {
          if(($arr_res->error)) {
-            Mage::log($arr_res->error, null, 'ShipHawk.log');
+            //Mage::log($arr_res->error, null, 'ShipHawk.log');
+            $helper->shlog($arr_res->error);
             $responce_html = '';
             $responce['shiphawk_error'] = $arr_res->error;
          }
@@ -177,7 +180,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $responce_BOL = Mage::helper('shiphawk_shipping')->getBOLurl($shipments_id);
 
         if ($responce_BOL->url) {
-            //$io = new Varien_Io_File();
+
             $path_to_save_bol_pdf = Mage::getBaseDir('media'). DS .'shiphawk'. DS .'bol';
             $BOLpdf = $path_to_save_bol_pdf . DS .  $shipments_id . '.pdf';
 
@@ -187,7 +190,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
             }else{
 
                 file_put_contents($BOLpdf, file_get_contents($responce_BOL->url));
-                //$responce = file_get_contents($BOLpdf);
+
                 $responce['bol_url'] = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB) . 'media' . DS . 'shiphawk'. DS .'bol' . DS . $shipments_id . '.pdf';
 
                 $this->getResponse()->setBody( json_encode($responce) );

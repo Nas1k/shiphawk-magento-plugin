@@ -240,4 +240,18 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $order->save();
     }
+
+    /**
+     * @param $observer
+     */
+    public function  checkShipHawkFields($observer) {
+
+        $event          = $observer->getEvent();
+        $section        = $event->getSection();
+        if($section) {
+            Mage::getSingleton('adminhtml/session')->addWarning('Warning message');
+        }
+
+    }
+
 }

@@ -66,7 +66,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                     if(is_object($responceObject)) {
                         $api_error = true;
                         $shiphawk_error = (string) $responceObject->error;
-                        Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
+                        //Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
+                        $helper->shlog('ShipHawk response: ' . $shiphawk_error);
                         $result['error'] = 'ShipHawk response: ' . $shiphawk_error;
                         return $result;
                     }else{
@@ -141,7 +142,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                         if(is_object($responceObject)) {
                             $api_error = true;
                             $shiphawk_error = (string) $responceObject->error;
-                            Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
+                            //Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
+                            $helper->shlog('ShipHawk response: ' . $shiphawk_error);
                             $result['error'] = 'ShipHawk response: ' . $shiphawk_error;
                             return $result;
                         }else{

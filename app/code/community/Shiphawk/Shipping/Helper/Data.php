@@ -313,4 +313,13 @@ class Shiphawk_Shipping_Helper_Data extends
 
         return $shipping_price;
     }
+
+    public function shlog($var, $file = 'shiphawk-error.log') {
+        $enable_log = Mage::getStoreConfig('carriers/shiphawk_shipping/enable_log');
+
+        if($enable_log == 1) {
+            Mage::log($var, null, $file);
+        }
+    }
+
 }
