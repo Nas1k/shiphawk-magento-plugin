@@ -205,7 +205,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                     }else{
                         $track_data = $api->toBook($order,$rate_id,$products_ids);
 
-                        if ($track_data->error) {
+                        if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                             $helper->shlog('ShipHawk response: '.$track_data->error);
                             continue;

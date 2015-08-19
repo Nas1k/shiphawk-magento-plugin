@@ -81,8 +81,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $origin_address = (empty($origin_address_product)) ? $default_origin_address : $origin_address_product;
 
-        $helper->shlog($url_api, 'shiphawk-book.log');
-
         /* For accessories */
         $orderAccessories = $order->getShiphawkShippingAccessories();
 

@@ -30,12 +30,4 @@ $data = array (
 
 $installer->addAttribute('catalog_product', 'shiphawk_carrier_type', $data);
 
-/* for sortOrder */
-//$installer->updateAttribute('catalog_product', 'shiphawk_height', 'frontend_label', 'Height', 5);
-$installer->updateAttribute('catalog_product', 'shiphawk_carrier_type', 'frontend_label', 'Carrier Type', 6);
-$installer->updateAttribute('catalog_product', 'shiphawk_freight_class', 'frontend_label', 'Freight Class', 7);
-$installer->updateAttribute('catalog_product', 'shiphawk_discount_percentage', 'frontend_label', 'Markup or Discount Percentage', 8);
-$installer->updateAttribute('catalog_product', 'shiphawk_discount_fixed', 'frontend_label', 'Markup or Discount Flat Amount', 8);
-$installer->updateAttribute('catalog_product', 'shiphawk_type_of_product_value', 'frontend_label', 'Origin Contact:', 9);
-
 $installer->endSetup();
