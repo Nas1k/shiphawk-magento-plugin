@@ -19,7 +19,6 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
             $data_from_shiphawk = (array) $data_from_shiphawk;
 
-            //Mage::log($data_from_shiphawk, null, 'TrackingData.log');
             $helper->shlog($data_from_shiphawk, 'shiphawk-tracking.log');
 
             $shipment_status_updates = Mage::getStoreConfig('carriers/shiphawk_shipping/shipment_status_updates');
@@ -121,7 +120,6 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
         if(is_object($arr_res)) {
          if(($arr_res->error)) {
-            //Mage::log($arr_res->error, null, 'ShipHawk.log');
             $helper->shlog($arr_res->error);
             $responce_html = '';
             $responce['shiphawk_error'] = $arr_res->error;

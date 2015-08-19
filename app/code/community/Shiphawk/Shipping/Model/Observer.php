@@ -249,7 +249,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $event          = $observer->getEvent();
         $section        = $event->getSection();
         if($section) {
-            Mage::getSingleton('adminhtml/session')->addWarning('Warning message');
+           // Mage::getSingleton('adminhtml/session')->addWarning('Warning message');
         }
 
     }

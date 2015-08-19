@@ -67,8 +67,6 @@ class Shiphawk_Shipping_Model_Carrier
 
         $grouped_items_by_carrier_type = $this->getGroupedItemsByCarrierType($items);
 
-        $grouped_items_by_discount_or_markup2 = $this->getGroupedItemsByDiscountOrMarkup($items); //delete
-
         $ship_responces = array();
         $toOrder= array();
         $api_error = false;
@@ -94,6 +92,9 @@ class Shiphawk_Shipping_Model_Carrier
             /* items has various carrier type */
             if($is_multi_carrier) {
                 foreach($grouped_items_by_carrier_type as $carrier_type=>$items_) {
+
+
+                    $carrier_type = (string) $carrier_type;
 
                     $grouped_items_by_origin = $this->getGroupedItemsByZip($items_);
 
@@ -123,8 +124,9 @@ class Shiphawk_Shipping_Model_Carrier
 
                                     $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
                                     $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
-                                    $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
-
+                                    $helper->shlog($carrier_type, 'shiphawk-get-rate.log');
+                                    $helper->shlog('-------items--------------------', 'shiphawk-get-rate.log');
+                                    $helper->shlog($discount_items, 'shiphawk-get-rate.log');
 
                                     $ship_responces[] = $responceObject;
 
@@ -156,11 +158,9 @@ class Shiphawk_Shipping_Model_Carrier
                                     }
                                 }
 
-
                             }else{
                                 $api_error = true;
                                 foreach($checkattributes as $rate_error) {
-                                    //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
                                     $helper->shlog('ShipHawk error: '.$rate_error);
                                 }
                             }
@@ -197,7 +197,9 @@ class Shiphawk_Shipping_Model_Carrier
                                         $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
                                         $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
                                         $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
-                                        $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
+                                        $helper->shlog($carrier_type, 'shiphawk-get-rate.log');
+                                        $helper->shlog('-------items--------------------', 'shiphawk-get-rate.log');
+                                        $helper->shlog($discount_items, 'shiphawk-get-rate.log');
 
                                         $ship_responces[] = $responceObject;
 
@@ -231,7 +233,6 @@ class Shiphawk_Shipping_Model_Carrier
                                 }else{
                                     $api_error = true;
                                     foreach($checkattributes as $rate_error) {
-                                        //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
                                         $helper->shlog('ShipHawk error: '.$rate_error);
                                     }
                                 }
@@ -250,6 +251,7 @@ class Shiphawk_Shipping_Model_Carrier
                     /* get carrier type from first item because items grouped by carrier type and not multi carrier */
                     /* if carrier type is null, get default carrier type from settings */
                     $carrier_type = ($items_[0]['shiphawk_carrier_type']) ? ($items_[0]['shiphawk_carrier_type']) : Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
+                    $carrier_type = (string) $carrier_type;
 
                     if ($origin_id != 'origin_per_product') {
 
@@ -268,6 +270,14 @@ class Shiphawk_Shipping_Model_Carrier
 
                             $grouped_items_by_discount_or_markup = $this->getGroupedItemsByDiscountOrMarkup($items_);
 
+                            if(count($grouped_items_by_discount_or_markup)>1) {
+                                $is_multi_zip = true;
+                            }
+
+                            if($is_multi_zip) {
+                                $rate_filter = 'best';
+                            }
+
                             foreach($grouped_items_by_discount_or_markup as $mark_up_discount=>$discount_items) {
 
                                 //get percentage and flat markup-discount from first item, because all item in group has identical markup-discount
@@ -282,12 +292,13 @@ class Shiphawk_Shipping_Model_Carrier
                                 $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
                                 $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
                                 $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
-                                $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
+                                $helper->shlog($carrier_type, 'shiphawk-get-rate.log');
+                                $helper->shlog('-------items--------------------', 'shiphawk-get-rate.log');
+                                $helper->shlog($discount_items, 'shiphawk-get-rate.log');
 
                                 $ship_responces[] = $responceObject;
 
-                                //todo null?
-                                if(is_object($responceObject)) {
+                                if(is_object($responceObject) or (empty($responceObject))) {
                                     $api_error = true;
                                     $shiphawk_error = (string) $responceObject->error;
                                     //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
@@ -328,7 +339,6 @@ class Shiphawk_Shipping_Model_Carrier
                         }else{
                             $api_error = true;
                             foreach($checkattributes as $rate_error) {
-                                //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
                                 $helper->shlog('ShipHawk error: '.$rate_error);
                             }
                         }
@@ -352,6 +362,14 @@ class Shiphawk_Shipping_Model_Carrier
 
                                 $grouped_items_by_discount_or_markup = $this->getGroupedItemsByDiscountOrMarkup($items_per_product);
 
+                                if(count($grouped_items_by_discount_or_markup)>1) {
+                                    $is_multi_zip = true;
+                                }
+
+                                if($is_multi_zip) {
+                                    $rate_filter = 'best';
+                                }
+
                                 foreach($grouped_items_by_discount_or_markup as $mark_up_discount=>$discount_items) {
 
                                     //get percentage and flat markup-discount from first item, because all item in group has identical markup-discount
@@ -365,14 +383,15 @@ class Shiphawk_Shipping_Model_Carrier
                                     $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
                                     $helper->shlog('from zip: ' . $from_zip, 'shiphawk-get-rate.log');
                                     $helper->shlog('to zip: ' . $to_zip, 'shiphawk-get-rate.log');
-                                    $helper->shlog('carrier type: ' . $carrier_type, 'shiphawk-get-rate.log');
+                                    $helper->shlog($carrier_type, 'shiphawk-get-rate.log');
+                                    $helper->shlog('-------items--------------------', 'shiphawk-get-rate.log');
+                                    $helper->shlog($discount_items, 'shiphawk-get-rate.log');
 
                                     $ship_responces[] = $responceObject;
 
                                     if(is_object($responceObject)) {
                                         $api_error = true;
                                         $shiphawk_error = (string) $responceObject->error;
-                                        //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
                                         $helper->shlog('ShipHawk response: '. $shiphawk_error);
                                     }else{
                                         // if $rate_filter = 'best' then it is only one rate
@@ -410,7 +429,6 @@ class Shiphawk_Shipping_Model_Carrier
                             }else{
                                 $api_error = true;
                                 foreach($checkattributes as $rate_error) {
-                                    //Mage::log('ShipHawk error: '.$rate_error, null, 'ShipHawk.log');
                                     $helper->shlog('ShipHawk error: '.$rate_error);
                                 }
                             }
@@ -481,12 +499,6 @@ class Shiphawk_Shipping_Model_Carrier
                     Mage::getSingleton('core/session')->setPackageInfo($package_info);
                     $result->append($this->_getShiphawkRateObject($name_service, $shipping_price, $summ_price, null));
                 }
-
-                //for save shiphawk amount in order with rate_filter = best
-                /*if ($rate_filter == 'best') {
-                    Mage::getSingleton('core/session')->setSummPrice($summ_price);
-                    Mage::getSingleton('core/session')->setPackageInfo($this->getPackeges($responceObject[0]));
-                }*/
             }
 
         }catch (Mage_Core_Exception $e) {
@@ -537,7 +549,8 @@ class Shiphawk_Shipping_Model_Carrier
         $rate->setPrice($price);
         $rate->setCost($price);
         if(!empty($accessorial)) {
-           $rate->setMethodDescription($accessorial);//maybe this fire error in system.log ERR (3): Recoverable Error: Object of class stdClass could not be converted to string
+           $rate->setMethodDescription(serialize($accessorial));
+
         }
 
         return $rate;
@@ -598,7 +611,7 @@ class Shiphawk_Shipping_Model_Carrier
                         'width' => $product->getShiphawkWidth(),
                         'length' => $product->getShiphawkLength(),
                         'height' => $product->getShiphawkHeight(),
-                        'weight' => (string) self::DEFAULT_WEIGHT, //todo move to config?
+                        'weight' => (string) self::DEFAULT_WEIGHT,
                         'value' => $this->getShipHawkItemValue($product),
                         //'quantity' => $product_qty*$item->getQty(),
                         'quantity' => $product_qty*$qty_ordered,
@@ -624,15 +637,18 @@ class Shiphawk_Shipping_Model_Carrier
     }
 
     public function getShiphawkShippingOrigin($product) {
-        $product_origin_id = $product->getShiphawkShippingOrigins();
+
         /** @var $helper Shiphawk_Shipping_Helper_Data */
         $helper = Mage::helper('shiphawk_shipping');
-        if ($product_origin_id) {
-            return $product_origin_id;
+
+        if($helper->checkShipHawkOriginAttributes($product)) {
+            return 'origin_per_product';
         }
 
-        if ((empty($product_origin_id)) && ($helper->checkShipHawkOriginAttributes($product))) {
-            return 'origin_per_product';
+        $product_origin_id = $product->getShiphawkShippingOrigins();
+
+        if ($product_origin_id) {
+            return $product_origin_id;
         }
 
         return null;

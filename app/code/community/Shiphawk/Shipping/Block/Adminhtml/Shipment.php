@@ -13,6 +13,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
 
         $items = $carrier->getShiphawkItems($order);
 
+        /* sort items by origin id */
         $grouped_items_by_zip = $carrier->getGroupedItemsByZip($items);
 
         $error_message = 'Sorry, not all products have necessary ShipHawk fields filled in. Please add necessary data for next products (or check required attributes):';
@@ -38,7 +39,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         $result['error'] = '';
         //default origin zip code
         $from_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
-        //foreach($grouped_items_by_zip as $from_zip=>$items_) {
+
         foreach($grouped_items_by_zip as $origin_id=>$items_) {
 
             if ($origin_id != 'origin_per_product') {
@@ -60,13 +61,11 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                     $from_zip = $items_[0]['zip'];
                     $location_type = $items_[0]['location_type'];
                     $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type, $location_type, $shLocationType);
-                    //$responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type);
                     $ship_responces[] = $responceObject;
 
                     if(is_object($responceObject)) {
                         $api_error = true;
                         $shiphawk_error = (string) $responceObject->error;
-                        //Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
                         $helper->shlog('ShipHawk response: ' . $shiphawk_error);
                         $result['error'] = 'ShipHawk response: ' . $shiphawk_error;
                         return $result;
@@ -137,12 +136,11 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                         $from_zip = $items_per_product[0]['zip'];
                         $location_type = $items_per_product[0]['location_type'];
                         $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_, $rate_filter, $carrier_type, $location_type, $shLocationType);
-                        //$responceObject = $api->getShiphawkRate($from_zip, $to_zip, $items_per_product, $rate_filter, $carrier_type);
+
                         $ship_responces[] = $responceObject;
                         if(is_object($responceObject)) {
                             $api_error = true;
                             $shiphawk_error = (string) $responceObject->error;
-                            //Mage::log('ShipHawk response: ' . $shiphawk_error, null, 'ShipHawk.log');
                             $helper->shlog('ShipHawk response: ' . $shiphawk_error);
                             $result['error'] = 'ShipHawk response: ' . $shiphawk_error;
                             return $result;
@@ -201,7 +199,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         $name_service = '';
         $summ_price = 0;
         if(!$api_error) {
-            $services = $carrier->getServices($ship_responces);
+            $services = $carrier->getServices($ship_responces, $toOrder);
 
             foreach ($services as $id_service=>$service) {
                 if (!$is_multi_zip) {

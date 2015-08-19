@@ -65,7 +65,7 @@ $tt = $address->getTotals();*/
                         <?php else: ?>
                         <input name="shipping_method" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>"<?php if($_rate->getCode()===$this->getAddressShippingMethod()) echo ' checked="checked"' ?> class="radio shipping-ratios" data-rate="<?php echo $_rate->getRateId();?>"/>
 
-                        <?php if ($_rate->getCode() === $this->getAddressShippingMethod()): z?>
+                        <?php if ($_rate->getCode() === $this->getAddressShippingMethod()): ?>
                         <script type="text/javascript">
                             //<![CDATA[
                                 lastPrice = <?php echo (float)$_rate->getPrice(); ?>;
@@ -85,25 +85,28 @@ $tt = $address->getTotals();*/
                    <?php endif ?>
                 </li>
                 <?php if (!$hideAccessoriesOnFrontend):?>
-                    <?php if($_rate->method_description && !empty($_rate->method_description->origin)): ?>
-                        <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Origin:</span>
-                        <?php foreach($_rate->method_description->origin as $origin_acc) {?>
-                            <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
-                                <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['origin']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id ?>']" class="checkbox" />
-                                <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
-                            </li>
-                        <?php  }
-                    endif; ?>
-                    <?php
-                    if($_rate->method_description && !empty($_rate->method_description->destination)): ?>
-                        <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Destination:</span>
-                        <?php foreach($_rate->method_description->destination as $origin_acc) {?>
-                            <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
-                                <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
-                                <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
-                            </li>
-                        <?php  }
-                    endif; ?>
+                    <?php if($_rate->method_description){ ?>
+                        <?php $methodDescription = unserialize($_rate->method_description); ?>
+                        <?php if($_rate->method_description && !empty($methodDescription->origin)): ?>
+                            <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Origin:</span>
+                            <?php foreach($methodDescription->origin as $origin_acc) {?>
+                                <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
+                                    <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['origin']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id ?>']" class="checkbox" />
+                                    <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                </li>
+                            <?php  }
+                        endif; ?>
+                        <?php
+                        if($_rate->method_description && !empty($methodDescription->destination)): ?>
+                            <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Destination:</span>
+                            <?php foreach($methodDescription->destination as $origin_acc) {?>
+                                <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
+                                    <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
+                                    <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                </li>
+                            <?php  }
+                        endif; ?>
+                    <?php } ?>
                 <?php endif;?>
             <?php endforeach; ?>
             </ul>

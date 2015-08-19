@@ -44,6 +44,68 @@ document.observe("dom:loaded", function() {
 
     updateInput();
 
+    var origin_fields = new Array($('shiphawk_origin_firstname'), $('shiphawk_origin_lastname'), $('shiphawk_origin_addressline1'),
+        $('shiphawk_origin_city'), $('shiphawk_origin_state'), $('shiphawk_origin_zipcode'), $('shiphawk_origin_phonenum'),
+        $('shiphawk_origin_email'), $('shiphawk_origin_location'));
+
+    function setOriginRequiredFields() {
+            origin_fields.forEach(function(item, i, arr) {
+            //item.addClassName('required-entry');
+                item.observe('keyup', function(event){
+                    if($('shiphawk_shipping_origins').value == '') {
+
+                        _addRequiredClass( origin_fields );
+                    }
+                });
+
+            });
+
+    }
+
+    function _addRequiredClass( origin_fields ) {
+
+        origin_fields.forEach(function(item, i, arr) {
+            if(!item.hasClassName('required-entry')){
+                item.addClassName('required-entry');
+            }
+        });
+    }
+
+    function _removeRequiredClass( origin_fields ) {
+
+        origin_fields.forEach(function(item, i, arr) {
+            if(item.hasClassName('required-entry')){
+                item.removeClassName('required-entry');
+            }
+        });
+    }
+
+    function _checkIfAllRequeredEmpty( origin_fields ) {
+        var k = 0;
+        origin_fields.forEach(function(item, i, arr) {
+            if(item.value){
+                k = k + 1;
+            }
+        });
+
+        if ((k != 9)&&(k>0)) {
+            _addRequiredClass( origin_fields );
+        }else{
+            _removeRequiredClass( origin_fields );
+        }
+    }
+
+    origin_fields.forEach(function(item) {
+        item.onchange = function(){
+            _checkIfAllRequeredEmpty( origin_fields );
+        };
+    });
+
+    //setOriginRequiredFields();
+    _checkIfAllRequeredEmpty( origin_fields );
+
+
+
     var el = document.createElement("div");
 
     el.id = "type_product";
@@ -56,7 +118,6 @@ document.observe("dom:loaded", function() {
         clearTimeout(typeloader);
         typeloader = setTimeout(function(){ respondToClick(event); }, 750);
     });
-
 
     function respondToClick(event) {
 
@@ -95,6 +156,7 @@ document.observe("dom:loaded", function() {
             });
         }
     }
+
 });
     function setItemid(el) {
         $('shiphawk_type_of_product').value = el.innerHTML;

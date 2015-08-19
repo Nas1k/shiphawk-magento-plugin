@@ -287,13 +287,29 @@ class Shiphawk_Shipping_Helper_Data extends
     }
 
     public function getProductCarrierType($product) {
-        $carrier_type =  $product->getAttributeText('shiphawk_carrier_type');
+        $carrier_types =  explode(',', $product->getShiphawkCarrierType());
+        //$carrier_type =  $product->getAttributeText('shiphawk_carrier_type');
+        $attr = Mage::getModel('catalog/product')->getResource()->getAttribute('shiphawk_carrier_type');
+        $carrier_types_labels = array();
 
-        if(($carrier_type == 'All')||(!$carrier_type)) {
-            return '';
+        foreach($carrier_types as $carrier_type) {
+            if ($attr->usesSource()) {
+                $carrier_types_label = $attr->getSource()->getOptionText($carrier_type);
+
+                if(($carrier_types_label == 'All')||(!$carrier_types_label)) {
+                    return '';
+                }
+
+                $carrier_types_labels[] = $carrier_types_label;
+            }
         }
 
-        return $carrier_type;
+
+        /*if(($carrier_type == 'All')||(!$carrier_type)) {
+            return '';
+        }*/
+
+        return implode(",", $carrier_types_labels);
 
     }
 
