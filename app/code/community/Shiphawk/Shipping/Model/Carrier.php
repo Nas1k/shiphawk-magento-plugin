@@ -505,6 +505,9 @@ class Shiphawk_Shipping_Model_Carrier
                     Mage::getSingleton('core/session')->setPackageInfo($package_info);
                     $result->append($this->_getShiphawkRateObject($name_service, $shipping_price, $summ_price, null));
                 }
+            }else{
+                $error_text_from_config = Mage::getStoreConfig('carriers/shiphawk_shipping/shiphawk_error_message');
+                Mage::getSingleton('core/session')->setShiphawkErrorRate($error_text_from_config);
             }
 
         }catch (Mage_Core_Exception $e) {

@@ -249,8 +249,23 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $event          = $observer->getEvent();
         $section        = $event->getSection();
         if($section) {
-           // Mage::getSingleton('adminhtml/session')->addWarning('Warning message');
+           // Mage::getSingleton('adminhtml/session')->addWarning('Warning message'); todo check shipHawk shipping field
         }
+
+    }
+
+    /**
+     * @param $observer
+     */
+    public function  showShiphawkRateError($observer) {
+
+        $err_text = Mage::getSingleton('core/session')->getShiphawkErrorRate();
+        if($err_text) {
+            Mage::getSingleton('core/session')->getMessages(true); // The true is for clearing them after loading them
+            Mage::getSingleton('core/session')->addError($err_text);
+        }
+
+        Mage::getSingleton('core/session')->unsShiphawkErrorRate();
 
     }
 

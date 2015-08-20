@@ -55,6 +55,15 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </enable_log>
+                        <shiphawk_error_message translate="label">
+                            <label>Error message</label>
+                            <comment>Error message for when a ShipHawk rate does not return</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>14</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </shiphawk_error_message>
                         <api_key translate="label">
                             <label>Api Key</label>
                             <frontend_type>text</frontend_type>
@@ -63,15 +72,6 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </api_key>
-                        <!--<gateway_url translate="label">
-                            <label>Gateway URL</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>21</sort_order>
-                            <comment>Use https://shiphawk.com/api/v1/ for production. Use https://sandbox.shiphawk.com/api/v1/ for test mode.</comment>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>0</show_in_website>
-                            <show_in_store>0</show_in_store>
-                        </gateway_url>-->
                         <gateway_url translate="label">
                             <label>Gateway Mode</label>
                             <frontend_type>select</frontend_type>
@@ -126,15 +126,6 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </carrier_type>
-                        <!--<required_attribute translate="label">
-                            <label>Required Attributes?</label>
-                            <frontend_type>select</frontend_type>
-                            <source_model>adminhtml/system_config_source_yesno</source_model>
-                            <sort_order>30</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>0</show_in_website>
-                            <show_in_store>0</show_in_store>
-                        </required_attribute>-->
                         <item_is_packed translate="label">
                             <label>Default packing setting</label>
                             <frontend_type>select</frontend_type>

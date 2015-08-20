@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.1.5</version>
+            <version>1.1.5.1</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -97,6 +97,24 @@
                     </check_shp_fields>
                 </observers>
             </admin_system_config_section_save_after>
+            <sales_quote_collect_totals_after>
+                <observers>
+                    <show_shiphawk_rate_error>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>showShiphawkRateError</method>
+                    </show_shiphawk_rate_error>
+                </observers>
+            </sales_quote_collect_totals_after>
+            <checkout_controller_onepage_save_shipping_method>
+                <observers>
+                    <show_shiphawk_rate_error_controller>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>showShiphawkRateError</method>
+                    </show_shiphawk_rate_error_controller>
+                </observers>
+            </checkout_controller_onepage_save_shipping_method>
         </events>
         <fieldsets>
             <sales_convert_quote>
