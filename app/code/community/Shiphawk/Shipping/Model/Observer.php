@@ -27,7 +27,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             if (!empty($shLocationType)) $order->setShiphawkLocationType($shLocationType);
 
-            /* set ShipHawk rate */
+            // set ShipHawk rate todo ship to multiply shiiping address, only one shipping order save to session
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();

@@ -110,21 +110,21 @@ class Shiphawk_Shipping_Helper_Data extends
     public function checkShipHawkAttributes($from_zip, $to_zip, $items_, $rate_filter) {
         $error = array();
         if (empty($from_zip)) {
-            $error['from_zip'] = 1;
+            $error['from_zip'] = 'empty from zip';
         }
 
         if (empty($to_zip)) {
-            $error['to_zip'] = 1;
+            $error['to_zip'] = 'empty to zip';
         }
 
         if (empty($rate_filter)) {
-            $error['rate_filter'] = 1;
+            $error['rate_filter'] = 'rate_filter error';
         }
 
         foreach ($items_ as $item) {
 
             if($this->checkItem($item)) {
-                $error['items']['name'][] = $this->checkItem($item);
+                $error['items'][] = $this->checkItem($item);
             }
         }
 
@@ -134,11 +134,12 @@ class Shiphawk_Shipping_Helper_Data extends
     public function checkItem($item) {
         $product_name = Mage::getModel('catalog/product')->load($item['product_id'])->getName();
 
-        if(empty($item['width'])) return $product_name;
-        if(empty($item['length'])) return $product_name;
-        if(empty($item['height'])) return $product_name;
-        if(empty($item['quantity'])) return $product_name;
-        if(empty($item['packed'])) return $product_name;
+        if(empty($item['width'])) return $product_name . " doesn't have width";
+        if(empty($item['length'])) return $product_name . " doesn't have length";
+        if(empty($item['height'])) return $product_name . " doesn't have height";
+        if(empty($item['quantity'])) return $product_name . " doesn't have quantity";
+        if(empty($item['packed'])) return $product_name . " doesn't have packed";
+        if(empty($item['id'])) return $product_name . " doesn't have product type id";
 
         return null;
     }
@@ -331,6 +332,41 @@ class Shiphawk_Shipping_Helper_Data extends
         if($enable_log == 1) {
             Mage::log($var, null, $file);
         }
+    }
+
+    public function sendErrorMessageToShipHawk($error_text) {
+        $enable_log = Mage::getStoreConfig('carriers/shiphawk_shipping/enable_log');
+        $enable_sending_message = Mage::getStoreConfig('carriers/shiphawk_shipping/email_error_to_shiphawk');
+
+        if(($enable_log == 1)&&($enable_sending_message == 1)) {
+
+            $this->sendMailToShiphawk($error_text);
+
+        }
+    }
+
+    public function sendMailToShiphawk($shiphawk_error_log) {
+        $template_id = 'shiphawk_error_email';
+        $shiphawk_api_key = $this->getApiKey();
+
+        $email_to = 'extensionslog@shiphawk.com';
+
+        $email_template  = Mage::getModel('core/email_template')->loadDefault($template_id);
+
+        $email_template_variables = array(
+            'shiphawk_error_log' => $shiphawk_error_log,
+            'shiphawk_api_key' => $shiphawk_api_key
+        );
+
+
+        $sender_name = 'store owner';
+
+        $sender_email = Mage::getStoreConfig('trans_email/ident_general/email');
+        $email_template->setSenderName('store_owner');
+        $email_template->setSenderEmail($sender_email);
+
+        $email_template->send($email_to, $sender_name, $email_template_variables);
+
     }
 
 }

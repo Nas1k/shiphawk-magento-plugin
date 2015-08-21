@@ -93,7 +93,6 @@ class Shiphawk_Shipping_Model_Carrier
             if($is_multi_carrier) {
                 foreach($grouped_items_by_carrier_type as $carrier_type=>$items_) {
 
-
                     $carrier_type = (string) $carrier_type;
 
                     $grouped_items_by_origin = $this->getGroupedItemsByZip($items_);
@@ -135,6 +134,7 @@ class Shiphawk_Shipping_Model_Carrier
                                         $shiphawk_error = (string) $responceObject->error;
                                         //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
                                         $helper->shlog('ShipHawk response: '. $shiphawk_error);
+                                        $helper->sendErrorMessageToShipHawk($shiphawk_error);
                                     }else{
                                         // if $rate_filter = 'best' then it is only one rate
                                         if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -163,6 +163,7 @@ class Shiphawk_Shipping_Model_Carrier
                                 $api_error = true;
                                 foreach($checkattributes as $rate_error) {
                                     $helper->shlog('ShipHawk error: '.$rate_error);
+                                    $helper->sendErrorMessageToShipHawk($rate_error);
                                 }
                             }
                         }else{ // product items has all required shipping origin fields
@@ -209,6 +210,7 @@ class Shiphawk_Shipping_Model_Carrier
                                             $shiphawk_error = (string) $responceObject->error;
                                             //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
                                             $helper->shlog('ShipHawk response: '. $shiphawk_error);
+                                            $helper->sendErrorMessageToShipHawk($shiphawk_error);
                                         }else{
                                             // if $rate_filter = 'best' then it is only one rate
                                             if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -236,6 +238,7 @@ class Shiphawk_Shipping_Model_Carrier
                                     $api_error = true;
                                     foreach($checkattributes as $rate_error) {
                                         $helper->shlog('ShipHawk error: '.$rate_error);
+                                        $helper->sendErrorMessageToShipHawk($rate_error);
                                     }
                                 }
 
@@ -305,6 +308,7 @@ class Shiphawk_Shipping_Model_Carrier
                                     $shiphawk_error = (string) $responceObject->error;
                                     //Mage::log('ShipHawk response: '. $shiphawk_error, null, 'ShipHawk.log');
                                     $helper->shlog('ShipHawk response: '. $shiphawk_error);
+                                    $helper->sendErrorMessageToShipHawk($shiphawk_error);
                                 }else{
                                     // if $rate_filter = 'best' then it is only one rate
                                     if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -343,6 +347,7 @@ class Shiphawk_Shipping_Model_Carrier
                             $api_error = true;
                             foreach($checkattributes as $rate_error) {
                                 $helper->shlog('ShipHawk error: '.$rate_error);
+                                $helper->sendErrorMessageToShipHawk($rate_error);
                             }
                         }
                     }else{
@@ -398,6 +403,7 @@ class Shiphawk_Shipping_Model_Carrier
                                         $api_error = true;
                                         $shiphawk_error = (string) $responceObject->error;
                                         $helper->shlog('ShipHawk response: '. $shiphawk_error);
+                                        $helper->sendErrorMessageToShipHawk($shiphawk_error);
                                     }else{
                                         // if $rate_filter = 'best' then it is only one rate
                                         if(($is_multi_zip)||($rate_filter == 'best')) {
@@ -436,6 +442,7 @@ class Shiphawk_Shipping_Model_Carrier
                                 $api_error = true;
                                 foreach($checkattributes as $rate_error) {
                                     $helper->shlog('ShipHawk error: '.$rate_error);
+                                    $helper->sendErrorMessageToShipHawk($rate_error);
                                 }
                             }
 

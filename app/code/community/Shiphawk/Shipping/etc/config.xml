@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.1.5.1</version>
+            <version>1.1.5.2</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -136,6 +136,15 @@
                 </shiphawk_api_id>
             </sales_convert_quote_item>
         </fieldsets>
+        <template>
+            <email>
+                <shiphawk_error_email module="shiphawk_shipping">
+                    <label>ShipHawk email template</label>
+                    <file>shiphawk_error_email.html</file>
+                    <type>html</type>
+                </shiphawk_error_email>
+            </email>
+        </template>
     </global>
     <frontend>
         <routers>
