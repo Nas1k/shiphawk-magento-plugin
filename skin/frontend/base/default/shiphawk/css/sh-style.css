@@ -2,6 +2,14 @@
     display: none;
 }
 
+.shipping-ratio-origins {
+    padding-left: 25px;
+}
+
+span.shipping-ratio-origins {
+    padding-left: 40px;
+}
+
 .shipping-ratio-origins-label {
     background-color: transparent!important;
 }

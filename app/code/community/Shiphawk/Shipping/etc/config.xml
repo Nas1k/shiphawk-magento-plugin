@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.1.5.2</version>
+            <version>1.1.8</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -88,15 +88,6 @@
                     </shiphawk_recalculation_totals>
                 </observers>
             </checkout_type_onepage_save_order>
-            <admin_system_config_section_save_after>
-                <observers>
-                    <check_shp_fields>
-                        <type>singleton</type>
-                        <class>shiphawk_shipping/observer</class>
-                        <method>checkShipHawkFields</method>
-                    </check_shp_fields>
-                </observers>
-            </admin_system_config_section_save_after>
             <sales_quote_collect_totals_after>
                 <observers>
                     <show_shiphawk_rate_error>
@@ -115,6 +106,15 @@
                     </show_shiphawk_rate_error_controller>
                 </observers>
             </checkout_controller_onepage_save_shipping_method>
+            <sales_quote_address_collect_totals_after>
+                <observers>
+                    <shiphawk_addaccessries_totals>
+                        <type>singleton</type>
+                        <class>shiphawk_shipping/observer</class>
+                        <method>addAccessoriesToTotals</method>
+                    </shiphawk_addaccessries_totals>
+                </observers>
+            </sales_quote_address_collect_totals_after>
         </events>
         <fieldsets>
             <sales_convert_quote>
@@ -229,6 +229,8 @@
                 <sort_order>10</sort_order>
                 <sallowspecific>1</sallowspecific>
                 <gateway_url>https://shiphawk.com/api/v1/</gateway_url>
+                <charge_customer_for_packing>1</charge_customer_for_packing>
+                <opt_to_self_pack>0</opt_to_self_pack>
             </shiphawk_shipping>
         </carriers>
     </default>

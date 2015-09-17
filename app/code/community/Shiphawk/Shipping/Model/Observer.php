@@ -27,7 +27,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             if (!empty($shLocationType)) $order->setShiphawkLocationType($shLocationType);
 
-            // set ShipHawk rate todo ship to multiply shiiping address, only one shipping order save to session
+            // set ShipHawk rate todo ship to multiply shiping address, only one shipping order save to session
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
@@ -41,7 +41,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
                 $shiphawk_book_id  = $helper->getShipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
-                    $order->setShiphawkShippingAmount($method_data['price']);
+                    //$order->setShiphawkShippingAmount($method_data['price']);
+                    $shiphawk_shipping_amount = $method_data['price'];
                     $order->setShiphawkShippingPackageInfo($method_data['packing_info']);
                 }
 
@@ -49,12 +50,13 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 //if multi origin shipping
                 $shiphawk_shipping_amount = Mage::getSingleton('core/session')->getSummPrice();
                 $shiphawk_shipping_package_info = Mage::getSingleton('core/session')->getPackageInfo();
-                $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
+                //$order->setShiphawkShippingAmount($shiphawk_shipping_amount);
                 $order->setShiphawkShippingPackageInfo($shiphawk_shipping_package_info);
             }
 
             $order->setShiphawkBookId(serialize($shiphawk_book_id));
 
+            // it's for admin order
             if (!empty($accessories)) {
                 /* For accessories */
                 $accessoriesPrice   = 0;
@@ -78,6 +80,14 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 $order->setBaseShippingAmount($newAccessoriesPrice);
                 $order->setGrandTotal($newGtandTotal);
                 $order->setBaseGrandTotal($newGtandTotal);
+
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
+            }else{
+
+                $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
+                $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData);
+
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
             }
 
             $order->save();
@@ -93,6 +103,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getSingleton('core/session')->unsMultiZipCode();
         Mage::getSingleton('core/session')->unsSummPrice();
         Mage::getSingleton('core/session')->unsPackageInfo();
+
+        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
     }
 
     /**
@@ -110,7 +122,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $accessories    = $session->getData('shipment_accessories');
         $method         = $address->getShippingMethod();
 
-        if (empty($accessories['accessories_price']) || !$method) {
+        // we have no accessories on cart page
+        $is_it_cart_page = Mage::helper('shiphawk_shipping')->checkIsItCartPage();
+
+        if (empty($accessories['accessories_price']) || !$method || $is_it_cart_page) {
             return;
         }
 
@@ -175,6 +190,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $params['base_shipping_amount'] = $baseShippingAmount;
 
         $session->setData("shipment_accessories", $params);
+        $session->setAccessoriesprice($accessoriesPrice);
     }
 
     /**
@@ -190,6 +206,9 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $session        = Mage::getSingleton('checkout/session');
         $accessories    = $session->getData("shipment_accessories");
+
+        //clear session data
+        $session->unsetData('shipment_accessories');
 
         if (empty($accessories['accessories_price'])) {
             return;
@@ -225,11 +244,12 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $subTotal       = $order->getSubtotal();
 
         $overrideCost   = Mage::app()->getRequest()->getPost('sh_override_shipping_cost', 0);
-        $overrideCost   = floatval($overrideCost);
 
-        if (empty($overrideCost)) {
+        if ((floatval($overrideCost) < 0)||($overrideCost === null)||( $overrideCost === "")) {
             return;
         }
+
+        $overrideCost   = floatval($overrideCost);
 
         $grandTotal = $subTotal + $overrideCost;
 
@@ -244,19 +264,6 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
     /**
      * @param $observer
      */
-    public function  checkShipHawkFields($observer) {
-
-        $event          = $observer->getEvent();
-        $section        = $event->getSection();
-        if($section) {
-           // Mage::getSingleton('adminhtml/session')->addWarning('Warning message'); todo check shipHawk shipping field
-        }
-
-    }
-
-    /**
-     * @param $observer
-     */
     public function  showShiphawkRateError($observer) {
 
         $err_text = Mage::getSingleton('core/session')->getShiphawkErrorRate();
@@ -266,6 +273,72 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         }
 
         Mage::getSingleton('core/session')->unsShiphawkErrorRate();
+
+    }
+
+    /**
+     * @param $observer
+     */
+    public function  addAccessoriesToTotals($observer) {
+
+        $event          = $observer->getEvent();
+        $address        = $event->getQuoteAddress();
+
+        $accessories_price_admin = Mage::getSingleton('core/session')->getData('admin_accessories_price');
+
+        $shiphawk_override_cost = Mage::getSingleton('core/session')->getData('shiphawk_override_cost');
+
+        $shippingAmount     = $address->getShippingAmount();
+
+        if(empty($shippingAmount)) {
+            return;
+        }
+
+        $baseShippingAmount = $address->getBaseShippingAmount();
+
+        $grandTotal         = $address->getSubtotal();
+        $baseGrandTotal     = $address->getBaseSubtotal();
+
+        $newShippingPrice       = $shippingAmount + $accessories_price_admin;
+        $newShippingBasePrice   = $baseShippingAmount + $accessories_price_admin;
+
+        $discountTotal = 0;
+
+        if (Mage::app()->getStore()->isAdmin()) {
+            $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
+        }else{
+            /** @var $cart Mage_Checkout_Model_Cart */
+            $cart = Mage::getSingleton('checkout/cart');
+            $quote = $cart->getQuote();
+        }
+
+        foreach ($quote->getAllItems() as $item){
+            $discountTotal += $item->getDiscountAmount();
+        }
+
+        $address->setShippingAmount($newShippingPrice);
+        $address->setBaseShippingAmount($baseShippingAmount + $accessories_price_admin);
+        $address->setGrandTotal($grandTotal + $newShippingPrice - $discountTotal);
+        $address->setBaseGrandTotal($baseGrandTotal + $newShippingBasePrice);
+
+        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+
+        if ((floatval($shiphawk_override_cost) < 0)||($shiphawk_override_cost === null)||( $shiphawk_override_cost === "")) {
+            return;
+        }
+
+        $overrideCost   = floatval($shiphawk_override_cost);
+
+        $subTotal       = $address->getSubtotal();
+        $grandTotal = $subTotal + $overrideCost;
+
+
+        $address->setShippingAmount($overrideCost);
+        $address->setBaseShippingAmount($overrideCost);
+        $address->setGrandTotal($grandTotal);
+        $address->setBaseGrandTotal($grandTotal);
+
+        Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
 
     }
 

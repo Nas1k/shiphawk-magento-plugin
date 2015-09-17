@@ -2,8 +2,8 @@
 class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Controller_Action
 {
     /**
-     * Save shipment
-     * We can save only new shipment. Existing shipments are not editable
+     * Get rate and book shipments order, manual booking
+     *
      *
      * @return null
      */
@@ -49,6 +49,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $location_type = $products_ids['items'][0]['location_type'];
 
                         $carrier_type = $products_ids['carrier_type'];
+                        $self_pack = $products_ids['self_pack'];
 
                         $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
                         // get only one method for each group of product
@@ -56,6 +57,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             if($responceObject->error) {
                                 $shiphawk_error = $responceObject->error;
                                 $helper->shlog('ShipHawk response: '. $shiphawk_error);
+                                $helper->sendErrorMessageToShipHawk($shiphawk_error);
                                 $is_rate = false;
                             }
                         }else{
@@ -71,11 +73,17 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         $carrier_type = $products_ids['carrier_type'];
 
+                        $self_pack = $products_ids['self_pack'];
+
                         $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
 
-                        $original_shipping_price = floatval($order->getShiphawkShippingAmount());
+                        $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
+                        $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
+                        // ShipHawk Shipping Amount includes accessories price
+                        $original_shipping_price = floatval($order->getShiphawkShippingAmount() - $accessoriesPrice);
                         foreach ($responceObject as $responce) {
 
+                            // shipping rate price from new response
                             $shipping_price = $helper->getSummaryPrice($responce);
                             if(round($original_shipping_price,3) == round($shipping_price,3)) {
                                 $rate_id        = $responce->id;
@@ -88,17 +96,18 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                     if($is_rate == true) {
                         // add book
-                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false);
+                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack);
 
                         if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                             $helper->shlog('ShipHawk response: '.$track_data->error);
+                            $helper->sendErrorMessageToShipHawk($track_data->error);
                             continue;
                         }
 
                         $shipment = $api->_initShipHawkShipment($order,$products_ids);
                         $shipment->register();
-                        $api->_saveShiphawkShipment($shipment);
+                        $api->_saveShiphawkShipment($shipment, $products_ids['name'], $products_ids['price']);
 
                         // add track
                         if($track_data->details->id) {
@@ -159,7 +168,10 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         $orderId = $params['order_id'];
         $shiphawk_rate_id = $params['shipping_method'];
         $is_multi = $params['is_multi'];
-        $multi_price = $params['multi_price'];
+        if(array_key_exists('multi_price', $params) ) {
+            $multi_price = $params['multi_price'];
+        }
+
 
         $shipmentCreatedMessage = $this->__('Something went wrong');
 
@@ -178,7 +190,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                     // add book
                     if($is_multi == 0) {
                         if($shiphawk_rate_id == $rate_id) {
-                            $track_data = $api->toBook($order,$rate_id,$products_ids);
+                            $self_pack = $products_ids['self_pack'];
+                            $track_data = $api->toBook($order,$rate_id,$products_ids, array(), false, $self_pack);
 
                             if (property_exists($track_data, 'error')) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -191,7 +204,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                             $shipment = $api->_initShipHawkShipment($order,$products_ids);
                             $shipment->register();
-                            $api->_saveShiphawkShipment($shipment);
+                            $api->_saveShiphawkShipment($shipment, $products_ids['name'], $products_ids['price']);
 
                             // add track
                             $track_number = $track_data->details->id;
@@ -203,7 +216,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             $this->_getSession()->addSuccess($shipmentCreatedMessage);
                         }
                     }else{
-                        $track_data = $api->toBook($order,$rate_id,$products_ids);
+                        $self_pack = $products_ids['self_pack'];
+                        $track_data = $api->toBook($order,$rate_id,$products_ids, array(), false, $self_pack);
 
                         if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -216,7 +230,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         $shipment = $api->_initShipHawkShipment($order,$products_ids);
                         $shipment->register();
-                        $api->_saveShiphawkShipment($shipment);
+                        $api->_saveShiphawkShipment($shipment, $products_ids['name'], $products_ids['price']);
 
                         // add track
                         $track_number = $track_data->details->id;
@@ -261,5 +275,29 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         Mage::getSingleton('checkout/session')->setData('shiphawk_location_type_shipping', $locationType);
 
         $this->getResponse()->setBody('Result: ok.');
+    }
+
+    /**
+     * Set accessories price for Update Totals button in admin (New order view)
+     *
+     * @version 20150701
+     */
+    public function setaccessoriespriceAction() {
+        $params = $this->getRequest()->getParams();
+        $accessories_price = $params['accessories_price'];
+        $shiphawk_override_cost = $params['shiphawk_override_cost'];
+
+        /*if (empty($accessories_price)) {
+            $this->getResponse()->setBody('accessories price is empty.');
+            return;
+        }*/
+
+        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+        Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
+
+        Mage::getSingleton('core/session')->setData('admin_accessories_price', $accessories_price);
+        Mage::getSingleton('core/session')->setData('shiphawk_override_cost', $shiphawk_override_cost);
+
+        //$this->getResponse()->setBody('Result: ok.');
     }
 }

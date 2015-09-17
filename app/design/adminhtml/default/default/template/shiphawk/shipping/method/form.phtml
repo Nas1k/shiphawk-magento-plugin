@@ -25,6 +25,15 @@
  */
 ?>
 <?php /** @var $this Mage_Adminhtml_Block_Sales_Order_Create_Shipping_Method_Form */ ?>
+<style>
+    .shipping-ratio-origins {
+        padding-left: 17px;
+    }
+
+    span.shipping-ratio-origins {
+        padding-left: 16px;
+    }
+</style>
 <?php $_shippingRateGroups = $this->getShippingRates(); ?>
 <?php if ($_shippingRateGroups): ?>
     <div id="order-shipping-method-choose" style="display:none">
@@ -65,15 +74,17 @@
                             <?php $shipHawkDescription = unserialize($_rate->getMethodDescription());?>
                             <?php if ($shipHawkDescription): ?>
                                 <?php foreach ($shipHawkDescription as $type => $accessories): ?>
+                                    <?php if (count($accessories) > 0) { ?>
                                     <span style="text-transform: capitalize; font-weight: bold; display: none;"
                                           class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId(); ?>-origins"><?php echo $type ?></span>
+                                        <?php } ?>
                                     <?php foreach ($accessories as $accessor): ?>
                                         <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId(); ?>-origins"
                                             style="display: none;">
                                             <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                    type="checkbox" value="<?php echo $accessor->price ?>"
                                                    name="accessories[<?php echo $type ?>]['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
-                                                   class="checkbox"/>
+                                                   class="checkbox accessor"/>
                                             <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                    class="shipping-ratio-origins-label"><?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
                                         </li>
@@ -93,9 +104,9 @@
                 </tr>
             </table>
         </div>
-        <!--        <div class="form-buttons" style="float: none; text-align: right;">-->
-        <!--            <button class="add" type="button" onclick="order.setShippingMethod($$('input.shipping-ratios:checked').invoke('readAttribute' ,'value'))"><span>--><?php //echo Mage::helper('sales')->__('Update Changes');?><!--</span></button>-->
-        <!--        </div>-->
+               <div class="form-buttons" style="float: none; text-align: right;"> <!-- sales_quote__collect_totals_after -->
+                    <button class="add" type="button" onclick="updateTotalsAccessories();"><span><?php echo Mage::helper('sales')->__('Update Grand Total');?></span></button>
+                </div>
     </div>
     <?php if ($_rate = $this->getActiveMethodRate()): ?>
         <div id="order-shipping-method-info">
@@ -204,4 +215,54 @@
 
         return;
     }
+
+    function updateTotalsAccessories() {
+        var accessories_checked_array = $$('.accessor:checked');
+        var accessories_price;
+
+        var shiphawk_override_cost = $('sh-override-shipping-cost').value;
+
+        if (typeof accessories_checked_array != 'undefined' && accessories_checked_array.length > 0) {
+            accessories_price = accessories_checked_array.invoke('readAttribute' ,'value').reduce(function(previousValue, currentValue, index, array) {
+                return parseFloat(previousValue) + parseFloat(currentValue);
+            });
+        }
+
+        var url = ajaxUrl + 'index.php/adminshiphawk/adminhtml_shipment/setaccessoriesprice';
+
+        var parameters = {
+            accessories_price: accessories_price,
+            shiphawk_override_cost: shiphawk_override_cost
+        };
+
+        new Ajax.Request(url, {
+            method: 'post',
+            parameters: parameters,
+            onSuccess: function(transport)  {
+
+            },
+            onComplete:function(transport)
+            {
+                order.setShippingMethod($$('input.shipping-ratios:checked').invoke('readAttribute' ,'value'));
+
+                setTimeout(function(){
+                    if (typeof accessories_checked_array != 'undefined' && accessories_checked_array.length > 0) {
+                        accessories_checked_array.forEach(function(el) {
+                            $(el.id).checked = true;
+                        });
+                    }
+
+                    $('sh-override-shipping-cost').value = shiphawk_override_cost;
+                    $('sh-override-shipping-cost').innerHTML = shiphawk_override_cost;
+                }, 3000);
+            }
+        });
+
+    }
+
+    if ($('order-shipping-method-choose')) {
+
+       $('order-shipping-method-choose').show();
+    }
+
 </script>

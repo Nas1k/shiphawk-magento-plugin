@@ -193,8 +193,58 @@ class Shiphawk_Shipping_Helper_Data extends
         return true;
     }
 
-    public function getSummaryPrice($object) {
+    /**
+     * @param $object Object of rate response
+     * @param null $opt_to_self_pack "Opt to Self Pack" from settings
+     * @param null $charge_customer_for_packing
+     * @param null $custom_packing_price "Custom Packing Prices?" from settings
+     * @param null $custom_packing_price_amount Sum of custom prices for product packaging
+     * @return mixed
+     */
+
+    public function getSummaryPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null, $custom_packing_price = null, $custom_packing_price_amount = null) {
+
+        if (( $opt_to_self_pack == 1) && ($custom_packing_price == 1)) {
+
+            if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
+                return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+            }
+
+            return $object->shipping->price + $object->delivery->price + $object->insurance->price + $custom_packing_price_amount;
+
+        }else{
+            if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
+                return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+            }
+        }
+
         return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
+
+    }
+
+    public function ChargeCustomerForPacking($opt_to_self_pack = null, $charge_customer_for_packing = null) {
+
+        $opt_to_self_pack = ($opt_to_self_pack === null) ? Mage::getStoreConfig('carriers/shiphawk_shipping/opt_to_self_pack') : $opt_to_self_pack;
+        //$opt_to_self_pack = Mage::getStoreConfig('carriers/shiphawk_shipping/opt_to_self_pack');
+        $charge_customer_for_packing = ($charge_customer_for_packing === null) ? Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing') : $charge_customer_for_packing;
+        //$charge_customer_for_packing = Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing');
+
+        if(($opt_to_self_pack == 1) && ($charge_customer_for_packing == 0)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getSelfPacked() {
+        $opt_to_self_pack = Mage::getStoreConfig('carriers/shiphawk_shipping/opt_to_self_pack');
+        $charge_customer_for_packing = Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing');
+
+        if(($opt_to_self_pack == 1) && ($charge_customer_for_packing == 1)) {
+            return 0;
+        }
+
+        return $opt_to_self_pack;
     }
 
     public function getBOLurl($shipment_id) {
@@ -208,7 +258,6 @@ class Shiphawk_Shipping_Helper_Data extends
         curl_setopt($curl, CURLOPT_URL, $bol_url);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-
 
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
@@ -362,11 +411,42 @@ class Shiphawk_Shipping_Helper_Data extends
         $sender_name = 'store owner';
 
         $sender_email = Mage::getStoreConfig('trans_email/ident_general/email');
-        $email_template->setSenderName('store_owner');
+        $email_template->setSenderName('Store Owner');
         $email_template->setSenderEmail($sender_email);
 
         $email_template->send($email_to, $sender_name, $email_template_variables);
 
+    }
+
+    public function getAccessoriesPrice($accessoriesPriceData) {
+        $accessoriesPrice = 0;
+
+        if(!empty($accessoriesPriceData)) {
+            foreach($accessoriesPriceData as $typeName => $type) {
+                foreach($type as $name => $values) {
+                    foreach($values as $key => $value) {
+
+                        $accessoriesPrice += (float)$value;
+                    }
+                }
+            }
+        }
+
+        return $accessoriesPrice;
+    }
+
+    public function  checkIsItCartPage() {
+        $request = Mage::app()->getFrontController()->getRequest();
+        $module = $request->getModuleName();
+        $controller = $request->getControllerName();
+        $action = $request->getActionName();
+
+        if($module == 'checkout' && $controller == 'cart' && $action == 'index')
+        {
+            return true;
+        }
+
+        return false;
     }
 
 }

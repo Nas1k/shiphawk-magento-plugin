@@ -51,7 +51,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $arr_res;
     }
 
-    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false)
+    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false, $self_packed = 0)
     {
         $ship_addr = $order->getShippingAddress()->getData();
         $bill_addr = $order->getBillingAddress()->getData();
@@ -61,6 +61,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $api_key = Mage::helper('shiphawk_shipping')->getApiKey();
         $api_url = Mage::helper('shiphawk_shipping')->getApiUrl();
         $url_api = $api_url . 'shipments?api_key=' . $api_key;
+
+        $self_packed = $self_packed ? 'true' : 'false';
 
         /* get shiphawk origin data from first product, because products are grouped by origin (or by zip code) and have same address */
         $origin_product = Mage::getModel('catalog/product')->load($products_ids['product_ids'][0]);
@@ -100,7 +102,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             'rate_id'=> $rate_id,
             'order_email'=> $order_email,
             'xid'=>$order_increment_id,
-            'self_packed'=>'true',
+            'self_packed'=>$self_packed,
             'insurance'=>'true',
             'origin_address' =>
                 $origin_address,
@@ -140,7 +142,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
             'accessorials' => $itemsAccessories
 
-
         );
 
 
@@ -161,7 +162,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
 
-        $helper->shlog($arr_res, 'shiphawk-book.log');
+        //$helper->shlog($arr_res, 'shiphawk-book.log');
 
         curl_close($curl);
 
@@ -255,7 +256,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
 
     /**
-     * Save shipment
+     * Save shipment in sales_order_place_after event, if manual booking set to No
      * We can save only new shipment. Existing shipments are not editable
      *
      *
@@ -273,16 +274,18 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                 $shipment->register();
 
-                $this->_saveShiphawkShipment($shipment);
+                $this->_saveShiphawkShipment($shipment, $products_ids['name'], $products_ids['price']);
+
+                $self_pack = $products_ids['self_pack'];
 
                 // add book
-                $track_data = $this->toBook($order, $rate_id, $products_ids, array(), true);
+                $track_data = $this->toBook($order, $rate_id, $products_ids, array(), true, $self_pack);
 
-                $helper->shlog($track_data, 'shiphawk-book.log');
+                $helper->shlog($track_data, 'shiphawk-book-response.log');
 
                 if (property_exists($track_data, 'error')) {
                     Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                    Mage::getSingleton('core/session')->addError($track_data->error);
+                    //Mage::getSingleton('core/session')->addError($track_data->error);
                     $helper->shlog('ShipHawk response: '.$track_data->error);
                     return;
                 }
@@ -349,9 +352,11 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
      * @param Mage_Sales_Model_Order_Shipment $shipment
      * @return Mage_Adminhtml_Sales_Order_ShipmentController
      */
-    public function _saveShiphawkShipment($shipment)
+    public function _saveShiphawkShipment($shipment, $shiphawk_shipment_title = null, $shiphawk_shipment_price = null)
     {
         $shipment->getOrder()->setIsInProcess(true);
+        $shipment->setShiphawkShippingMethodTitle($shiphawk_shipment_title);
+        $shipment->setShiphawkShippingPrice($shiphawk_shipment_price);
         $transactionSave = Mage::getModel('core/resource_transaction')
             ->addObject($shipment)
             ->addObject($shipment->getOrder())

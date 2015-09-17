@@ -35,7 +35,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                         case 'confirmed':
                             $comment = "Shipment status changed to Confirmed (" . $crated_time['date'] . " at " . $crated_time['time'] . "). Your shipment has been successfully confirmed.";
                             break;
-                        case 'scheduled':
+                        case 'scheduled_for_pickup':
                             $comment = "Shipment status changed to Scheduled (" . $crated_time['date'] . " at " . $crated_time['time'] . "). Your shipment has been scheduled for pickup.";
                             break;
                         case 'agent_prep':
@@ -177,7 +177,9 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
         $responce_BOL = Mage::helper('shiphawk_shipping')->getBOLurl($shipments_id);
 
-        if ($responce_BOL->url) {
+        $responce = array();
+
+        if (property_exists($responce_BOL, 'url')) {
 
             $path_to_save_bol_pdf = Mage::getBaseDir('media'). DS .'shiphawk'. DS .'bol';
             $BOLpdf = $path_to_save_bol_pdf . DS .  $shipments_id . '.pdf';
@@ -195,8 +197,12 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
             }
 
         }else{
-            $responce['shiphawk_error'] = $responce_BOL->error;
+            if (property_exists($responce_BOL, 'error')){
+                $responce['shiphawk_error'] = $responce_BOL->error;
+            }
+
             $this->getResponse()->setBody( json_encode($responce) );
+
         }
 
     }

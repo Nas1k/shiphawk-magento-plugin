@@ -78,6 +78,8 @@
                 $('loading-mask').hide();
                 $('formSuccess').show();
                 $('formSuccess').update(responce_html);
+
+                setTimeout('parent.location.reload()', 2000);
             },
             onComplete:function(request, json) {
                 Element.hide($('shiphawk_form'));
