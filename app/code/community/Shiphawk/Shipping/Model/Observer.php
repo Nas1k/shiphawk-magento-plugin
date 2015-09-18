@@ -277,9 +277,14 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
     }
 
     /**
+     * Update accessories & shipping price in admin order view
      * @param $observer
      */
     public function  addAccessoriesToTotals($observer) {
+
+        if(!Mage::helper('shiphawk_shipping')->checkIsAdmin()) {
+            return;
+        }
 
         $event          = $observer->getEvent();
         $address        = $event->getQuoteAddress();
@@ -304,13 +309,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $discountTotal = 0;
 
-        if (Mage::app()->getStore()->isAdmin()) {
-            $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
-        }else{
-            /** @var $cart Mage_Checkout_Model_Cart */
-            $cart = Mage::getSingleton('checkout/cart');
-            $quote = $cart->getQuote();
-        }
+
+        $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
 
         foreach ($quote->getAllItems() as $item){
             $discountTotal += $item->getDiscountAmount();

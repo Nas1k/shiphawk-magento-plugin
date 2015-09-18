@@ -517,6 +517,11 @@ class Shiphawk_Shipping_Model_Carrier
                 $package_info           = '';
                 $multi_shipping_price   = 0;
 
+                $free_shipping_setting = Mage::getStoreConfig('carriers/shiphawk_shipping/free_method');
+
+                $chipiest_rate_id = $this->_getChipiestRateId($services);
+
+
                 foreach ($services as $id_service=>$service) {
                     if (!$is_multi_zip) {
                         //add ShipHawk shipping
@@ -526,6 +531,20 @@ class Shiphawk_Shipping_Model_Carrier
                             $shipping_price = $helper->getDiscountShippingPrice($service['price']);
                         }else{
                             $shipping_price = $helper->getProductDiscountMarkupPrice($service['price'], $service['shiphawk_discount_percentage'], $service['shiphawk_discount_fixed']);
+                        }
+
+                        if($free_shipping_setting != 'none') {
+                            if ($request->getFreeShipping()) {
+
+                                // get chipiest rate id
+                                if($chipiest_rate_id == $id_service){
+                                    $shipping_price = 0;
+                                }
+
+                                if ($free_shipping_setting == 'all') {
+                                    $shipping_price = 0;
+                                }
+                            }
                         }
 
                         if($is_admin == false) {
@@ -546,6 +565,16 @@ class Shiphawk_Shipping_Model_Carrier
                         }
 
                         $multi_shipping_price += $shipping_price;
+                        if ($request->getFreeShipping()) {
+                            /**
+                             *  If the request has the free shipping flag,
+                             *  append a free shipping rate to the result.
+                             */
+                            if($free_shipping_setting != 'none') {
+                                $multi_shipping_price = 0;
+                            }
+
+                        }
                         //$multi_shipping_price += $helper->getTotalDiscountShippingPrice($service['price'], $toOrder[$id_service]);
                     }
                 }
@@ -581,8 +610,23 @@ class Shiphawk_Shipping_Model_Carrier
         } catch (Exception $e) {
             Mage::logException($e->getMessage());
         }
+
         return $result;
     }
+
+    protected function _getFreeShippingRate()
+    {
+        $rate = Mage::getModel('shipping/rate_result_method');
+        /* @var $rate Mage_Shipping_Model_Rate_Result_Method */
+        $rate->setCarrier($this->_code);
+        $rate->setCarrierTitle($this->getConfigData('title'));
+        $rate->setMethod('free_shipping');
+        $rate->setMethodTitle('Free Shipping');
+        $rate->setPrice(0);
+        $rate->setCost(0);
+        return $rate;
+    }
+
 
     /**
      * Returns Allowed shipping methods
@@ -592,7 +636,7 @@ class Shiphawk_Shipping_Model_Carrier
     public function getAllowedMethods()
     {
         return array(
-            'ground'    =>  'Ground delivery',
+            'ground'    =>  'Ground delivery'
         );
     }
 
@@ -851,6 +895,21 @@ class Shiphawk_Shipping_Model_Carrier
             $tmp[$item['shiphawk_custom_packing_price']][] = $item;
         }
         return $tmp;
+    }
+
+    protected function _getChipiestRateId($services) {
+
+        $rate_id =0;
+        $t = array();
+        foreach ($services as $id_service=>$service) {
+                $t[$id_service] = $service['price'];
+        }
+
+        asort($t);
+
+        $rate_id = key($t);
+
+        return $rate_id;
     }
 
     public function getServices($ship_responces, $toOrder, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting) {
