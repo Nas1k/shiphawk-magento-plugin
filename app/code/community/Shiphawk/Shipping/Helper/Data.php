@@ -204,45 +204,72 @@ class Shiphawk_Shipping_Helper_Data extends
 
     public function getSummaryPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null, $custom_packing_price = null, $custom_packing_price_amount = null) {
 
-        if (( $opt_to_self_pack == 1) && ($custom_packing_price == 1)) {
-
-            if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
-                return $object->shipping->price + $object->delivery->price + $object->insurance->price;
-            }
-
-            return $object->shipping->price + $object->delivery->price + $object->insurance->price + $custom_packing_price_amount;
-
+        if(!$opt_to_self_pack) {
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
         }else{
-            if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
-                return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+            if (( $opt_to_self_pack == 1) && ($custom_packing_price == 1)) {
+
+                if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
+                    return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+                }
+
+                return $object->shipping->price + $object->delivery->price + $object->insurance->price + $custom_packing_price_amount;
+
+            }else{
+                if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
+                    return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+                }
+
+
             }
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
+
         }
 
-        return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
+    }
+
+    public function getShipHawkPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null) {
+
+        if(!$opt_to_self_pack) {
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
+        }else{
+
+            return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+
+        }
 
     }
 
     public function ChargeCustomerForPacking($opt_to_self_pack = null, $charge_customer_for_packing = null) {
 
         $opt_to_self_pack = ($opt_to_self_pack === null) ? Mage::getStoreConfig('carriers/shiphawk_shipping/opt_to_self_pack') : $opt_to_self_pack;
-        //$opt_to_self_pack = Mage::getStoreConfig('carriers/shiphawk_shipping/opt_to_self_pack');
-        $charge_customer_for_packing = ($charge_customer_for_packing === null) ? Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing') : $charge_customer_for_packing;
-        //$charge_customer_for_packing = Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing');
 
-        if(($opt_to_self_pack == 1) && ($charge_customer_for_packing == 0)) {
-            return false;
+        $charge_customer_for_packing = ($charge_customer_for_packing === null) ? Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing') : $charge_customer_for_packing;
+
+        if(($opt_to_self_pack == 1)) {
+            return $charge_customer_for_packing;
         }
 
-        return true;
+        return false;
+    }
+
+    public function getCustomPackingPriceSumm($items) {
+        $packing_summ = 0;
+        foreach($items as $item) {
+            if(isset($item['shiphawk_custom_packing_price']))
+            $packing_summ +=   $item['shiphawk_custom_packing_price']*$item['quantity'];
+        }
+
+        return $packing_summ;
     }
 
     public function getSelfPacked() {
         $opt_to_self_pack = Mage::getStoreConfig('carriers/shiphawk_shipping/opt_to_self_pack');
         $charge_customer_for_packing = Mage::getStoreConfig('carriers/shiphawk_shipping/charge_customer_for_packing');
 
-        if(($opt_to_self_pack == 1) && ($charge_customer_for_packing == 1)) {
+     /*   if(($opt_to_self_pack == 1) && ($charge_customer_for_packing == 1)) {
             return 0;
-        }
+        }*/
 
         return $opt_to_self_pack;
     }

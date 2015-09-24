@@ -4,7 +4,6 @@ class Shiphawk_Shipping_Model_Carrier
     extends Mage_Shipping_Model_Carrier_Abstract
     implements Mage_Shipping_Model_Carrier_Interface
 {
-    const DEFAULT_WEIGHT = "5";// todo ?
     /**
      * Carrier's code, as defined in parent class
      *
@@ -136,8 +135,7 @@ class Shiphawk_Shipping_Model_Carrier
                                     $custom_products_packing_price = 0;
 
                                     if($custom_packing_price_setting) {
-                                        $items_grouped_by_custom_packing_price = $this->getGroupedItemsByCustomPackingPrice($discount_items);
-                                        $custom_products_packing_price = array_sum(array_keys($items_grouped_by_custom_packing_price));
+                                        $custom_products_packing_price = $helper->getCustomPackingPriceSumm($discount_items);
                                     }
 
                                     $ship_responces[] = $responceObject;
@@ -155,7 +153,8 @@ class Shiphawk_Shipping_Model_Carrier
                                             $flat_markup_discount = $discount_items[0]['shiphawk_discount_fixed'];
                                             $percentage_markup_discount = $discount_items[0]['shiphawk_discount_percentage'];
                                             $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($discount_items);
-                                            $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                            //$toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                            $toOrder[$responceObject[0]->id]['price'] = $helper->getShipHawkPrice($responceObject[0], $self_pack, $charge_customer_for_packing);
                                             $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;//
                                             $toOrder[$responceObject[0]->id]['items'] = $discount_items;
                                             $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
@@ -225,8 +224,7 @@ class Shiphawk_Shipping_Model_Carrier
                                         $custom_products_packing_price = 0;
 
                                         if($custom_packing_price_setting) {
-                                            $items_grouped_by_custom_packing_price = $this->getGroupedItemsByCustomPackingPrice($discount_items);
-                                            $custom_products_packing_price = array_sum(array_keys($items_grouped_by_custom_packing_price));
+                                            $custom_products_packing_price = $helper->getCustomPackingPriceSumm($discount_items);
                                         }
 
 
@@ -243,7 +241,8 @@ class Shiphawk_Shipping_Model_Carrier
                                             if(($is_multi_zip)||($rate_filter == 'best')) {
 
                                                 $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($discount_items);
-                                                $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                                //$toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                                $toOrder[$responceObject[0]->id]['price'] = $helper->getShipHawkPrice($responceObject[0], $self_pack, $charge_customer_for_packing);
                                                 $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;//
                                                 $toOrder[$responceObject[0]->id]['items'] = $discount_items;
                                                 $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
@@ -336,8 +335,7 @@ class Shiphawk_Shipping_Model_Carrier
                                 $custom_products_packing_price = 0;
 
                                 if($custom_packing_price_setting) {
-                                    $items_grouped_by_custom_packing_price = $this->getGroupedItemsByCustomPackingPrice($discount_items);
-                                    $custom_products_packing_price = array_sum(array_keys($items_grouped_by_custom_packing_price));
+                                    $custom_products_packing_price = $helper->getCustomPackingPriceSumm($discount_items);
                                 }
 
                                 $ship_responces[] = $responceObject;
@@ -353,7 +351,8 @@ class Shiphawk_Shipping_Model_Carrier
                                     if(($is_multi_zip)||($rate_filter == 'best')) {
 
                                         $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($discount_items);
-                                        $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                        //$toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                        $toOrder[$responceObject[0]->id]['price'] = $helper->getShipHawkPrice($responceObject[0], $self_pack, $charge_customer_for_packing);
                                         $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;//
                                         $toOrder[$responceObject[0]->id]['items'] = $discount_items;
                                         $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
@@ -369,7 +368,8 @@ class Shiphawk_Shipping_Model_Carrier
                                         Mage::getSingleton('core/session')->setMultiZipCode(false);
                                         foreach ($responceObject as $responce) {
                                             $toOrder[$responce->id]['product_ids'] = $this->getProductIds($discount_items);
-                                            $toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                            //$toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                            $toOrder[$responce->id]['price'] = $helper->getShipHawkPrice($responce, $self_pack, $charge_customer_for_packing);
                                             $toOrder[$responce->id]['name'] = $responce->shipping->service;//
                                             $toOrder[$responce->id]['items'] = $discount_items;
                                             $toOrder[$responce->id]['from_zip'] = $from_zip;
@@ -443,8 +443,7 @@ class Shiphawk_Shipping_Model_Carrier
                                     $custom_products_packing_price = 0;
 
                                     if($custom_packing_price_setting) {
-                                        $items_grouped_by_custom_packing_price = $this->getGroupedItemsByCustomPackingPrice($discount_items);
-                                        $custom_products_packing_price = array_sum(array_keys($items_grouped_by_custom_packing_price));
+                                        $custom_products_packing_price = $helper->getCustomPackingPriceSumm($discount_items);
                                     }
 
                                     $ship_responces[] = $responceObject;
@@ -459,7 +458,8 @@ class Shiphawk_Shipping_Model_Carrier
                                         if(($is_multi_zip)||($rate_filter == 'best')) {
 
                                             $toOrder[$responceObject[0]->id]['product_ids'] = $this->getProductIds($discount_items);
-                                            $toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                            //$toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                            $toOrder[$responceObject[0]->id]['price'] = $helper->getShipHawkPrice($responceObject[0], $self_pack, $charge_customer_for_packing);
                                             $toOrder[$responceObject[0]->id]['name'] = $responceObject[0]->shipping->service;//
                                             $toOrder[$responceObject[0]->id]['items'] = $discount_items;
                                             $toOrder[$responceObject[0]->id]['from_zip'] = $from_zip;
@@ -475,7 +475,8 @@ class Shiphawk_Shipping_Model_Carrier
                                             Mage::getSingleton('core/session')->setMultiZipCode(false);
                                             foreach ($responceObject as $responce) {
                                                 $toOrder[$responce->id]['product_ids'] = $this->getProductIds($discount_items);
-                                                $toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                                //$toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
+                                                $toOrder[$responce->id]['price'] = $helper->getShipHawkPrice($responce, $self_pack, $charge_customer_for_packing);
                                                 $toOrder[$responce->id]['name'] = $responce->shipping->service;//
                                                 $toOrder[$responce->id]['items'] = $discount_items;
                                                 $toOrder[$responce->id]['from_zip'] = $from_zip;
@@ -548,9 +549,9 @@ class Shiphawk_Shipping_Model_Carrier
                         }
 
                         if($is_admin == false) {
-                            $result->append($this->_getShiphawkRateObject($service['name'], $shipping_price, $service['price'], $service['accessorial']));
+                            $result->append($this->_getShiphawkRateObject($service['name'], $shipping_price, $service['shiphawk_price'], $service['accessorial']));
                         }else{
-                            $result->append($this->_getShiphawkRateObject($service['name'] . ' - ' . $service['carrier'], $shipping_price, $service['price'], $service['accessorial']));
+                            $result->append($this->_getShiphawkRateObject($service['name'] . ' - ' . $service['carrier'], $shipping_price, $service['shiphawk_price'], $service['accessorial']));
                         }
 
                     }else{
@@ -678,6 +679,8 @@ class Shiphawk_Shipping_Model_Carrier
         $items          = array();
         $productModel   = Mage::getModel('catalog/product');
 
+        $custom_packing_price_setting = Mage::getStoreConfig('carriers/shiphawk_shipping/shiphawk_custom_packing_price');
+
         foreach ($request->getAllItems() as $item) {
             $product_id = $item->getProductId();
             $product = Mage::getModel('catalog/product')->load($product_id);
@@ -701,55 +704,29 @@ class Shiphawk_Shipping_Model_Carrier
                 //hack for admin shipment in popup
                 $qty_ordered = ($item->getQty() > 0 ) ? $item->getQty() : $item->getData('qty_ordered');
 
-                if($product->getWeight() > 0) {
-                    $items[] = array(
-                        'width' => $product->getShiphawkWidth(),
-                        'length' => $product->getShiphawkLength(),
-                        'height' => $product->getShiphawkHeight(),
-                        'weight' => $product->getWeight(),
-                        'value' => $this->getShipHawkItemValue($product),
-                        //'quantity' => $product_qty*$item->getQty(),
-                        'quantity' => $product_qty*$qty_ordered,
-                        'packed' => $this->getIsPacked($product),
-                        'id' => $product->getShiphawkTypeOfProductValue(),
-                        'zip'=> $this->getOriginZip($product),
-                        'product_id'=> $product_id,
-                        'xid'=> $product_id,
-                        'origin'=> $this->getShiphawkShippingOrigin($product),
-                        'location_type'=> $this->getOriginLocation($product),
-                        'require_crating'=> false,
-                        'nmfc'=> '',
-                        'freight_class'=> $freightClassValue,
-                        'shiphawk_carrier_type'=> $carrier_type,
-                        'shiphawk_discount_fixed'=> $product->getShiphawkDiscountFixed(),
-                        'shiphawk_discount_percentage'=> $product->getShiphawkDiscountPercentage(),
-                        'shiphawk_custom_packing_price'=> ($this->getIsPacked($product) == 'true') ? null  : $product->getShiphawkCustomPackingPrice(),
-                    );
-                }else{
-                    $items[] = array(
-                        'width' => $product->getShiphawkWidth(),
-                        'length' => $product->getShiphawkLength(),
-                        'height' => $product->getShiphawkHeight(),
-                        'weight' => (string) self::DEFAULT_WEIGHT,
-                        'value' => $this->getShipHawkItemValue($product),
-                        //'quantity' => $product_qty*$item->getQty(),
-                        'quantity' => $product_qty*$qty_ordered,
-                        'packed' => $this->getIsPacked($product),
-                        'id' => $product->getShiphawkTypeOfProductValue(),
-                        'zip'=> $this->getOriginZip($product),
-                        'product_id'=> $product_id,
-                        'xid'=> $product_id,
-                        'origin'=> $this->getShiphawkShippingOrigin($product),
-                        'location_type'=> $this->getOriginLocation($product),
-                        'require_crating'=> false,
-                        'nmfc'=> '',
-                        'freight_class'=> $freightClassValue,
-                        'shiphawk_carrier_type'=> $carrier_type,
-                        'shiphawk_discount_fixed'=> $product->getShiphawkDiscountFixed(),
-                        'shiphawk_discount_percentage'=> $product->getShiphawkDiscountPercentage(),
-                        'shiphawk_custom_packing_price'=> ($this->getIsPacked($product) == 'true') ? null  : $product->getShiphawkCustomPackingPrice(),
-                    );
-                }
+                $items[] = array(
+                    'width' => $product->getShiphawkWidth(),
+                    'length' => $product->getShiphawkLength(),
+                    'height' => $product->getShiphawkHeight(),
+                    'weight' => ($product->getWeight()) ? ($product->getWeight()) : 0,
+                    'value' => $this->getShipHawkItemValue($product),
+                    //'quantity' => $product_qty*$item->getQty(),
+                    'quantity' => $product_qty*$qty_ordered,
+                    'packed' => $this->getIsPacked($product),
+                    'id' => $product->getShiphawkTypeOfProductValue(),
+                    'zip'=> $this->getOriginZip($product),
+                    'product_id'=> $product_id,
+                    'xid'=> $product_id,
+                    'origin'=> $this->getShiphawkShippingOrigin($product),
+                    'location_type'=> $this->getOriginLocation($product),
+                    'require_crating'=> false,
+                    'nmfc'=> '',
+                    'freight_class'=> $freightClassValue,
+                    'shiphawk_carrier_type'=> $carrier_type,
+                    'shiphawk_discount_fixed'=> $product->getShiphawkDiscountFixed(),
+                    'shiphawk_discount_percentage'=> $product->getShiphawkDiscountPercentage(),
+                    'shiphawk_custom_packing_price'=> (($this->getIsPacked($product) == 'true')&&($custom_packing_price_setting)) ? null  : $product->getShiphawkCustomPackingPrice(),
+                );
             }
         }
 
@@ -899,7 +876,6 @@ class Shiphawk_Shipping_Model_Carrier
 
     protected function _getChipiestRateId($services) {
 
-        $rate_id =0;
         $t = array();
         foreach ($services as $id_service=>$service) {
                 $t[$id_service] = $service['price'];
@@ -932,6 +908,7 @@ class Shiphawk_Shipping_Model_Carrier
 
                     $services[$object->id]['price'] = $helper->getSummaryPrice($object, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
                     $services[$object->id]['carrier'] = $this->getCarrierName($object);
+                    $services[$object->id]['shiphawk_price'] = $helper->getShipHawkPrice($object, $self_pack, $charge_customer_for_packing);
 
                     /* packing info */
                     $services[$object->id]['packing']['price'] = $object->packing->price;

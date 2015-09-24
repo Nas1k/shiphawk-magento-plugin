@@ -42,7 +42,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 $shiphawk_book_id  = $helper->getShipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
                     //$order->setShiphawkShippingAmount($method_data['price']);
-                    $shiphawk_shipping_amount = $method_data['price'];
+                    $shiphawk_shipping_amount = $method_data['price']; //todo ?
                     $order->setShiphawkShippingPackageInfo($method_data['packing_info']);
                 }
 
@@ -129,6 +129,12 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             return;
         }
 
+        $totals = Mage::getSingleton('checkout/session')->getQuote()->getTotals();
+        $discount = 0;
+        if(isset($totals['discount'])&&$totals['discount']->getValue()) {
+            $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
+        }
+
         $accessoriesPrice   = (float)$accessories['accessories_price'];
         $grandTotal         = (float)$accessories['grand_total'];
         $baseGrandTotal     = (float)$accessories['base_grand_total'];
@@ -143,7 +149,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $address->setShippingAmount($newShippingPrice);
         $address->setBaseShippingAmount($baseShippingAmount + $accessoriesPrice);
-        $address->setGrandTotal($grandTotal + $newShippingPrice);
+        $address->setGrandTotal($grandTotal + $newShippingPrice + ($discount));
         $address->setBaseGrandTotal($baseGrandTotal + $newShippingBasePrice);
     }
 
@@ -307,18 +313,15 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $newShippingPrice       = $shippingAmount + $accessories_price_admin;
         $newShippingBasePrice   = $baseShippingAmount + $accessories_price_admin;
 
-        $discountTotal = 0;
-
-
-        $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
-
-        foreach ($quote->getAllItems() as $item){
-            $discountTotal += $item->getDiscountAmount();
+        $totals = Mage::getSingleton('adminhtml/session_quote')->getQuote()->getTotals();
+        $discount = 0;
+        if(isset($totals['discount'])&&$totals['discount']->getValue()) {
+            $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
         }
 
         $address->setShippingAmount($newShippingPrice);
         $address->setBaseShippingAmount($baseShippingAmount + $accessories_price_admin);
-        $address->setGrandTotal($grandTotal + $newShippingPrice - $discountTotal);
+        $address->setGrandTotal($grandTotal + $newShippingPrice + ($discount));
         $address->setBaseGrandTotal($baseGrandTotal + $newShippingBasePrice);
 
         Mage::getSingleton('core/session')->unsetData('admin_accessories_price');

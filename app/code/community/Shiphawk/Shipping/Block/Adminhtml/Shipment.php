@@ -53,7 +53,11 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         if($is_multi_carrier) {
             foreach($grouped_items_by_carrier_type as $carrier_type=>$items_) {
 
-                $carrier_type = (string) $carrier_type;
+                if($carrier_type) {
+                    $carrier_type = explode(',', $carrier_type);
+                }else{
+                    $carrier_type = '';
+                }
 
                 $grouped_items_by_origin = $carrier->getGroupedItemsByZip($items_);
 
@@ -173,6 +177,12 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
                                     $flat_markup_discount = $discount_items[0]['shiphawk_discount_fixed'];
                                     $percentage_markup_discount = $discount_items[0]['shiphawk_discount_percentage'];
 
+                                    if($carrier_type) {
+                                        $carrier_type = explode(',', $carrier_type);
+                                    }else{
+                                        $carrier_type = '';
+                                    }
+
                                     // 2. multi carrier, multi origin, origin per product
                                     $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
                                     $helper->shlog($discount_items, 'shiphawk-items-request.log');
@@ -252,8 +262,11 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
 
                 /* get carrier type from first item because items grouped by carrier type and not multi carrier */
                 /* if carrier type is null, get default carrier type from settings */
-                $carrier_type = ($items_[0]['shiphawk_carrier_type']) ? ($items_[0]['shiphawk_carrier_type']) : Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
-                $carrier_type = (string) $carrier_type;
+                if($items_[0]['shiphawk_carrier_type']) {
+                    $carrier_type = (explode(',', $items_[0]['shiphawk_carrier_type'])) ? (explode(',', $items_[0]['shiphawk_carrier_type'])) : Mage::getStoreConfig('carriers/shiphawk_shipping/carrier_type');
+                }else{
+                    $carrier_type = '';
+                }
 
                 if ($origin_id != 'origin_per_product') {
 

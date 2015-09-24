@@ -2,7 +2,7 @@
 class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Controller_Action
 {
     /**
-     * Get rate and book shipments order, manual booking
+     * Get rate and book shipments order, Manual booking
      *
      *
      * @return null
@@ -84,7 +84,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         foreach ($responceObject as $responce) {
 
                             // shipping rate price from new response
-                            $shipping_price = $helper->getSummaryPrice($responce);
+                            $shipping_price = $helper->getShipHawkPrice($responce, $self_pack);
                             if(round($original_shipping_price,3) == round($shipping_price,3)) {
                                 $rate_id        = $responce->id;
                                 $accessories    = $responce->shipping->carrier_accessorial;

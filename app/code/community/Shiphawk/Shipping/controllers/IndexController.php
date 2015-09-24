@@ -13,11 +13,11 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $helper = Mage::helper('shiphawk_shipping');
         if($api_key_from_url == $api_key) {
             try {
-            $track_number = $data_from_shiphawk->details->id;
-            $shipment_track = Mage::getResourceModel('sales/order_shipment_track_collection')->addAttributeToFilter('track_number', $track_number)->getFirstItem();
-            $shipment = Mage::getModel('sales/order_shipment')->load($shipment_track->getParentId());
-
             $data_from_shiphawk = (array) $data_from_shiphawk;
+            $track_number = $data_from_shiphawk['shipment_id'];
+            $shipment_track = Mage::getResourceModel('sales/order_shipment_track_collection')->addAttributeToFilter('track_number', $track_number)->getFirstItem();
+
+            $shipment = Mage::getModel('sales/order_shipment')->load($shipment_track->getParentId());
 
             $helper->shlog($data_from_shiphawk, 'shiphawk-tracking.log');
 
@@ -25,7 +25,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
             $updates_tracking_url =    Mage::getStoreConfig('carriers/shiphawk_shipping/updates_tracking_url');
             $comment = '';
 
-                $crated_time = $this->convertDateTome($data_from_shiphawk['updated_at']);
+            $crated_time = $this->convertDateTome($data_from_shiphawk['updated_at']);
 
                 if($data_from_shiphawk['event'] == 'shipment.status_update') {
                     switch ($data_from_shiphawk['status']) {
@@ -48,7 +48,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                             $comment = "Shipment status changed to Cancelled (" . $crated_time['date'] . " at " . $crated_time['time'] . "). Your shipment has been cancelled successfully.";
                             break;
                         default:
-                            $comment = "Status was updated to " . $data_from_shiphawk['status'] . " at " . $crated_time['time'];
+                            $comment = "Status was updated to " . $data_from_shiphawk['status'] . " ". $crated_time['date'] . " at " . $crated_time['time'];
 
                     }
 
@@ -64,6 +64,7 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                         $comment .= ' <a href="' . $data_from_shiphawk['tracking_url'] . '" target="_blank">Click here to track.</a>';
                     }
 
+
                     $shipment->addComment($comment);
                     if($updates_tracking_url) {
                         $shipment->sendUpdateEmail(true, $comment);
@@ -73,9 +74,9 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
 
             $shipment->save();
             }catch (Mage_Core_Exception $e) {
-                Mage::logException($e->getMessage());
+                Mage::logException($e);
             } catch (Exception $e) {
-                Mage::logException($e->getMessage());
+                Mage::logException($e);
             }
 
         }

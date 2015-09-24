@@ -436,6 +436,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 $resp = curl_exec($curl);
                 $arr_res = json_decode($resp);
 
+                $helper->shlog($arr_res, 'shiphawk-tracking.log');
+
                 if (!empty($arr_res)) {
                     $comment = '';
                     $event_list = '';
