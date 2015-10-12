@@ -35,3 +35,7 @@ label[for=shiphawk_origin_location]:after {
     color: red;
     content: "*";
 }
+
+#error_text_ {
+    padding: 10px 10px 10px 0;
+}

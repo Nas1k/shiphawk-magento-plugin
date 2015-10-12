@@ -42,7 +42,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 $shiphawk_book_id  = $helper->getShipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
                     //$order->setShiphawkShippingAmount($method_data['price']);
-                    $shiphawk_shipping_amount = $method_data['price']; //todo ?
+                    $shiphawk_shipping_amount = $method_data['price'];
                     $order->setShiphawkShippingPackageInfo($method_data['packing_info']);
                 }
 
@@ -84,6 +84,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
             }else{
 
+                // it is for frontend order - accessories saved in checkout_type_onepage_save_order event
                 $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
                 $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData);
 
@@ -141,8 +142,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $shippingAmount     = (float)$accessories['shipping_amount'];
         $baseShippingAmount = (float)$accessories['base_shipping_amount'];
 
-        $shippingAmount     = empty($shippingAmount) ? $address->getShippingAmount() : $shippingAmount;
-        $baseShippingAmount = empty($baseShippingAmount) ? $address->getBaseShippingAmount() : $baseShippingAmount;
+        //$shippingAmount     = empty($shippingAmount) ? $address->getShippingAmount() : $shippingAmount;
+        $shippingAmount     = $address->getShippingAmount();
+        //$baseShippingAmount = empty($baseShippingAmount) ? $address->getBaseShippingAmount() : $baseShippingAmount;
+        $baseShippingAmount = $address->getBaseShippingAmount();
 
         $newShippingPrice       = $shippingAmount + $accessoriesPrice;
         $newShippingBasePrice   = $baseShippingAmount + $accessoriesPrice;

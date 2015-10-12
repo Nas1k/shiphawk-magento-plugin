@@ -63,6 +63,7 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
+                            <depends><enable_log>1</enable_log></depends>
                         </email_error_to_shiphawk>
                         <shiphawk_error_message translate="label">
                             <label>Error message</label>
@@ -171,6 +172,7 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                             <comment>This option works only when Opt to Self Pack set to Yes.</comment>
+                            <depends><opt_to_self_pack>1</opt_to_self_pack></depends>
                         </charge_customer_for_packing>
                         <shiphawk_custom_packing_price translate="label">
                             <label>Custom Packing Prices?</label>

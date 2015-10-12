@@ -51,7 +51,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $arr_res;
     }
 
-    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false, $self_packed = 0)
+    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false, $self_packed, $is_rerate = null)
     {
         $ship_addr = $order->getShippingAddress()->getData();
         $bill_addr = $order->getBillingAddress()->getData();
@@ -88,9 +88,18 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         if ($is_auto) {
             $orderAccessories = json_decode($orderAccessories, true);
-            foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
-                foreach($orderAccessor as $key => $orderAccessorValues) {
-                    $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+            if($is_rerate) {
+
+                foreach($accessories as $orderAccessoriesType => $orderAccessor) {
+                    foreach($orderAccessor as $key => $orderAccessorValues) {
+                        $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+                    }
+                }
+            }else{
+                foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
+                    foreach($orderAccessor as $key => $orderAccessorValues) {
+                        $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+                    }
                 }
             }
         } else {
@@ -256,7 +265,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
 
     /**
-     * Save shipment in sales_order_place_after event, if manual booking set to No
+     * Auto booking. Save shipment in sales_order_place_after event, if manual booking set to No
      * We can save only new shipment. Existing shipments are not editable
      *
      *
@@ -278,7 +287,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                 $self_pack = $products_ids['self_pack'];
 
-                // add book
+                // add book, auto booking - true
                 $track_data = $this->toBook($order, $rate_id, $products_ids, array(), true, $self_pack);
 
                 $helper->shlog($track_data, 'shiphawk-book-response.log');

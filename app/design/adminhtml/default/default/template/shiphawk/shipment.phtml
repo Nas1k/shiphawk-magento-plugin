@@ -17,9 +17,13 @@
     $name_service = $result['name_service'];
 
     $order_id = $order->getId();
-    $currensy_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
-?>
+    $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
 
+    $error_text = Mage::getSingleton('core/session')->getData('error_price_text', true); // clear data after get
+?>
+<?php if(!empty($error_text)) { ?>
+<div id="error_text_"><?php echo $error_text ?></div>
+<?php } ?>
 <form class="my-form" name="shiphawk_form" id="shiphawk_form">
     <input type="hidden" value="<?php echo $order_id ?>" name="order_id">
     <input type="hidden" value="<?php echo $is_multi_zip ?>" name="is_multi">
@@ -30,19 +34,31 @@
             $shipment_value = 'shiphawk_shipping_' . $shipments_data['name'];
             $shipment_id = 's_method_shiphawk_shipping_' . $shipments_data['name'];
             $shipping_price = $shipments_data['price'];
-
+            $carrier_accessorial = (array) $shipments_data['carrier_accessorial'];
+            $_radioProperty = 'name="shipping_method" type="radio" class="shipping-ratios" data-rate="' .$rate_id . '"';
             ?>
-            <?php if ($rate_filter == 'best') { ?>
-        <li>
-            <input name="shipping_method" checked type="radio" value="<?php echo $rate_id ?>" id="<?php echo $shipment_id ?>" class="radio">
-            <label for="<?php echo $shipment_id ?>"><?php echo  $shipments_data['carrier'] . ' - ' . $shipments_data['packege_info'] . ' ' . $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' - ' . $currensy_symbol . $shipping_price ?></span></label>
-        </li>
-                <?php }else { ?>
                 <li>
-                    <input name="shipping_method" type="radio" value="<?php echo $rate_id ?>" id="<?php echo $shipment_id ?>" class="radio">
-                    <label for="<?php echo $shipment_id ?>"><?php echo $shipments_data['carrier'] . ' - ' . $shipments_data['packege_info'] . ' ' . $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' - ' . $currensy_symbol . $shipping_price ?></span></label>
+                    <input <?php echo $_radioProperty ?> value="<?php echo $rate_id ?>" id="<?php echo $shipment_id ?>" class="shipping-ratios">
+                    <label for="<?php echo $shipment_id ?>"><?php echo $shipments_data['carrier'] . ' - '. $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' - ' . $currency_symbol . $shipping_price ?></span></label>
                 </li>
-            <?php } ?>
+                <?php foreach ($carrier_accessorial as $type => $accessories): ?>
+                    <?php if (count($accessories) > 0) { ?>
+                        <span style="text-transform: capitalize; font-weight: bold; display: none; padding-left: 16px"
+                              class="shipping-ratio-origins shipping-ratio-<?php echo $rate_id; ?>-origins"><?php echo $type ?></span>
+                    <?php } ?>
+                    <?php foreach ($accessories as $accessor): ?>
+                        <li class="shipping-ratio-origins shipping-ratio-<?php echo $rate_id; ?>-origins"
+                            style="display: none; padding-left: 16px;">
+                            <input id="<?php echo $accessor->id . '-' . $rate_id; ?>"
+                                   type="checkbox" value="<?php echo $accessor->price ?>"
+                                   name="accessories[<?php echo $type ?>]['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
+                                   class="checkbox accessor"/>
+                            <label for="<?php echo $accessor->id . '-' . $rate_id; ?>"
+                                   class="shipping-ratio-origins-label"><?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
+                        </li>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
+
         <?php } ?>
     </ul>
     <?php }else{?>
@@ -50,7 +66,7 @@
             <li>
                 <input type="hidden" value="<?php echo $summ_price ?>" name="multi_price">
                 <input checked name="shipping_method" type="radio" value="<?php echo $name_service ?>" id="<?php echo 'multi_origin' ?>" class="radio">
-                <label for="<?php echo 'multi_origin' ?>"><?php echo $name_service . ' ' ?><span class="price"><?php echo ' - ' . $currensy_symbol . $summ_price ?></span></label>
+                <label for="<?php echo 'multi_origin' ?>"><?php echo $name_service . ' ' ?><span class="price"><?php echo ' - ' . $currency_symbol . $summ_price ?></span></label>
             </li>
 
     </ul>
@@ -78,6 +94,7 @@
                 $('loading-mask').hide();
                 $('formSuccess').show();
                 $('formSuccess').update(responce_html);
+                $('error_text_').hide();
 
                 setTimeout('parent.location.reload()', 2000);
             },
@@ -95,5 +112,26 @@
         e.stop();
         doAjax();
     });
+
+    /* For couple rates */
+
+    $$("input.shipping-ratios").invoke('observe', 'change', function() {
+        $$('.shipping-ratio-origins').invoke('hide');
+        $$('.shipping-ratio-origins input[type=checkbox]').invoke('setValue', false);
+
+        var ratioId = $$("input.shipping-ratios:checked").invoke('readAttribute' ,'data-rate');
+        showOrigins(ratioId);
+    });
+
+    /* For checked rate */
+
+    if ($$("input.shipping-ratios:checked").length > 0) {
+        var ratioId = $$("input.shipping-ratios:checked").invoke('readAttribute' ,'data-rate');
+        showOrigins(ratioId);
+    }
+
+    function showOrigins(id) {
+        $$('.shipping-ratio-' + id + '-origins').invoke('show');
+    }
     //]]>
 </script>
