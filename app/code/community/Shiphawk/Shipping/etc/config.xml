@@ -2,11 +2,16 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.1.11</version>
+            <version>1.1.9</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
         <models>
+            <checkout>
+                <rewrite>
+                    <cart>Shiphawk_Checkout_Model_Cart</cart>
+                </rewrite>
+            </checkout>
             <shiphawk_shipping>
                 <class>Shiphawk_Shipping_Model</class>
                 <resourceModel>shiphawk_resource</resourceModel>
