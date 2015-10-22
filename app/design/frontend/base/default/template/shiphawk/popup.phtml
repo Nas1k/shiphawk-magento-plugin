@@ -95,6 +95,9 @@ $api = Mage::getModel('shiphawk_shipping/api');
                     case 'cancelled':
                         $comment = "Shipment status is: Cancelled. Your shipment has been cancelled successfully.";
                         break;
+                    case 'ready_for_carrier_pickup':
+                        $comment = "Shipment status changed to Ready for Carrier Pickup. Your shipment has been successfully dispatched to the carrier.";
+                        break;
                     default: $comment = "Shipment status is:  " . $trackResult->status . ". ";
                 }
 

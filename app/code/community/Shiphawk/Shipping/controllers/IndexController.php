@@ -47,9 +47,11 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                         case 'cancelled':
                             $comment = "Shipment status changed to Cancelled (" . $crated_time['date'] . " at " . $crated_time['time'] . "). Your shipment has been cancelled successfully.";
                             break;
+                        case 'ready_for_carrier_pickup':
+                            $comment = "Shipment status changed to Ready for Carrier Pickup (" . $crated_time['date'] . " at " . $crated_time['time'] . "). Your shipment has been successfully dispatched to the carrier.";
+                            break;
                         default:
-                            $comment = "Status was updated to " . $data_from_shiphawk['status'] . " ". $crated_time['date'] . " at " . $crated_time['time'];
-
+                            $comment = "Shipment status is ".$comment = "Shipment status is ";
                     }
 
                     $shipment->addComment($comment);
