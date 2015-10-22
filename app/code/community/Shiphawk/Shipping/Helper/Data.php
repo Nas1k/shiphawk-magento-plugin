@@ -72,8 +72,6 @@ class Shiphawk_Shipping_Helper_Data extends
         $result = array();
 
         foreach ($shiphawk_book_id as $rate_id=>$method_data) {
-            //if( strpos($shipping_description, $method_data['name']) !== false ) {
-            //if( $shipping_code == $method_data['price'] ) {
             $shipping_price = (string) $method_data['price'];
               if($this->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
                 $result = array($rate_id => $method_data);
@@ -460,6 +458,41 @@ class Shiphawk_Shipping_Helper_Data extends
         }
 
         return $accessoriesPrice;
+    }
+
+    public function getChosenAccessoriesForCurrentRate($accessories, $orderAccessories) {
+
+        if (empty($accessories) || empty($orderAccessories)) {
+            return array();
+        }
+
+        $helper = Mage::helper('shiphawk_shipping');
+
+        $orderAccessories = json_decode($orderAccessories, true);
+        $itemsAccessories = array();
+        $price =0;
+
+        foreach ($accessories as $accessoriesType => $accessor) {
+            foreach($accessor as $accessorRow) {
+                foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
+                    foreach($orderAccessor as $orderAccessorValues) {
+                        $orderAccessorValuesName = str_replace("'", '', $orderAccessorValues['name']);
+                        $orderAccessorValuesName = trim($orderAccessorValuesName);
+
+                        $accessorName = (string)$accessorRow->accessorial_type . ' (' . (string)$accessorRow->accessorial_options . ')';
+                        $accessorName = trim($accessorName);
+
+                        if (str_replace("'", '', $orderAccessoriesType) == $accessoriesType && $accessorName == $orderAccessorValuesName) {
+                            $itemsAccessories[] = array('id' => $accessorRow->id);
+                            $price += $accessorRow->price;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $price;
+
     }
 
     public function  checkIsItCartPage() {

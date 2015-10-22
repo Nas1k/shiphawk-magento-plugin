@@ -29,6 +29,11 @@
             </action>
         </reference>
     </checkout_onepage_shippingmethod>
+    <checkout_cart_index>
+        <reference name="checkout.cart.shipping">
+            <action method="setTemplate"><template>shiphawk/checkout/cart/shipping.phtml</template></action>
+        </reference>
+    </checkout_cart_index>
     <checkout_onepage_review translate="label">
         <reference name="checkout.onepage.review.info.totals">
             <action method="setTemplate">

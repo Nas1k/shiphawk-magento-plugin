@@ -51,7 +51,7 @@
             $currensySymbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
         ?>
         <?php if (!empty($accessories['data'])):?>
-            <p><?php echo $this->__('Accessorials:');?></p>
+            <p><?php echo $this->__('Accessories:');?></p>
             <?php foreach($accessories['data'] as $type => $accessor):?>
                 <span class="shipping-ratio-origins-type"><?php echo str_replace("'", '' , $type);?></span>
                 <ul>

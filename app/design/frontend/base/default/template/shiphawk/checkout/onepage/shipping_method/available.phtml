@@ -27,23 +27,8 @@
 <?php /** @var $this Mage_Checkout_Block_Onepage_Shipping_Method_Available */ ?>
 <?php $_shippingRateGroups = $this->getShippingRates();
 $hideAccessoriesOnFrontend = Mage::getStoreConfig('carriers/shiphawk_shipping/hide_accessories_on_frontend');
-/*$quote = Mage::getSingleton('checkout/session')->getQuote();
 
-$address = $quote->getShippingAddress();
-$address->addTotal(array(
-    'code'  => 'sssss',
-    'title' => 'Accesorials 1',
-    'value' => 50
-));
-
-$address->save();
-
-$tt = $address->getTotals();*/
-
-
-
-//$quote->setTotalsCollectedFlag(false)->collectTotals();
-
+$multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
 ?>
 <?php if (!$_shippingRateGroups): ?>
     <p><?php echo $this->__('Sorry, no quotes are available for this order at this time.') ?></p>
@@ -51,58 +36,250 @@ $tt = $address->getTotals();*/
     <dl class="sp-methods">
     <?php $shippingCodePrice = array(); ?>
     <?php $_sole = count($_shippingRateGroups) == 1; foreach ($_shippingRateGroups as $code => $_rates): ?>
+        <?php if (($code == 'shiphawk_shipping') && ($multi_zip_code)) {?>
+            <style>
+                .sub-left {
+                    float: left;
+                }
+                .sub-right {
+                    float: right;
+                    width: 70%;
+                }
+                .clear-both {
+                    clear: both;
+                    padding-bottom: 10px;
+                }
+
+                .sub-title {
+                    padding-left: 20px;
+                    padding-top: 20px;
+                }
+            </style>
+        <?php
+            $toOrder = Mage::getSingleton('core/session')->getShiphawkBookId();
+            $carrier_model = Mage::getModel('shiphawk_shipping/carrier');
+            $rates_grouped_by_items = $carrier_model->groupRatesByItems($toOrder, $_rates);
+        ?>
         <dt><?php echo $this->escapeHtml($this->getCarrierName($code)) ?></dt>
         <dd>
-            <ul>
-            <?php $_sole = $_sole && count($_rates) == 1; foreach ($_rates as $_rate): ?>
-                <?php $shippingCodePrice[] = "'".$_rate->getCode()."':".(float)$_rate->getPrice(); ?>
-                <li>
-                   <?php if ($_rate->getErrorMessage()): ?>
-                    <ul class="messages"><li class="error-msg"><ul><li><?php echo $this->escapeHtml($_rate->getErrorMessage()) ?></li></ul></li></ul>
-                   <?php else: ?>
-                        <?php if ($_sole) : ?>
-                        <span class="no-display"><input name="shipping_method" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>" checked="checked" class="shipping-ratios" data-rate="<?php echo $_rate->getRateId();?>"/></span>
-                        <?php else: ?>
-                        <input name="shipping_method" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>"<?php if($_rate->getCode()===$this->getAddressShippingMethod()) echo ' checked="checked"' ?> class="radio shipping-ratios" data-rate="<?php echo $_rate->getRateId();?>"/>
-
-                        <?php if ($_rate->getCode() === $this->getAddressShippingMethod()): ?>
-                        <script type="text/javascript">
-                            //<![CDATA[
-                                lastPrice = <?php echo (float)$_rate->getPrice(); ?>;
-                            //]]>
-                        </script>
-                        <?php endif; ?>
-
-                        <?php endif; ?>
-                        <label for="s_method_<?php echo $_rate->getCode() ?>"><?php echo $this->escapeHtml($_rate->getMethodTitle()) ?>
-                        <?php $_excl = $this->getShippingPrice($_rate->getPrice(), $this->helper('tax')->displayShippingPriceIncludingTax()); ?>
-                        <?php $_incl = $this->getShippingPrice($_rate->getPrice(), true); ?>
-                        <?php echo $_excl; ?>
-                        <?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
-                            (<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
-                        <?php endif; ?>
-                        </label>
-                   <?php endif ?>
-                </li>
-                <?php if (!$hideAccessoriesOnFrontend):?>
-                    <?php if($_rate->method_description){ ?>
-                        <?php $methodDescription = unserialize($_rate->method_description); ?>
-
-                        <?php
-                        if($_rate->method_description && !empty($methodDescription->destination)): ?>
-                            <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Destination:</span>
-                            <?php foreach($methodDescription->destination as $origin_acc) {?>
-                                <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
-                                    <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
-                                    <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
-                                </li>
-                            <?php  }
-                        endif; ?>
-                    <?php } ?>
-                <?php endif;?>
-            <?php endforeach; ?>
-            </ul>
+            <input name="shipping_method" type="radio" value="shiphawk_shipping_Shipping_from_multiple_location" <?php if('shiphawk_shipping_Shipping_from_multiple_location'===$this->getAddressShippingMethod()) echo ' checked="checked"' ?>  class="radio shipping-ratios" id="s_method_shiphawk_shipping_multi_parcel" />
+            <label for="s_method_shiphawk_shipping_multi_parcel"><?php echo $this->escapeHtml('Shipping from multiple location') ?>
+            <input name="shiphawk_shipping_multi_parcel_price" type="hidden" value=""  id="shiphawk_shipping_multi_parcel_price" />
         </dd>
+        <dd>
+            <div class="sub-title">
+            <?php $_sole = $_sole && count($_rates) == 1;
+            $i=0; $t = count($rates_grouped_by_items);
+            foreach($rates_grouped_by_items as $items_ids=>$_shiphawk_rates) {?>
+                <div class="sub-left">
+                <?php
+                    $product_ids = array_unique(unserialize($items_ids));
+                    foreach ($product_ids as $pr_id) {
+                        $_product = Mage::getModel('catalog/product')->load($pr_id);
+                        $product_name = $_product->getName();
+                        $img = (string)Mage::helper('catalog/image')->init($_product, 'image')->resize(200);
+                        echo '<img src ="' .$img.'" alt="' .$product_name.'" width=200 height=200 />';
+                        echo $product_name;
+                        echo '<br>';
+                    }
+                ?>
+                </div>
+                <div class="sub-right">
+                <ul>
+                <?php foreach ($_shiphawk_rates as $_rate) {?>
+
+                    <?php $shippingCodePrice[] = "'".$_rate->getCode()."':".(float)$_rate->getPrice(); ?>
+                    <li>
+                       <?php if ($_rate->getErrorMessage()): ?>
+                        <ul class="messages"><li class="error-msg"><ul><li><?php echo $this->escapeHtml($_rate->getErrorMessage()) ?></li></ul></li></ul>
+                       <?php else: ?>
+                            <?php if ($_sole) : ?>
+                            <span class="no-display"><input name="shipping_method" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>" checked="checked" class="shipping-ratios" data-rate="<?php echo $_rate->getRateId();?>"/></span>
+                            <?php else: ?>
+                            <input name="shipping_method_<?php echo $i; ?>" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>"<?php if($_rate->getCode()===$this->getAddressShippingMethod()) echo ' checked="checked"' ?> class="radio shipping-ratios-multiple validate-one-required-by-name" data-shipping-method="<?php echo $i; ?>" data-rate="<?php echo $_rate->getRateId();?>" multiple_ = "multiple_"/>
+
+                            <?php if ($_rate->getCode() === $this->getAddressShippingMethod()): ?>
+                            <script type="text/javascript">
+                                //<![CDATA[
+                                    lastPrice = <?php echo (float)$_rate->getPrice(); ?>;
+                                //]]>
+                            </script>
+                            <?php endif; ?>
+
+                            <?php endif; ?>
+                            <label for="s_method_<?php echo $_rate->getCode() ?>"><?php echo $this->escapeHtml($_rate->getMethodTitle()) ?>
+                            <?php $_excl = $this->getShippingPrice($_rate->getPrice(), $this->helper('tax')->displayShippingPriceIncludingTax()); ?>
+                            <?php $_incl = $this->getShippingPrice($_rate->getPrice(), true); ?>
+                            <?php echo $_excl; ?>
+                            <?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
+                                (<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
+                            <?php endif; ?>
+                            </label>
+                       <?php endif ?>
+                    </li>
+                    <?php if (!$hideAccessoriesOnFrontend):?>
+                        <?php if($_rate->method_description){ ?>
+                            <?php $methodDescription = unserialize($_rate->method_description); ?>
+                            <?php
+                            if($_rate->method_description && !empty($methodDescription->destination)): ?>
+                                <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins<?php echo $i; ?>">Destination:</span>
+
+                                <?php foreach($methodDescription->destination as $origin_acc) {?>
+                                    <li class="shipping-ratio-origins<?php echo $i; ?> shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
+                                        <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
+                                        <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                    </li>
+                                <?php  } ?>
+
+                            <? endif; ?>
+                        <?php } ?>
+                    <?php endif;?>
+                <?php }?>
+                </ul>
+                </div>
+                <div class="clear-both"></div>
+            <?php $i++;}?>
+            </div>
+        </dd>
+        <script type="text/javascript">
+            //<![CDATA[
+            <?php if (!empty($shippingCodePrice)): ?>
+            var shippingCodePrice = {<?php echo implode(',',$shippingCodePrice); ?>};
+            <?php endif; ?>
+
+            $$('input[type="radio"][multiple_="multiple_"]').each(function(el){
+                Event.observe(el, 'click', function(){
+                    if (el.checked == true) {
+                        var getShippingCode = el.getValue();
+
+                        <?php if (!empty($shippingCodePrice)): ?>
+                        var newPrice = shippingCodePrice[getShippingCode];
+
+                        if (!lastPrice) {
+                            lastPrice = newPrice;
+                            quoteBaseGrandTotal += newPrice;
+                        }
+
+                        if (newPrice != lastPrice) {
+                            quoteBaseGrandTotal += (newPrice-lastPrice);
+                            lastPrice = newPrice;
+                        }
+
+                        lastPrice = getRatesSum(shippingCodePrice);
+                        $('shiphawk_shipping_multi_parcel_price').value = lastPrice;
+
+                        <?php endif; ?>
+                        checkQuoteBaseGrandTotal = quoteBaseGrandTotal;
+                        //return false;
+                    }
+
+                    $('s_method_shiphawk_shipping_multi_parcel').checked = true;
+                });
+            });
+
+            function getRatesSum(shippingCodePrice) {
+                var sum = 0;
+                $$('input[type="radio"][multiple_="multiple_"]').each(function(el){
+                    if (el.checked == true) {
+                        var getShippingCode = el.getValue();
+
+                        <?php if (!empty($shippingCodePrice)): ?>
+                        var newPrice = shippingCodePrice[getShippingCode];
+
+                        sum = sum + newPrice;
+                        <?php endif; ?>
+                    }
+                });
+
+                return sum.toFixed(2);
+            }
+
+            /* For couple rates */
+            jQuery("input.shipping-ratios-multiple").change(function(el) {
+                //console.log(el.target);
+                var shippingNumber = el.target.getAttribute('data-shipping-method');
+
+                jQuery('.shipping-ratio-origins'+ shippingNumber + ' input[type=checkbox]').prop('checked', false);
+                jQuery('.shipping-ratio-origins'+ shippingNumber).hide();
+
+                var sh_checked = jQuery("input.shipping-ratios-multiple:checked");
+                if (sh_checked.length > 0) {
+                    jQuery.each( sh_checked, function( key, element ) {
+                        var data_rate = element.getAttribute('data-rate');
+                        showOrigins(data_rate);
+                    });
+                }
+            });
+
+            /* For checked rate */
+            /*if (jQuery("input.shipping-ratios-multiple:checked").length > 0) {
+
+                jQuery("input.shipping-ratios-multiple:checked").each(function(el){
+                    var id = el.data('rate');
+
+                    showOrigins(id);
+                });
+            }*/
+
+            function showOrigins(id) {
+                jQuery('.shipping-ratio-' + id + '-origins').show();
+            }
+            //]]>
+        </script>
+        <? }else { ?>
+            <dt><?php echo $this->escapeHtml($this->getCarrierName($code)) ?></dt>
+            <dd>
+                <ul>
+                    <?php $_sole = $_sole && count($_rates) == 1; foreach ($_rates as $_rate): ?>
+                        <?php $shippingCodePrice[] = "'".$_rate->getCode()."':".(float)$_rate->getPrice(); ?>
+                        <li>
+                            <?php if ($_rate->getErrorMessage()): ?>
+                                <ul class="messages"><li class="error-msg"><ul><li><?php echo $this->escapeHtml($_rate->getErrorMessage()) ?></li></ul></li></ul>
+                            <?php else: ?>
+                            <?php if ($_sole) : ?>
+                                <span class="no-display"><input name="shipping_method" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>" checked="checked" class="shipping-ratios" data-rate="<?php echo $_rate->getRateId();?>"/></span>
+                            <?php else: ?>
+                            <input name="shipping_method" type="radio" value="<?php echo $_rate->getCode() ?>" id="s_method_<?php echo $_rate->getCode() ?>"<?php if($_rate->getCode()===$this->getAddressShippingMethod()) echo ' checked="checked"' ?> class="radio shipping-ratios" data-rate="<?php echo $_rate->getRateId();?>"/>
+
+                            <?php if ($_rate->getCode() === $this->getAddressShippingMethod()): ?>
+                                <script type="text/javascript">
+                                    //<![CDATA[
+                                    lastPrice = <?php echo (float)$_rate->getPrice(); ?>;
+                                    //]]>
+                                </script>
+                            <?php endif; ?>
+
+                            <?php endif; ?>
+                                <label for="s_method_<?php echo $_rate->getCode() ?>"><?php echo $this->escapeHtml($_rate->getMethodTitle()) ?>
+                                    <?php $_excl = $this->getShippingPrice($_rate->getPrice(), $this->helper('tax')->displayShippingPriceIncludingTax()); ?>
+                                    <?php $_incl = $this->getShippingPrice($_rate->getPrice(), true); ?>
+                                    <?php echo $_excl; ?>
+                                    <?php if ($this->helper('tax')->displayShippingBothPrices() && $_incl != $_excl): ?>
+                                        (<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
+                                    <?php endif; ?>
+                                </label>
+                            <?php endif ?>
+                        </li>
+                        <?php if (!$hideAccessoriesOnFrontend):?>
+                            <?php if($_rate->method_description){ ?>
+                                <?php $methodDescription = unserialize($_rate->method_description); ?>
+
+                                <?php
+                                if($_rate->method_description && !empty($methodDescription->destination)): ?>
+                                    <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Destination:</span>
+                                    <?php foreach($methodDescription->destination as $origin_acc) {?>
+                                        <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
+                                            <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
+                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                        </li>
+                                    <?php  }
+                                endif; ?>
+                            <?php } ?>
+                        <?php endif;?>
+                    <?php endforeach; ?>
+                </ul>
+            </dd>
+        <?php } ?>
     <?php endforeach; ?>
     </dl>
 <script type="text/javascript">
@@ -147,11 +324,11 @@ $tt = $address->getTotals();*/
         var id = jQuery("input.shipping-ratios:checked").data('rate');
 
         showOrigins(id);
-    };
+    }
 
     function showOrigins(id) {
         jQuery('.shipping-ratio-' + id + '-origins').show();
-    };
+    }
 //]]>
 </script>
 <?php endif; ?>

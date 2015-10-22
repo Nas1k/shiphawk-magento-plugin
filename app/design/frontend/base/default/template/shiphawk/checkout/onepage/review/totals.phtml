@@ -36,17 +36,17 @@
     <?php
         $session        = Mage::getSingleton('checkout/session');
         $accessories    = $session->getData("shipment_accessories");
-        $currensySymbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
+        $currencySymbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
     ?>
     <?php if (!empty($accessories['data'])):?>
         <tr>
             <td class="a-right" colspan="3">
-                <?php echo $this->helper('sales')->__('Accessorials:') ?><br/>
+                <?php echo $this->helper('sales')->__('Accessories:') ?><br/>
                 <?php foreach($accessories['data'] as $type => $accessor):?>
                     <span class="shipping-ratio-origins-type"><?php echo str_replace("'", '', $type);?></span>
                     <ul>
                         <?php foreach($accessor as $values):?>
-                            <li><?php echo str_replace("'", '', $values['name'] . ' - ' . $currensySymbol . $values['value']);?></li>
+                            <li><?php echo str_replace("'", '', $values['name'] . ' - ' . $currencySymbol . $values['value']);?></li>
                         <?php endforeach;?>
                     </ul>
                     <br/>

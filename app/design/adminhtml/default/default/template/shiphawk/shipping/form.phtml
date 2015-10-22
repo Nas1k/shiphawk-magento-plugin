@@ -66,23 +66,20 @@
                     (<?php echo $this->__('Incl. Tax'); ?> <?php echo $_incl; ?>)
                 <?php endif; ?>
             </div>
-
-
                 <?php
                 $shipment = $this->getShipment();
                 $shipment_price = $shipment->getShiphawkShippingPrice();
-                $accessoriesPriceData = json_decode($_order->getData('shiphawk_shipping_accessories'));
-                $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
-                $shipment_price = $shipment_price + $accessoriesPrice;
+                //$accessoriesPriceData = json_decode($_order->getData('shiphawk_shipping_accessories'));
+                //$accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
+                //$shipment_price = $shipment_price + $accessoriesPrice;
                 $shiphawkShipmentTitle = $shipment->getShiphawkShippingMethodTitle();
                 ?>
             <?php if(!empty($shiphawkShipmentTitle)) { ?>
             <div style=" margin: 10px 0 0;"><strong><?php echo $this->__('Current ShipHawk Shipment Price (incl. accessories):'); ?></strong></div>
             <div>
-                    <strong><?php echo $this->escapeHtml($shiphawkShipmentTitle) ?></strong>
-                    <?php $currensy_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol(); ?>
-                    <?php echo ': ' . $currensy_symbol . $shipment_price; ?>
-
+                <strong><?php echo $this->escapeHtml($shiphawkShipmentTitle) ?></strong>
+                <?php $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol(); ?>
+                <?php echo ': ' . $currency_symbol . $shipment_price; ?>
             </div>
             <?php } ?>
             <?php if ($this->canCreateShippingLabel()): ?>
@@ -98,13 +95,9 @@
             <?php endif ?>
 
             <?php
-
-            foreach($shipment->getAllTracks() as $tracknum)
-            {
+            foreach($shipment->getAllTracks() as $tracknum) {
                 $tracknums[]=$tracknum->getNumber();
             }
-
-
             ?>
             <ul>
                 <?php foreach($tracknums as $ship_num) { ?>
@@ -140,15 +133,10 @@
                             alert(error_html);
                         }else{
                             if(responce_html.bol_url) {
-
-                                // alert(responce_html.bol_url);
-                                //window.location = responce_html.bol_url;
-
                                 window.open(
                                     responce_html.bol_url,
                                     '_blank' // <- This is what makes it open in a new window.
                                 );
-
                             }
                         }
 

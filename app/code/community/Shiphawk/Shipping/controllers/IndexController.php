@@ -51,7 +51,8 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                             $comment = "Shipment status changed to Ready for Carrier Pickup (" . $crated_time['date'] . " at " . $crated_time['time'] . "). Your shipment has been successfully dispatched to the carrier.";
                             break;
                         default:
-                            $comment = "Shipment status is ".$comment = "Shipment status is ";
+                            $comment = "Status was updated to " . $data_from_shiphawk['status'] . " ". $crated_time['date'] . " at " . $crated_time['time'];
+
                     }
 
                     $shipment->addComment($comment);
@@ -72,7 +73,6 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                         $shipment->sendUpdateEmail(true, $comment);
                     }
                 }
-
 
             $shipment->save();
             }catch (Mage_Core_Exception $e) {

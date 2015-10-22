@@ -18,7 +18,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $manual_shipping =  Mage::getStoreConfig('carriers/shiphawk_shipping/book_shipment');
         $shipping_code = $order->getShippingMethod();
-        $shipping_description = $order->getShippingDescription();
+
         $check_shiphawk = Mage::helper('shiphawk_shipping')->isShipHawkShipping($shipping_code);
         if($check_shiphawk !== false) {
 
@@ -27,8 +27,15 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             if (!empty($shLocationType)) $order->setShiphawkLocationType($shLocationType);
 
-            // set ShipHawk rate todo ship to multiply shiping address, only one shipping order save to session
+            //todo ship to multiple shipping address, only one shipping order save to session
+            // set ShipHawk Rates data
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
+
+            $shiphawk_multi_shipping = Mage::getModel('shiphawk_shipping/carrier')->sortMultipleShiping($shiphawk_book_id);
+            $order->setShiphawkMultiShipping(serialize($shiphawk_multi_shipping));
+
+            $chosen_shipping_methods = Mage::getSingleton('checkout/session')->getData('chosen_multi_shipping_methods');
+            $order->setChosenMultiShippingMethods(serialize($chosen_shipping_methods));
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
 
@@ -41,16 +48,16 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
                 $shiphawk_book_id  = $helper->getShipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
-                    //$order->setShiphawkShippingAmount($method_data['price']);
                     $shiphawk_shipping_amount = $method_data['price'];
                     $order->setShiphawkShippingPackageInfo($method_data['packing_info']);
                 }
 
             }else{
                 //if multi origin shipping
-                $shiphawk_shipping_amount = Mage::getSingleton('core/session')->getSummPrice();
-                $shiphawk_shipping_package_info = Mage::getSingleton('core/session')->getPackageInfo();
-                //$order->setShiphawkShippingAmount($shiphawk_shipping_amount);
+
+                //$shiphawk_shipping_package_info = Mage::getSingleton('core/session')->getPackageInfo();
+                $shiphawk_shipping_package_info = _('See Package Info in Shipments');
+                $shiphawk_shipping_amount = Mage::getSingleton('checkout/session')->getData('multiple_price');
                 $order->setShiphawkShippingPackageInfo($shiphawk_shipping_package_info);
             }
 
@@ -83,8 +90,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
             }else{
-
-                // it is for frontend order - accessories saved in checkout_type_onepage_save_order event
+                // it is for frontend order - accessories already saved in checkout_type_onepage_save_order event
                 $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
                 $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData);
 
@@ -106,6 +112,9 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getSingleton('core/session')->unsPackageInfo();
 
         Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+        Mage::getSingleton('checkout/session')->unsetData('multiple_price');
+        Mage::getSingleton('checkout/session')->unsetData('shiphawk_multi_shipping');
+        Mage::getSingleton('checkout/session')->unsetData('chosen_multi_shipping_methods');
     }
 
     /**
@@ -166,12 +175,45 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
     public function setAccessories($observer) {
         $event              = $observer->getEvent();
         $accessories        = $event->getRequest()->getPost('accessories', array());
-        $address            = $event->getQuote()->getShippingAddress();
+        $quote              = $event->getQuote();
+        $address            = $quote->getShippingAddress();
         $grandTotal         = $address->getSubtotal();
         $baseGrandTotal     = $address->getBaseSubtotal();
         $shippingAmount     = $address->getShippingInclTax();
         $baseShippingAmount = $address->getBaseShippingInclTax();
         $session            = Mage::getSingleton('checkout/session');
+
+        if($event->getRequest()->getPost('shipping_method') == 'shiphawk_shipping_Shipping_from_multiple_location') {
+            $shippingAmount = $event->getRequest()->getPost('shiphawk_shipping_multi_parcel_price');
+
+            $params = $event->getRequest()->getPost();
+            $chosen_shipping_methods = array();
+            foreach ($params as $key => $value) {
+                if(($key != 'shiphawk_shipping_multi_parcel_price') && ($key != 'shipping_method') && ($key != 'accessories') ) {
+                    $chosen_shipping_methods[] = $value;
+                }
+            }
+
+            // chosen shipping methods
+            Mage::getSingleton('checkout/session')->setData('chosen_multi_shipping_methods', $chosen_shipping_methods);
+
+            $rates = $address->collectShippingRates()->getGroupedAllShippingRates();
+
+            foreach ($rates as $carrier) {
+                foreach ($carrier as $rate) {
+                    if($rate->getCode() == 'shiphawk_shipping_Shipping_from_multiple_location'){
+                        // multi price for checkout
+                        Mage::getSingleton('checkout/session')->setData('multiple_price_checkout', $shippingAmount);
+                        // multi price for order
+                        Mage::getSingleton('checkout/session')->setData('multiple_price', $shippingAmount);
+                        $rate->setPrice((float) $shippingAmount);
+                        $rate->save();
+                        $address->collectTotals();
+                        break;
+                    }
+                }
+            }
+        }
 
         if (empty($accessories)) {
             $session->setData("shipment_accessories", array());
