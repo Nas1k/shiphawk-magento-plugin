@@ -2,11 +2,16 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.1.11</version>
+            <version>1.1.9</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
         <models>
+            <checkout>
+                <rewrite>
+                    <cart>Shiphawk_Checkout_Model_Cart</cart>
+                </rewrite>
+            </checkout>
             <shiphawk_shipping>
                 <class>Shiphawk_Shipping_Model</class>
                 <resourceModel>shiphawk_resource</resourceModel>
@@ -222,6 +227,7 @@
                 <hide_on_frontend>0</hide_on_frontend>
                 <updates_tracking_url>0</updates_tracking_url>
                 <shipment_status_updates>0</shipment_status_updates>
+                <calc_rate_on_cart_change>1</calc_rate_on_cart_change>
                 <enable_log>1</enable_log>
                 <sort_order>10</sort_order>
                 <model>shiphawk_shipping/carrier</model>
