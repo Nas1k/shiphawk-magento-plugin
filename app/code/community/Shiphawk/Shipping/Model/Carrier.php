@@ -20,25 +20,24 @@ class Shiphawk_Shipping_Model_Carrier
     public function collectRates(Mage_Shipping_Model_Rate_Request $request)
     {
         /** @var Mage_Shipping_Model_Rate_Result $result */
+        /*Check to see if Shiphawk rates should be displayed on frontend*/
         $result = Mage::getModel('shipping/rate_result');
-
         $helper = Mage::helper('shiphawk_shipping');
         $default_origin_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
-
         $hide_on_frontend = Mage::getStoreConfig('carriers/shiphawk_shipping/hide_on_frontend');
         $is_admin = $helper->checkIsAdmin();
         // hide ShipHawk method on frontend , allow only in admin area
         if (($hide_on_frontend == 1) && (!$is_admin)) {
             return $result;
         }
+        /*END*/
 
         /* For location type */
-        $shLocationType  = 'residential';
+        $shLocationType     = 'residential';
         if ($is_admin) {
             // if is admin this means that we have already set the value in setlocationtypeAction
             $shLocationType = Mage::getSingleton('checkout/session')->getData('shiphawk_location_type_shipping');
-        }
-        else {
+        } else {
             $shippingRequest    = Mage::app()->getRequest()->getPost();
 
             if (!empty($shippingRequest['billing'])) {
@@ -58,16 +57,10 @@ class Shiphawk_Shipping_Model_Carrier
                 $shLocationType = $shLocationType != 'commercial' && $shLocationType != 'residential' ? 'residential' : $shLocationType;
             }
         }
-
         $to_zip = $this->getShippingZip();
         $api = Mage::getModel('shiphawk_shipping/api');
         $items = $this->getShiphawkItems($request);
 
-        $grouped_items_by_zip = $this->getGroupedItemsByZip($items);
-
-        $grouped_items_by_carrier_type = $this->getGroupedItemsByCarrierType($items);
-
-        $ship_responces = array();
         $toOrder= array();
         $api_error = false;
         $is_multi_zip = false;
@@ -76,16 +69,21 @@ class Shiphawk_Shipping_Model_Carrier
         $ship_api_calls = array();
         $api_calls_params = array();
 
+        $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin);
+
+        $grouped_items_by_zip = $this->getGroupedItemsByZip($items);
+        $grouped_items_by_carrier_type = $this->getGroupedItemsByCarrierType($items);
+
         if(count($grouped_items_by_zip) > 1)  {
             $is_multi_zip = true;
+            $rate_filter = 'best';
         }
 
         if(count($grouped_items_by_carrier_type) > 1)  {
             $is_multi_carrier = true;
             $is_multi_zip = true;
+            $rate_filter = 'best';
         }
-
-        $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin);
 
         $custom_packing_price_setting = Mage::getStoreConfig('carriers/shiphawk_shipping/shiphawk_custom_packing_price');
 
@@ -96,11 +94,10 @@ class Shiphawk_Shipping_Model_Carrier
         //default origin zip code from config settings
         $from_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
 
-
-
         try {
 
             /* items has various carrier type */
+            //building api calls
             if($is_multi_carrier) {
                 foreach($grouped_items_by_carrier_type as $carrier_type=>$items_) {
 
@@ -109,7 +106,6 @@ class Shiphawk_Shipping_Model_Carrier
                     }else{
                         $carrier_type = '';
                     }
-
 
                     $grouped_items_by_origin = $this->getGroupedItemsByZip($items_);
 
@@ -131,13 +127,11 @@ class Shiphawk_Shipping_Model_Carrier
                                 $grouped_items_by_discount_or_markup = $this->getGroupedItemsByDiscountOrMarkup($items__);
 
                                 foreach($grouped_items_by_discount_or_markup as $mark_up_discount=>$discount_items) {
+
                                     /* get zipcode and location type from first item in grouped by origin (zipcode) products */
-                                    $flat_markup_discount = $discount_items[0]['shiphawk_discount_fixed'];
-
-                                    $percentage_markup_discount = $discount_items[0]['shiphawk_discount_percentage'];
-
                                     $from_zip = $items__[0]['zip'];
                                     $location_type = $items__[0]['location_type'];
+
                                     // 1. multi carrier, multi origin, not origin per product
                                     Mage::Log('getting rates the paramters:  1,1,1');
                                     $ship_api_calls[] = $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
@@ -149,6 +143,10 @@ class Shiphawk_Shipping_Model_Carrier
                                     if($custom_packing_price_setting) {
                                         $custom_products_packing_price = $helper->getCustomPackingPriceSumm($discount_items);
                                     }
+
+                                    //get percentage and flat markup-discount from first item, because all item in group has identical markup-discount
+                                    $flat_markup_discount = $discount_items[0]['shiphawk_discount_fixed'];
+                                    $percentage_markup_discount = $discount_items[0]['shiphawk_discount_percentage'];
 
                                     $tempArray = array(
                                         'discount_items' => $discount_items,
@@ -174,7 +172,8 @@ class Shiphawk_Shipping_Model_Carrier
                                     $helper->sendErrorMessageToShipHawk($rate_error);
                                 }
                             }
-                        }else{ // product items has all required shipping origin fields
+                        }
+                        else{ // product items has all required shipping origin fields
 
                             $grouped_items_per_product_by_zip = $this->getGroupedItemsByZipPerProduct($items__);
 
@@ -239,10 +238,8 @@ class Shiphawk_Shipping_Model_Carrier
 
                                     }
 
-
                                 }else{
                                     $api_error = true;
-
                                     foreach($checkattributes as $rate_error) {
                                         $helper->shlog('ShipHawk error: '.$rate_error);
                                         $helper->sendErrorMessageToShipHawk($rate_error);
@@ -338,7 +335,8 @@ class Shiphawk_Shipping_Model_Carrier
                                 $helper->sendErrorMessageToShipHawk($rate_error);
                             }
                         }
-                    }else{
+                    }
+                    else{
 
                         /* product items has per product origin, grouped by zip code */
                         $grouped_items_per_product_by_zip = $this->getGroupedItemsByZipPerProduct($items_);
@@ -381,6 +379,7 @@ class Shiphawk_Shipping_Model_Carrier
                                     $ship_api_calls[] = $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
 
                                     $helper->shlog($discount_items, 'shiphawk-items-request.log');
+                                    // $helper->shlog($responceObject, 'shiphawk-rate-responce.log');
 
                                     $custom_products_packing_price = 0;
 
@@ -439,8 +438,14 @@ class Shiphawk_Shipping_Model_Carrier
             }
             //end multi curl
 
+            Mage::Log('api response count:');
+            Mage::Log(count($api_responses));
+            Mage::Log('api param count:');
+            Mage::Log(count($api_calls_params));
+
+
             //proccess responses into old data objects
-            for($i = 0; $i < count($api_responses) - 1; $i++) {
+            for($i = 0; $i < count($api_responses); $i++) {
 
                 if(is_object($api_responses[$i])) {
                     $api_error = true;
@@ -449,7 +454,7 @@ class Shiphawk_Shipping_Model_Carrier
                     $helper->sendErrorMessageToShipHawk($shiphawk_error);
                 }else{
                     // if $rate_filter = 'best' then it is only one rate
-                    if(($is_multi_zip)||($rate_filter == 'best')) {
+                    if($rate_filter == 'best') {
 
                         $toOrder[$api_responses[$i][0]->id]['product_ids'] = $this->getProductIds($api_calls_params[$i]['discount_items']);
                         //$toOrder[$responceObject[0]->id]['price'] = $helper->getSummaryPrice($responceObject[0], $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
@@ -468,6 +473,7 @@ class Shiphawk_Shipping_Model_Carrier
                     }else{
                         Mage::getSingleton('core/session')->setMultiZipCode(false);
                         foreach ($api_responses[$i] as $responseItem) {
+
                             $toOrder[$responseItem->id]['product_ids'] = $this->getProductIds($api_calls_params[$i]['discount_items']);
                             //$toOrder[$responce->id]['price'] = $helper->getSummaryPrice($responce, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price);
                             $toOrder[$responseItem->id]['price'] = $helper->getShipHawkPrice($responseItem, $self_pack, $charge_customer_for_packing);
@@ -493,6 +499,7 @@ class Shiphawk_Shipping_Model_Carrier
             }
             //end process responses into old data objects
 
+
             if(!$api_error) {
                 $services               = $this->getServices($api_responses, $toOrder, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting);
                 $name_service           = '';
@@ -504,7 +511,6 @@ class Shiphawk_Shipping_Model_Carrier
 
                 $chipiest_rate_id = $this->_getChipiestRateId($services);
 
-                Mage::Log('in service code');
 
                 foreach ($services as $id_service=>$service) {
                     if (!$is_multi_zip) {
@@ -590,9 +596,9 @@ class Shiphawk_Shipping_Model_Carrier
             }
 
         }catch (Mage_Core_Exception $e) {
-            Mage::logException($e->getMessage());
+            Mage::logException($e);
         } catch (Exception $e) {
-            Mage::logException($e->getMessage());
+            Mage::logException($e);
         }
 
         return $result;
@@ -651,7 +657,7 @@ class Shiphawk_Shipping_Model_Carrier
         $rate->setPrice($price);
         $rate->setCost($price);
         if(!empty($accessorial)) {
-           $rate->setMethodDescription(serialize($accessorial));
+            $rate->setMethodDescription(serialize($accessorial));
 
         }
 
@@ -677,7 +683,8 @@ class Shiphawk_Shipping_Model_Carrier
             }
 
             $type_id = $product->getTypeId();
-            if($type_id == 'simple') {
+            $parent_item = $item->getParentItem();
+            if(($type_id == 'simple')&&(empty($parent_item))) {
                 $product_qty = (($product->getShiphawkQuantity() > 0)) ? $product->getShiphawkQuantity() : 1;
 
                 /** @var $helper Shiphawk_Shipping_Helper_Data */
@@ -693,7 +700,47 @@ class Shiphawk_Shipping_Model_Carrier
                     'height' => $product->getShiphawkHeight(),
                     'weight' => ($product->getWeight()) ? ($product->getWeight()) : 0,
                     'value' => $this->getShipHawkItemValue($product),
-                    //'quantity' => $product_qty*$item->getQty(),
+                    'quantity' => $product_qty*$qty_ordered,
+                    'packed' => $this->getIsPacked($product),
+                    'id' => $product->getShiphawkTypeOfProductValue(),
+                    'zip'=> $this->getOriginZip($product),
+                    'product_id'=> $product_id,
+                    'xid'=> $product_id,
+                    'origin'=> $this->getShiphawkShippingOrigin($product),
+                    'location_type'=> $this->getOriginLocation($product),
+                    'require_crating'=> false,
+                    'nmfc'=> '',
+                    'freight_class'=> $freightClassValue,
+                    'shiphawk_carrier_type'=> $carrier_type,
+                    'shiphawk_discount_fixed'=> $product->getShiphawkDiscountFixed(),
+                    'shiphawk_discount_percentage'=> $product->getShiphawkDiscountPercentage(),
+                    'shiphawk_custom_packing_price'=> (($this->getIsPacked($product) == 'true')&&($custom_packing_price_setting)) ? null  : $product->getShiphawkCustomPackingPrice(),
+                );
+            }
+
+            // single product in Bundle Product
+            if(($type_id == 'simple')&&(is_object($parent_item))) {
+                $product_qty = (($product->getShiphawkQuantity() > 0)) ? $product->getShiphawkQuantity() : 1;
+
+                $qty_bundle_product = $parent_item->getQty();
+
+                if($qty_bundle_product > 0) {
+                    $product_qty = $qty_bundle_product * $product_qty;
+                }
+
+                /** @var $helper Shiphawk_Shipping_Helper_Data */
+                $helper = Mage::helper('shiphawk_shipping');
+                $carrier_type = $helper->getProductCarrierType($product);
+
+                //hack for admin shipment in popup
+                $qty_ordered = ($item->getQty() > 0 ) ? $item->getQty() : $item->getData('qty_ordered');
+
+                $items[] = array(
+                    'width' => $product->getShiphawkWidth(),
+                    'length' => $product->getShiphawkLength(),
+                    'height' => $product->getShiphawkHeight(),
+                    'weight' => ($product->getWeight()) ? ($product->getWeight()) : 0,
+                    'value' => $this->getShipHawkItemValue($product),
                     'quantity' => $product_qty*$qty_ordered,
                     'packed' => $this->getIsPacked($product),
                     'id' => $product->getShiphawkTypeOfProductValue(),
@@ -861,7 +908,7 @@ class Shiphawk_Shipping_Model_Carrier
 
         $t = array();
         foreach ($services as $id_service=>$service) {
-                $t[$id_service] = $service['price'];
+            $t[$id_service] = $service['price'];
         }
 
         asort($t);
