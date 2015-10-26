@@ -1,6 +1,50 @@
 <?php
 class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 {
+    public function buildShiphawkRequest($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType){
+        $helper = Mage::helper('shiphawk_shipping');
+        $api_key = $helper->getApiKey();
+        //$url_api_rates = $helper->getApiUrl() . 'rates/full?api_key=' . $api_key;
+        $url_api_rates = $helper->getApiUrl() . 'rates?api_key=' . $api_key;
+
+        $curl = curl_init();
+
+        if($carrier_type == '') {
+            $items_array = array(
+                'from_zip'=> $from_zip,
+                'to_zip'=> $to_zip,
+                'rate_filter' => $rate_filter,
+                'items' => $items,
+                'from_type' => $location_type,
+                'to_type' => $shLocationType,
+            );
+        }else{
+            $items_array = array(
+                'from_zip'=> $from_zip,
+                'to_zip'=> $to_zip,
+                'rate_filter' => $rate_filter,
+                'carrier_type' => $carrier_type,
+                'items' => $items,
+                'from_type' => $location_type,
+                'to_type' => $shLocationType,
+            );
+        }
+
+        $items_array =  json_encode($items_array);
+
+        curl_setopt($curl, CURLOPT_URL, $url_api_rates);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $items_array);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($items_array)
+            )
+        );
+
+        return $curl;
+    }
+
     public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType) {
 
         $helper = Mage::helper('shiphawk_shipping');
