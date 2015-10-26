@@ -14,6 +14,16 @@ class Shiphawk_Shipping_Helper_Data extends
     }
 
     /**
+     * Get Calculate Rate on Cart Change
+     *
+     * @return mixed
+     */
+    public function getCalcRateOnCartChange()
+    {
+        return Mage::getStoreConfig('carriers/shiphawk_shipping/calc_rate_on_cart_change');
+    }
+
+    /**
      * Get callback url for shipments
      *
      * @return mixed
