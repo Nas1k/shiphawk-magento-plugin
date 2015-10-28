@@ -50,7 +50,6 @@ class Shiphawk_Shipping_Model_Carrier
         $api_error = false;
         $is_multi_zip = false;
         $is_multi_carrier = false;
-        $ship_api_calls = array();
         $api_calls_params = array();
 
 
@@ -147,7 +146,6 @@ class Shiphawk_Shipping_Model_Carrier
 
                                     // 1. multi carrier, multi origin, not origin per product
                                     Mage::Log('getting rates the paramters:  1,1,1');
-                                    //$ship_api_calls[] = $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
 
                                     $tempArray = array(
                                         'api_call' => $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType),
@@ -202,7 +200,6 @@ class Shiphawk_Shipping_Model_Carrier
 
                                         // 2. multi carrier, multi origin, origin per product
                                         Mage::Log('getting rates the paramters:  1,1,2');
-                                        //$ship_api_calls[] = $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
 
                                         $tempArray = array(
                                             'api_call' => $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType),
@@ -279,7 +276,6 @@ class Shiphawk_Shipping_Model_Carrier
 
                                 // 3. one carrier, multi origin, not origin per product
                                 Mage::Log('getting rates the paramters:  2,1,1');
-                                //$ship_api_calls[] = $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
 
                                 $tempArray = array(
                                     'api_call' => $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType),
@@ -334,7 +330,6 @@ class Shiphawk_Shipping_Model_Carrier
 
                                     // 4. one carrier, multi origin, origin per product
                                     Mage::Log('getting rates the paramters:  2,1,2');
-                                    //$ship_api_calls[] = $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType);
 
                                     $tempArray = array(
                                         'api_call' => $api->buildShiphawkRequest($from_zip, $to_zip, $discount_items, $rate_filter, $carrier_type, $location_type, $shLocationType),
