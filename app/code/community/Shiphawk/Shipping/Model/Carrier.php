@@ -369,9 +369,19 @@ class Shiphawk_Shipping_Model_Carrier
                 curl_multi_add_handle($mh, $api_data['api_call']);
             }
 
-            do{
-                curl_multi_exec($mh, $running);
-            } while ($running);
+            $active = null;
+            do {
+                $mrc = curl_multi_exec($mh, $active);
+            } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+
+            while ($active && $mrc == CURLM_OK){
+                if (curl_multi_select($mh) == -1){
+                    continue;
+                }
+                do{
+                    $mrc = curl_multi_exec($mh, $active);
+                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+            }
 
             foreach ($api_calls_params as $api_data){
                 curl_multi_remove_handle($mh, $api_data['api_call']);

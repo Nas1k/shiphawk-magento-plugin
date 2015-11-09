@@ -8,6 +8,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
     }
 
     public function salesOrderPlaceAfter($observer) {
+        Mage::log('code Block 1: sale order place');
         $event = $observer->getEvent();
         $order = $event->getOrder();
         $orderId = $order->getId();
@@ -71,7 +72,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                         }
                     }
                 }
-
+                Mage::log('BLOCK 1.1: checkout prices');
                 $newAccessoriesPrice    = $order->getShippingAmount() + $accessoriesPrice;
                 $newGtandTotal          = $order->getGrandTotal() + $accessoriesPrice;
 
@@ -116,6 +117,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
      * @version 20150617
      */
     public function recalculationTotals($observer) {
+        Mage::log('code Block 2: recal tots');
         $event          = $observer->getEvent();
         $address        = $event->getQuoteAddress();
 
@@ -126,11 +128,17 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         // we have no accessories on cart page
         $is_it_cart_page = Mage::helper('shiphawk_shipping')->checkIsItCartPage();
 
+        Mage::log('checkout prices');
+        Mage::log($accessories);
+        Mage::log($method);
+        Mage::log($is_it_cart_page);
         if (empty($accessories['accessories_price']) || !$method || $is_it_cart_page) {
             return;
         }
 
         $totals = Mage::getSingleton('checkout/session')->getQuote()->getTotals();
+        Mage::log('CODE BLOCK  2.1');
+        //Mage::log($totals);
         $discount = 0;
         if(isset($totals['discount'])&&$totals['discount']->getValue()) {
             $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
@@ -164,6 +172,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
      * @version 20150617
      */
     public function setAccessories($observer) {
+        Mage::log('CODE BLOCK 6: set access');
         $event              = $observer->getEvent();
         $accessories        = $event->getRequest()->getPost('accessories', array());
         $address            = $event->getQuote()->getShippingAddress();
@@ -210,6 +219,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
      * @version 20150618
      */
     public function saveAccessoriesInOrder($observer) {
+        Mage::log('CODE BLOCK 5: save access');
         $event = $observer->getEvent();
         $order = $event->getOrder();
 
@@ -248,6 +258,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
      * @version 20150626
      */
     public function overrideShippingCost($observer) {
+        Mage::log('block 3: overriding shipping');
         $event          = $observer->getEvent();
         $order          = $event->getOrder();
         $subTotal       = $order->getSubtotal();
@@ -258,9 +269,19 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             return;
         }
 
+        $totals = Mage::getSingleton('adminhtml/session_quote')->getQuote()->getTotals();
+        $discount = 0;
+        if(isset($totals['discount']) && $totals['discount']->getValue()) {
+            $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
+        }
+        $tax = 0;
+        if(isset($totals['tax']) && $totals['tax']->getValue()) {
+            $tax = round($totals['tax']->getValue(), 2); //Discount value if applied
+        }
+
         $overrideCost   = floatval($overrideCost);
 
-        $grandTotal = $subTotal + $overrideCost;
+        $grandTotal = $subTotal + $overrideCost + $discount + $tax;
 
         $order->setShippingAmount($overrideCost);
         $order->setBaseShippingAmount($overrideCost);
@@ -290,6 +311,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
      * @param $observer
      */
     public function  addAccessoriesToTotals($observer) {
+        Mage::log('Code Block 4 : accessorial');
 
         if(!Mage::helper('shiphawk_shipping')->checkIsAdmin()) {
             return;
@@ -304,9 +326,11 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $shippingAmount     = $address->getShippingAmount();
 
+        Mage::log('pre 4.1');
         if(empty($shippingAmount)) {
             return;
         }
+        Mage::log('CODE BLOCK 4.1');
 
         $baseShippingAmount = $address->getBaseShippingAmount();
 
@@ -318,13 +342,34 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $totals = Mage::getSingleton('adminhtml/session_quote')->getQuote()->getTotals();
         $discount = 0;
-        if(isset($totals['discount'])&&$totals['discount']->getValue()) {
+        if(isset($totals['discount']) && $totals['discount']->getValue()) {
             $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
         }
+        $tax = 0;
+        if(isset($totals['tax']) && $totals['tax']->getValue()) {
+            $tax = round($totals['tax']->getValue(), 2); //Discount value if applied
+        }
+        Mage::log('t');
+        Mage::log('shipping');
+        Mage::log($shippingAmount);
+        Mage::log('base shipping');
+        Mage::log($baseShippingAmount);
+        Mage::log('acc');
+        Mage::log($accessories_price_admin);
+        Mage::log('discount');
+        Mage::log($discount);
+        Mage::log('grandtot');
+        Mage::log($grandTotal);
+        Mage::log('base grand tot');
+        Mage::log($baseGrandTotal);
+        Mage::log('taxes');
+        Mage::log($tax);
+        Mage::log('tt');
 
         $address->setShippingAmount($newShippingPrice);
         $address->setBaseShippingAmount($baseShippingAmount + $accessories_price_admin);
-        $address->setGrandTotal($grandTotal + $newShippingPrice + ($discount));
+        $address->setGrandTotal($grandTotal + $newShippingPrice + ($discount) +  ($tax));
+        //$address->setGrandTotal(1234);
         $address->setBaseGrandTotal($baseGrandTotal + $newShippingBasePrice);
 
         Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
@@ -333,10 +378,12 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             return;
         }
 
+        Mage::log('CODE BLOCK 4.2');
+
         $overrideCost   = floatval($shiphawk_override_cost);
 
         $subTotal       = $address->getSubtotal();
-        $grandTotal = $subTotal + $overrideCost;
+        $grandTotal = $subTotal + $overrideCost + $discount + $tax;
 
 
         $address->setShippingAmount($overrideCost);
