@@ -15,20 +15,21 @@
     $summ_price = $result['summ_price'];
     $rate_filter = $result['rate_filter'];
     $name_service = $result['name_service'];
+    $multiple_shipments_id = $result['multiple_shipments_id'];
 
     $order_id = $order->getId();
     $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
 
-    $error_text = Mage::getSingleton('core/session')->getData('error_price_text', true); // clear data after get
+    $error_text = Mage::getSingleton('core/session')->getData('error_price_text', true); // 'true' for clear data after get
 ?>
 <?php if(!empty($error_text)) { ?>
 <div id="error_text_"><?php echo $error_text ?></div>
-<?php } ?>
+<?php } else { ?>
 <form class="my-form" name="shiphawk_form" id="shiphawk_form">
     <input type="hidden" value="<?php echo $order_id ?>" name="order_id">
     <input type="hidden" value="<?php echo $is_multi_zip ?>" name="is_multi">
 
-<?php if ($is_multi_zip == 0) { ?>
+<?php if (!$is_multi_zip) { ?>
     <ul>
         <?php foreach ($toOrder as $rate_id=>$shipments_data ) {
             $shipment_value = 'shiphawk_shipping_' . $shipments_data['name'];
@@ -38,8 +39,8 @@
             $_radioProperty = 'name="shipping_method" type="radio" class="shipping-ratios" data-rate="' .$rate_id . '"';
             ?>
                 <li>
-                    <input <?php echo $_radioProperty ?> value="<?php echo $rate_id ?>" id="<?php echo $shipment_id ?>" class="shipping-ratios">
-                    <label for="<?php echo $shipment_id ?>"><?php echo $shipments_data['carrier'] . ' - '. $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' - ' . $currency_symbol . $shipping_price ?></span></label>
+                    <input <?php echo $_radioProperty ?> value="<?php echo $rate_id ?>" id="<?php echo $rate_id ?>" class="shipping-ratios">
+                    <label for="<?php echo $rate_id ?>"><?php echo $shipments_data['carrier'] . ' - '. $shipments_data['name'] . ' ' ?><span class="price"><?php echo ' - ' . $currency_symbol . $shipping_price ?></span></label>
                 </li>
                 <?php foreach ($carrier_accessorial as $type => $accessories): ?>
                     <?php if (count($accessories) > 0) { ?>
@@ -65,6 +66,7 @@
     <ul>
             <li>
                 <input type="hidden" value="<?php echo $summ_price ?>" name="multi_price">
+                <input type="hidden" value="<?php echo $multiple_shipments_id ?>" name="multiple_shipments_id">
                 <input checked name="shipping_method" type="radio" value="<?php echo $name_service ?>" id="<?php echo 'multi_origin' ?>" class="radio">
                 <label for="<?php echo 'multi_origin' ?>"><?php echo $name_service . ' ' ?><span class="price"><?php echo ' - ' . $currency_symbol . $summ_price ?></span></label>
             </li>
@@ -77,7 +79,7 @@
 
 <div id="formSuccess" style="display:none;">&nbsp;</div>
 
-
+<?php }?>
 <script type="text/javascript">
     //<![CDATA[
 
@@ -95,14 +97,16 @@
                 $('formSuccess').show();
                 $('formSuccess').update(responce_html);
                 $('error_text_').hide();
+                setTimeout('parent.location.reload()', 3000);
 
-                setTimeout('parent.location.reload()', 2000);
             },
             onComplete:function(request, json) {
                 Element.hide($('shiphawk_form'));
                 responce_html  = JSON.parse(transport.responseText);
                 $('formSuccess').show();
                 $('formSuccess').update(responce_html);
+                setTimeout('parent.location.reload()', 3000);
+
             }
         });
 
@@ -111,6 +115,7 @@
     new Event.observe($('submitshiphawk'), 'click', function(e){
         e.stop();
         doAjax();
+       
     });
 
     /* For couple rates */

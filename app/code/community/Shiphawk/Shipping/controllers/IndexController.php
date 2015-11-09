@@ -174,6 +174,34 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
         $this->getResponse()->setBody( json_encode($responce) );
     }
 
+    public function statesAction() {
+        $region_id = trim(strip_tags($this->getRequest()->getPost('state_id')));
+
+        $is_mass_action = $this->getRequest()->getPost('is_mass_action');
+
+        $regions = Mage::helper('shiphawk_shipping')->getRegions();
+
+        $response = '<select name="product[shiphawk_origin_state]" id="shiphawk_origin_state">';
+
+        if($is_mass_action == 1) {
+            $response = '<select name="attributes[shiphawk_origin_state]" id="shiphawk_origin_state" disabled>';
+        }
+
+        $response .= '<option value=""></option>';
+
+        foreach($regions as $region) {
+            if ($region['value'] != $region_id) {
+                $response .= '<option value="'.$region['value'].'">'.$region['label']. '</option>';
+            }else{
+                $response .= '<option selected value="'.$region['value'].'">'.$region['label'].  '</option>';
+            }
+        }
+
+        $response .='</select>';
+
+        $this->getResponse()->setBody( json_encode($response) );
+    }
+
     public function getbolAction() {
 
         $shipments_id = $this->getRequest()->getPost('shipments_id');
@@ -191,11 +219,8 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
                 $responce['bol_url'] = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB) . 'media' . DS . 'shiphawk'. DS .'bol' . DS . $shipments_id . '.pdf';
                 $this->getResponse()->setBody( json_encode($responce) );
             }else{
-
                 file_put_contents($BOLpdf, file_get_contents($responce_BOL->url));
-
                 $responce['bol_url'] = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB) . 'media' . DS . 'shiphawk'. DS .'bol' . DS . $shipments_id . '.pdf';
-
                 $this->getResponse()->setBody( json_encode($responce) );
             }
 
@@ -205,8 +230,26 @@ class Shiphawk_Shipping_IndexController extends Mage_Core_Controller_Front_Actio
             }
 
             $this->getResponse()->setBody( json_encode($responce) );
-
         }
 
+    }
+
+    /**
+     * Set required *destination* accessorials *prior* to getting a rate.
+     *
+     * @version 20150701
+     */
+    public function  prioraccessorialsAction() {
+        $params = $this->getRequest()->getParams();
+        $accessories_id = $params['accessories_id'];
+        $unset_id = $params['unset_id'];
+
+        Mage::getSingleton('checkout/session')->setData($accessories_id, $accessories_id);
+
+        if ($unset_id == 1) {
+            Mage::getSingleton('checkout/session')->unsetData($accessories_id);
+        }
+
+        $this->getResponse()->setBody('Update accessories');
     }
 }

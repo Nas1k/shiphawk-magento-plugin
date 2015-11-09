@@ -67,7 +67,7 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
             <input name="shiphawk_shipping_multi_parcel_price" type="hidden" value=""  id="shiphawk_shipping_multi_parcel_price" />
         </dd>
         <dd>
-            <div class="sub-title">
+            <div class="sub-title" id="sub-title" style="display: none">
             <?php $_sole = $_sole && count($_rates) == 1;
             $i=0; $t = count($rates_grouped_by_items);
             foreach($rates_grouped_by_items as $items_ids=>$_shiphawk_rates) {?>
@@ -126,8 +126,9 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
 
                                 <?php foreach($methodDescription->destination as $origin_acc) {?>
                                     <li class="shipping-ratio-origins<?php echo $i; ?> shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
-                                        <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
+                                        <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" onclick=" var el_id = 'hiddenaccessorial_' + id; if ($(el_id).disabled) { $(el_id).disabled = false; }else{ $(el_id).disabled = true;}" />
                                         <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                        <input type="hidden" id="hiddenaccessorial_<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" disabled name="hdaccess['s_method_<?php echo $_rate->getCode() ?>']['<?php echo $origin_acc->id ?>']" value="<?php echo $origin_acc->id ?>">
                                     </li>
                                 <?php  } ?>
 
@@ -193,6 +194,32 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
 
                 return sum.toFixed(2);
             }
+
+            function ckAccess (id) {
+                var el_id = 'hiddenaccessorial_' + id;
+
+                if ($(el_id).disabled) {
+                    $(el_id).disabled = false;
+                }else{
+                    $(el_id).disabled = true;
+                }
+            }
+
+            if($('s_method_shiphawk_shipping_multi_parcel').checked == true) {
+                $('sub-title').setStyle({display: 'block'});
+            }else{
+                $('sub-title').setStyle({display: 'none'});
+            }
+
+            $$('input[type="radio"][name="shipping_method"]').each(function(el){
+                Event.observe(el, 'click', function(){
+                    if($('s_method_shiphawk_shipping_multi_parcel').checked == true) {
+                        $('sub-title').setStyle({display: 'block'});
+                    }else{
+                        $('sub-title').setStyle({display: 'none'});
+                    }
+                });
+            });
 
             /* For couple rates */
             jQuery("input.shipping-ratios-multiple").change(function(el) {

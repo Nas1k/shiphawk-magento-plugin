@@ -31,8 +31,21 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
             $is_multi_zip = (count($shiphawk_multi_shipping) > 1) ? true : false;
             $is_admin = $helper->checkIsAdmin();
+            $is_backend_order = $helper->checkIfOrderIsBackend($order);
+            $multi_front = null;
 
             $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin, $order);
+
+            $pre_accessories = null;
+
+            $accessories_for_rates = unserialize($order->getShiphawkCustomerAccessorials());
+
+            $accessories_per_carriers = unserialize($order->getChosenAccessoriesPerCarrier());
+
+            if (!empty($accessories_for_rates))
+            foreach ($accessories_for_rates as $access_rate) {
+                $pre_accessories[$access_rate] = 'true';
+            }
 
             $accessories = array();
 
@@ -46,20 +59,43 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $carrier_type = $rates_data[0]['carrier_type'];
                         $self_pack = $rates_data[0]['self_pack'];
 
-                        $responceObject = $api->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
+                        $responseObject = $api->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
 
-                        //todo error ?
-                        foreach ($responceObject as $responce) {
-                            $shipping_price = (string) $helper->getShipHawkPrice($responce, $self_pack);
-                            foreach($chosen_shipping_methods as $shipping_code) {
-                                if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
-                                    $rate_id        = $responce->id;
-                                    $accessories    = $responce->shipping->carrier_accessorial;
-                                    $rate_name      = $carrier_model->_getServiceName($responce);
-                                    $shipping_price = $helper->getShipHawkPrice($responce, $self_pack);
-                                    $pakage_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($responce); // TODO get package info
-                                    $is_rate = true;
-                                    break 2;
+                        if(is_object($responseObject))
+                        if (property_exists($responseObject, 'error')) {
+                            Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                            $helper->shlog('ShipHawk response: '.$responseObject->error);
+                            $helper->sendErrorMessageToShipHawk($responseObject->error);
+                        };
+
+                        foreach ($responseObject as $response) {
+                            $shipping_price = (string) $helper->getShipHawkPrice($response, $self_pack);
+                            if($is_backend_order) {
+                                $shipping_price = round ($helper->getShipHawkPrice($response, $self_pack),2);
+                                foreach ($shiphawk_rate_data as $rate_data) {
+                                    if(round ($rate_data['price'], 2) == $shipping_price) {
+                                        $rate_id        = $response->id;
+                                        $accessories    = $response->shipping->carrier_accessorial;
+                                        $rate_name      = $carrier_model->_getServiceName($response);
+                                        $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
+                                        $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
+                                        $is_rate = true;
+                                        break 2;
+                                    }
+                                }
+                            }else{
+                                foreach($chosen_shipping_methods as $shipping_code) {
+                                    if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
+                                        $rate_id        = $response->id;
+                                        $accessories_from_rate    = $response->shipping->carrier_accessorial;
+                                        $accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers);
+                                        $rate_name      = $carrier_model->_getServiceName($response);
+                                        $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
+                                        $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
+                                        $is_rate = true;
+                                        $multi_front = true;
+                                        break 2;
+                                    }
                                 }
                             }
                         }
@@ -67,10 +103,14 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         if($is_rate == true) {
 
                             // add book
-                            $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories, false, $self_pack);
+                            $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories, false, $self_pack, null, $multi_front);
 
                             $orderAccessories = $order->getData('shiphawk_shipping_accessories');
-                            $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
+                            if($multi_front) {
+                                $accessoriesPrice = $helper->getCurrentAccessoriesPrice($accessories, $orderAccessories);
+                            }else{
+                                $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
+                            }
 
                             if (property_exists($track_data, 'error')) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -81,8 +121,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                             $shipment = $api->_initShipHawkShipment($order,$rates_data[0]);
                             $shipment->register();
+
                             $shippingShipHawkAmount = $shipping_price + $accessoriesPrice;
-                            $api->_saveShiphawkShipment($shipment, $rate_name, $shippingShipHawkAmount); // save shipping price incl accessories price
+                            $api->_saveShiphawkShipment($shipment, $rate_name, $shippingShipHawkAmount, $package_info); // save shipping price incl accessories price
 
                             // add track
                             if($track_data->details->id) {
@@ -113,19 +154,26 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                     $self_pack = $products_ids['self_pack'];
 
-                    $responceObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
+                    $responseObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
+
+                    if(is_object($responseObject))
+                    if (property_exists($responseObject, 'error')) {
+                        Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                        $helper->shlog('ShipHawk response: '.$responseObject->error);
+                        $helper->sendErrorMessageToShipHawk($responseObject->error);
+                    };
 
                     $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
                     $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
                     // ShipHawk Shipping Amount includes accessories price
                     $original_shipping_price = floatval($order->getShiphawkShippingAmount() - $accessoriesPrice);
-                    foreach ($responceObject as $responce) {
+                    foreach ($responseObject as $response) {
 
                         // shipping rate price from new response
-                        $shipping_price = $helper->getShipHawkPrice($responce, $self_pack);
+                        $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                         if(round($original_shipping_price,2) == round($shipping_price,2)) {
-                            $rate_id        = $responce->id;
-                            $accessories    = $responce->shipping->carrier_accessorial;
+                            $rate_id        = $response->id;
+                            $accessories    = $response->shipping->carrier_accessorial;
                             $is_rate = true;
                             break;
                         }
@@ -152,6 +200,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             $api->addTrackNumber($shipment, $track_data->details->id);
                             $api->subscribeToTrackingInfo($shipment->getId());
                         }
+
+                        $shipmentCreatedMessage = $this->__('The shipment has been created.');
+                        $this->_getSession()->addSuccess($shipmentCreatedMessage);
 
                     }else{
                         //Mage::getSingleton('core/session')->addError("Unfortunately the method that was chosen by a customer during checkout is currently unavailable. Please contact ShipHawk's customer service to manually book this shipment.");
@@ -216,6 +267,10 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             $multi_price = $params['multi_price'];
         }
 
+        if(array_key_exists('multiple_shipments_id', $params) ) {
+            $multiple_shipments_id = unserialize($params['multiple_shipments_id']);
+        }
+
         $shipmentCreatedMessage = $this->__('Something went wrong');
 
         try {
@@ -250,7 +305,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                 }
                             }
 
-                            $track_data = $api->toBook($order,$rate_id,$products_ids, $accessoriesData, true, $self_pack, true);
+                            $track_data = $api->toBook($order,$rate_id,$products_ids, $accessoriesData, true, $self_pack, true, null);
 
                             if (property_exists($track_data, 'error')) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -276,34 +331,37 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             $this->_getSession()->addSuccess($shipmentCreatedMessage);
                         }
                     }else{
-                        $self_pack = $products_ids['self_pack'];
-                        $accessories = array();
-                        if(array_key_exists('accessories', $params)) {
-                            $accessories = $params['accessories'];
+                        if(in_array($products_ids['rate_price_for_group'], $multiple_shipments_id)) {
+                            // multi parcel shipping. book shipments with cheapest price.
+                            $self_pack = $products_ids['self_pack'];
+                            $accessories = array();
+                            /*if(array_key_exists('accessories', $params)) {
+                                $accessories = $params['accessories'];
+                            }*/
+                            $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, true, null);
+
+                            if (property_exists($track_data, 'error')) {
+                                Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                                $helper->shlog('ShipHawk response: ' . $track_data->error);
+                                continue;
+                            }
+
+                            $order->setShiphawkShippingAmount($multi_price);
+                            $order->save();
+
+                            $shipment = $api->_initShipHawkShipment($order, $products_ids);
+                            $shipment->register();
+                            $api->_saveShiphawkShipment($shipment, $products_ids['name'], $products_ids['price']);
+
+                            // add track
+                            $track_number = $track_data->details->id;
+
+                            $api->addTrackNumber($shipment, $track_number);
+                            $api->subscribeToTrackingInfo($shipment->getId());
+
+                            $shipmentCreatedMessage = $this->__("The multi-origin shipment's has been created.");
+                            $this->_getSession()->addSuccess($shipmentCreatedMessage);
                         }
-                        $track_data = $api->toBook($order,$rate_id,$products_ids, $accessories, false, $self_pack);
-
-                        if (property_exists($track_data, 'error')) {
-                            Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                            $helper->shlog('ShipHawk response: '.$track_data->error);
-                            continue;
-                        }
-
-                        $order->setShiphawkShippingAmount($multi_price);
-                        $order->save();
-
-                        $shipment = $api->_initShipHawkShipment($order,$products_ids);
-                        $shipment->register();
-                        $api->_saveShiphawkShipment($shipment, $products_ids['name'], $products_ids['price']);
-
-                        // add track
-                        $track_number = $track_data->details->id;
-
-                        $api->addTrackNumber($shipment, $track_number);
-                        $api->subscribeToTrackingInfo($shipment->getId());
-
-                        $shipmentCreatedMessage = $this->__("The multi-origin shipment's has been created.");
-                        $this->_getSession()->addSuccess($shipmentCreatedMessage);
                     }
             }
 

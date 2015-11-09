@@ -43,6 +43,9 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $shiphawkRateFilter = Mage::getSingleton('core/session')->getShiphawkRateFilter();
             $order->setShiphawkRateFilter($shiphawkRateFilter);
 
+            $chosen_accessories_per_carrier = Mage::getSingleton('checkout/session')->getData('chosen_accessories_per_carrier');
+            $order->setChosenAccessoriesPerCarrier(serialize($chosen_accessories_per_carrier));
+
             //shiphawk_shipping_amount
             if($multi_zip_code == false) {
 
@@ -54,8 +57,6 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             }else{
                 //if multi origin shipping
-
-                //$shiphawk_shipping_package_info = Mage::getSingleton('core/session')->getPackageInfo();
                 $shiphawk_shipping_package_info = _('See Package Info in Shipments');
                 $shiphawk_shipping_amount = Mage::getSingleton('checkout/session')->getData('multiple_price');
                 $order->setShiphawkShippingPackageInfo($shiphawk_shipping_package_info);
@@ -80,22 +81,28 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 }
 
                 $newAccessoriesPrice    = $order->getShippingAmount() + $accessoriesPrice;
-                $newGtandTotal          = $order->getGrandTotal() + $accessoriesPrice;
+                $newGrandTotal          = $order->getGrandTotal() + $accessoriesPrice;
 
                 $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
                 $order->setShippingAmount($newAccessoriesPrice);
                 $order->setBaseShippingAmount($newAccessoriesPrice);
-                $order->setGrandTotal($newGtandTotal);
-                $order->setBaseGrandTotal($newGtandTotal);
+                $order->setGrandTotal($newGrandTotal);
+                $order->setBaseGrandTotal($newGrandTotal);
 
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
             }else{
                 // it is for frontend order - accessories already saved in checkout_type_onepage_save_order event
                 $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
                 $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData);
-
+                $accessoriesPrice = round($accessoriesPrice, 2);
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
             }
+
+            // save pre *destination* accessorials for future re rate in booking
+            $accessories_for_rates = $helper->getPreAccessoriesInSession();
+            $order->setShiphawkCustomerAccessorials(serialize($accessories_for_rates));
+
+            $helper->clearCustomAccessoriesInSession();
 
             $order->save();
             if(!$manual_shipping) {
@@ -115,6 +122,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getSingleton('checkout/session')->unsetData('multiple_price');
         Mage::getSingleton('checkout/session')->unsetData('shiphawk_multi_shipping');
         Mage::getSingleton('checkout/session')->unsetData('chosen_multi_shipping_methods');
+        Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
     }
 
     /**
@@ -189,9 +197,15 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $params = $event->getRequest()->getPost();
             $chosen_shipping_methods = array();
             foreach ($params as $key => $value) {
-                if(($key != 'shiphawk_shipping_multi_parcel_price') && ($key != 'shipping_method') && ($key != 'accessories') ) {
+                if(($key != 'shiphawk_shipping_multi_parcel_price') && ($key != 'shipping_method') && ($key != 'accessories')&& ($key != 'hdaccess') ) {
                     $chosen_shipping_methods[] = $value;
                 }
+            }
+
+            Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
+            if (!empty($params['hdaccess'])) {
+                // chosen accessories per carrier
+                Mage::getSingleton('checkout/session')->setData('chosen_accessories_per_carrier', $params['hdaccess']);
             }
 
             // chosen shipping methods
@@ -315,7 +329,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
     /**
      * @param $observer
      */
-    public function  showShiphawkRateError($observer) {
+    /*public function  showShiphawkRateError($observer) {
 
         $err_text = Mage::getSingleton('core/session')->getShiphawkErrorRate();
         if($err_text) {
@@ -325,7 +339,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         Mage::getSingleton('core/session')->unsShiphawkErrorRate();
 
-    }
+    }*/
 
     /**
      * Update accessories & shipping price in admin order view

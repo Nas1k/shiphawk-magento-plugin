@@ -44,6 +44,8 @@ document.observe("dom:loaded", function() {
 
     updateInput();
 
+
+
     var origin_fields = new Array($('shiphawk_origin_firstname'), $('shiphawk_origin_lastname'), $('shiphawk_origin_addressline1'),
         $('shiphawk_origin_city'), $('shiphawk_origin_state'), $('shiphawk_origin_zipcode'), $('shiphawk_origin_phonenum'),
         $('shiphawk_origin_email'), $('shiphawk_origin_location'));
@@ -72,7 +74,6 @@ document.observe("dom:loaded", function() {
     }
 
     function _removeRequiredClass( origin_fields ) {
-
         origin_fields.forEach(function(item, i, arr) {
             if(item.hasClassName('required-entry')){
                 item.removeClassName('required-entry');
@@ -104,6 +105,56 @@ document.observe("dom:loaded", function() {
     //setOriginRequiredFields();
     _checkIfAllRequeredEmpty( origin_fields );
 
+    function updateInputShiphawkOriginState() {
+        var shiphawk_origin_state = document.getElementById("shiphawk_origin_state");
+        var is_mass_action = 0;
+
+        // check is it mass edit attribute action
+        if (document.URL.indexOf('catalog_product_action_attribute') > 0) {
+            is_mass_action = 1;
+        }
+        var url = 'shiphawk/index/states';
+
+        url = baseMagentoUrl + url;
+        var parameters = {
+            state_id: shiphawk_origin_state.value,
+            is_mass_action : is_mass_action
+        };
+
+        new Ajax.Request(url, {
+            method: 'post',
+            parameters: parameters,
+            onSuccess: function(transport)  {
+
+                responce_html  = JSON.parse(transport.responseText);
+
+                var el = document.createElement("div");
+
+                el.id = "origins_state_select";
+
+                el.update(responce_html);
+
+                shiphawk_origin_state.parentNode.replaceChild(el, shiphawk_origin_state);
+
+                if(empty(shiphawk_origin_state.value)) {
+                    _removeRequiredClass( origin_fields );
+                }
+
+            },
+            onLoading:function(transport)
+            {
+
+            }
+        });
+    }
+
+    updateInputShiphawkOriginState();
+
+    document.getElementById("shiphawk_origin_state").observe('change', function(event){
+        if($('shiphawk_origin_state').value == '') {
+            _checkIfAllRequeredEmpty( origin_fields );
+        }
+    });
 
 
     var el = document.createElement("div");

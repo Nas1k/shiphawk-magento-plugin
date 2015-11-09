@@ -17,5 +17,4 @@ $shipping_origins = array (
 
 $installer->addAttribute('catalog_product','shiphawk_shipping_origins', $shipping_origins);
 
-
 $installer->endSetup();

@@ -1,7 +1,56 @@
 <?php
 class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 {
-    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType) {
+    public function buildShiphawkRequest($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType, $destination_accessorials = null){
+        $helper = Mage::helper('shiphawk_shipping');
+        $api_key = $helper->getApiKey();
+        //$url_api_rates = $helper->getApiUrl() . 'rates/full?api_key=' . $api_key;
+        $url_api_rates = $helper->getApiUrl() . 'rates?api_key=' . $api_key;
+
+        $curl = curl_init();
+
+        if($carrier_type == '') {
+            $items_array = array(
+                'from_zip'=> $from_zip,
+                'to_zip'=> $to_zip,
+                'rate_filter' => $rate_filter,
+                'items' => $items,
+                'from_type' => $location_type,
+                'to_type' => $shLocationType,
+                'destination_accessorials' => $destination_accessorials,
+            );
+        }else{
+            $items_array = array(
+                'from_zip'=> $from_zip,
+                'to_zip'=> $to_zip,
+                'rate_filter' => $rate_filter,
+                'carrier_type' => $carrier_type,
+                'items' => $items,
+                'from_type' => $location_type,
+                'to_type' => $shLocationType,
+                'destination_accessorials' => $destination_accessorials,
+            );
+        }
+
+        $req_name = 'Request-rates' . $from_zip . '-' .$to_zip .'.log';
+        $helper->shlog($items_array, $req_name);
+
+        $items_array =  json_encode($items_array);
+
+        curl_setopt($curl, CURLOPT_URL, $url_api_rates);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $items_array);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($items_array)
+            )
+        );
+
+        return $curl;
+    }
+
+    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType, $destination_accessorials = null) {
 
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
@@ -18,6 +67,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'items' => $items,
                 'from_type' => $location_type,
                 'to_type' => $shLocationType,
+                'destination_accessorials' => $destination_accessorials,
             );
         }else{
             $items_array = array(
@@ -28,10 +78,13 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'items' => $items,
                 'from_type' => $location_type,
                 'to_type' => $shLocationType,
+                'destination_accessorials' => $destination_accessorials,
             );
         }
+        $req_name = 'Request-rates' . $from_zip . '-' .$to_zip .'.log';
+        $helper->shlog($items_array, $req_name);
 
-       $items_array =  json_encode($items_array);
+        $items_array =  json_encode($items_array);
 
         curl_setopt($curl, CURLOPT_URL, $url_api_rates);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -51,7 +104,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $arr_res;
     }
 
-    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false, $self_packed, $is_rerate = null)
+    public function toBook($order, $rate_id, $products_ids, $accessories = array(), $is_auto = false, $self_packed, $is_rerate = null, $multi_front = null)
     {
         $ship_addr = $order->getShippingAddress()->getData();
         $bill_addr = $order->getBillingAddress()->getData();
@@ -84,29 +137,33 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $origin_address = (empty($origin_address_product)) ? $default_origin_address : $origin_address_product;
 
         /* For accessories */
-        $orderAccessories = $order->getShiphawkShippingAccessories();
 
-        $itemsAccessories = $this->getAccessoriesForBook($accessories, $orderAccessories);
+        if ($multi_front) {
+            $itemsAccessories = $accessories; //accessories already grouped by carrier
+        }else{
+            // all accessories saved in order
+            $orderAccessories = $order->getShiphawkShippingAccessories();
 
-        /*if ($is_auto) {
-            $orderAccessories = json_decode($orderAccessories, true);
-            if($is_rerate) {
+            $itemsAccessories = $this->getAccessoriesForBook($accessories, $orderAccessories);
 
-                foreach($accessories as $orderAccessoriesType => $orderAccessor) {
-                    foreach($orderAccessor as $key => $orderAccessorValues) {
-                        $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+            if ($is_auto) {
+                $orderAccessories = json_decode($orderAccessories, true);
+                if($is_rerate) {
+
+                    foreach($accessories as $orderAccessoriesType => $orderAccessor) {
+                        foreach($orderAccessor as $key => $orderAccessorValues) {
+                            $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+                        }
                     }
-                }
-            }else{
-                foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
-                    foreach($orderAccessor as $key => $orderAccessorValues) {
-                        $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+                }else{
+                    foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
+                        foreach($orderAccessor as $key => $orderAccessorValues) {
+                            $itemsAccessories[] = array('id' => str_replace("'", '', $key));
+                        }
                     }
                 }
             }
-        } else {
-            $itemsAccessories = $this->getAccessoriesForBook($accessories, $orderAccessories);
-        }*/
+        }
 
         $next_bussines_day = date('Y-m-d', strtotime('now +1 Weekday'));
         $items_array = array(
@@ -243,7 +300,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         }
         catch(Exception $e)
         {
-         Mage::log($e->getMessage());
+            Mage::log($e->getMessage());
         }
 
         return $origin_address_product;
@@ -256,7 +313,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
             if($key != 'origin_address2') {
                 if(empty($value)) {
-                   return $default_origin_address;
+                    return $default_origin_address;
                 }
             }
         }
@@ -277,6 +334,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         try {
             $order = Mage::getModel('sales/order')->load($orderId);
             $helper = Mage::helper('shiphawk_shipping');
+            $api = Mage::getModel('shiphawk_shipping/api');
 
             $shLocationType = $order->getShiphawkLocationType();
 
@@ -288,9 +346,21 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             $is_multi_zip = (count($shiphawk_multi_shipping) > 1) ? true : false;
 
             $is_admin = $helper->checkIsAdmin();
+            $is_backend_order = $helper->checkIfOrderIsBackend($order);
             $rate_filter =  Mage::helper('shiphawk_shipping')->getRateFilter($is_admin, $order);
 
             $accessories = array();
+            $multi_front = null;
+
+            $pre_accessories = null;
+
+            $accessories_for_rates = unserialize($order->getShiphawkCustomerAccessorials());
+            $accessories_per_carriers = unserialize($order->getChosenAccessoriesPerCarrier());
+
+            if (!empty($accessories_for_rates))
+                foreach ($accessories_for_rates as $access_rate) {
+                    $pre_accessories[$access_rate] = 'true';
+                }
 
             if($is_multi_zip === true) {
                 foreach($shiphawk_multi_shipping as $pr_ids=>$rates_data) {
@@ -301,28 +371,50 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $carrier_type = $rates_data[0]['carrier_type'];
                     $self_pack = $rates_data[0]['self_pack'];
 
-                    $responceObject = $this->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType);
+                    $responseObject = $this->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
 
                     //todo if error ?
-                    foreach ($responceObject as $responce) {
-                        $shipping_price = (string) $helper->getShipHawkPrice($responce, $self_pack);
-                        foreach($chosen_shipping_methods as $shipping_code) {
-                            if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
-                                $rate_id        = $responce->id;
-                                $accessories    = $responce->shipping->carrier_accessorial;
-                                $rate_name      = $carrier_model->_getServiceName($responce);
-                                $shipping_price = $helper->getShipHawkPrice($responce, $self_pack);
-                                $is_rate = true;
-                                break 2;
+                    foreach ($responseObject as $response) {
+                        $shipping_price = (string) $helper->getShipHawkPrice($response, $self_pack);
+                        if($is_backend_order) {
+                            $shipping_price = round ($helper->getShipHawkPrice($response, $self_pack),2);
+                            foreach ($shiphawk_rate_data as $rate_data) {
+                                if(round ($rate_data['price'], 2) == $shipping_price) {
+                                    $rate_id        = $response->id;
+                                    $accessories    = $response->shipping->carrier_accessorial;
+                                    $rate_name      = $carrier_model->_getServiceName($response);
+                                    $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
+                                    $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
+                                    $is_rate = true;
+                                    break 2;
+                                }
+                            }
+                        }else{
+                            foreach($chosen_shipping_methods as $shipping_code) {
+                                if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
+                                    $rate_id        = $response->id;
+                                    $accessories_from_rate    = $response->shipping->carrier_accessorial;
+                                    $accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers);
+                                    $rate_name      = $carrier_model->_getServiceName($response);
+                                    $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
+                                    $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
+                                    $is_rate = true;
+                                    $multi_front = true;
+                                    break 2;
+                                }
                             }
                         }
                     }
 
                     if($is_rate == true) {
-                        // add book
-                        $track_data = $this->toBook($order, $rate_id, $rates_data[0], $accessories, false, $self_pack);
+                        $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories, false, $self_pack, null, $multi_front);
+
                         $orderAccessories = $order->getData('shiphawk_shipping_accessories');
-                        $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
+                        if($multi_front) {
+                            $accessoriesPrice = $helper->getCurrentAccessoriesPrice($accessories, $orderAccessories);
+                        }else{
+                            $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
+                        }
 
                         if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -334,7 +426,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         $shipment = $this->_initShipHawkShipment($order,$rates_data[0]);
                         $shipment->register();
                         $shippingShipHawkAmount = $shipping_price + $accessoriesPrice;
-                        $this->_saveShiphawkShipment($shipment, $rate_name, $shippingShipHawkAmount);
+                        $this->_saveShiphawkShipment($shipment, $rate_name, $shippingShipHawkAmount, $package_info);
 
                         // add track
                         if($track_data->details->id) {
@@ -362,13 +454,12 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $self_pack = $products_ids['self_pack'];
 
                     // add book, auto booking - true
-                    $track_data = $this->toBook($order, $rate_id, $products_ids, array(), true, $self_pack);
+                    $track_data = $this->toBook($order, $rate_id, $products_ids, $accessoriesPriceData, true, $self_pack);
 
                     $helper->shlog($track_data, 'shiphawk-book-response.log');
 
                     if (property_exists($track_data, 'error')) {
                         Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                        //Mage::getSingleton('core/session')->addError($track_data->error);
                         $helper->shlog('ShipHawk response: ' . $track_data->error);
                         return;
                     }
@@ -409,6 +500,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     }
 
     public function _getItems($order, $products_ids) {
+        //todo bundle?
         $qty = array();
         if(is_object($order)) {
             foreach($order->getAllItems() as $eachOrderItem){
@@ -423,7 +515,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 }else{
                     $qty[$eachOrderItem->getId()] = 0;
                 }
-
             }
         }
 
@@ -436,11 +527,12 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
      * @param Mage_Sales_Model_Order_Shipment $shipment
      * @return Mage_Adminhtml_Sales_Order_ShipmentController
      */
-    public function _saveShiphawkShipment($shipment, $shiphawk_shipment_title = null, $shiphawk_shipment_price = null)
+    public function _saveShiphawkShipment($shipment, $shiphawk_shipment_title = null, $shiphawk_shipment_price = null, $shiphawk_package_info = null)
     {
         $shipment->getOrder()->setIsInProcess(true);
         $shipment->setShiphawkShippingMethodTitle($shiphawk_shipment_title);
         $shipment->setShiphawkShippingPrice($shiphawk_shipment_price);
+        $shipment->setShiphawkPackageInfo($shiphawk_package_info);
         $transactionSave = Mage::getModel('core/resource_transaction')
             ->addObject($shipment)
             ->addObject($shipment->getOrder())
@@ -628,7 +720,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $orderAccessories = json_decode($orderAccessories, true);
         $itemsAccessories = array();
-
+        $price = 0;
         foreach ($accessories as $accessoriesType => $accessor) {
             foreach($accessor as $accessorRow) {
                 foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
@@ -641,6 +733,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                         if (str_replace("'", '', $orderAccessoriesType) == $accessoriesType && $accessorName == $orderAccessorValuesName) {
                             $itemsAccessories[] = array('id' => $accessorRow->id);
+                            $price += $accessorRow->price;
                         }
                     }
                 }
@@ -659,6 +752,21 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
             $helper->shlog('Accessories!', 'shiphawk-book.log');
 
             $helper->shlog($itemsAccessories, 'shiphawk-book.log');
+        }
+
+        return $itemsAccessories;
+    }
+
+    public function getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers) {
+        $itemsAccessories = array();
+        if (is_array($accessories_per_carriers)) {
+            $helper = Mage::helper('shiphawk_shipping');
+            foreach ($accessories_per_carriers as $code=>$acc_data) {
+                if($helper->getOriginalShipHawkShippingPrice($code, $shipping_price)) {
+                    foreach($acc_data as $acc_id)
+                        $itemsAccessories[] = array('id' => $acc_id);
+                }
+            }
         }
 
         return $itemsAccessories;

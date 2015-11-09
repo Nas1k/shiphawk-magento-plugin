@@ -69,9 +69,8 @@
                 <?php
                 $shipment = $this->getShipment();
                 $shipment_price = $shipment->getShiphawkShippingPrice();
-                //$accessoriesPriceData = json_decode($_order->getData('shiphawk_shipping_accessories'));
-                //$accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
-                //$shipment_price = $shipment_price + $accessoriesPrice;
+                $package_info = $shipment->getShiphawkPackageInfo();
+
                 $shiphawkShipmentTitle = $shipment->getShiphawkShippingMethodTitle();
                 ?>
             <?php if(!empty($shiphawkShipmentTitle)) { ?>
@@ -80,6 +79,8 @@
                 <strong><?php echo $this->escapeHtml($shiphawkShipmentTitle) ?></strong>
                 <?php $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol(); ?>
                 <?php echo ': ' . $currency_symbol . $shipment_price; ?>
+
+                <?php if ($package_info) echo 'Package Info: ' . $package_info; ?>
             </div>
             <?php } ?>
             <?php if ($this->canCreateShippingLabel()): ?>
@@ -95,6 +96,7 @@
             <?php endif ?>
 
             <?php
+            $tracknums = array();
             foreach($shipment->getAllTracks() as $tracknum) {
                 $tracknums[]=$tracknum->getNumber();
             }

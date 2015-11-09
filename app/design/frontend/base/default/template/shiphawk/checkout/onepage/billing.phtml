@@ -140,6 +140,73 @@
                         </div>
                     </div>
                 </li>
+                <li class="fields">
+                    <div class="field">
+                        <label for="billing:shiphawk-location-type"><?php echo $this->__('Destination Accessorials') ?></label>
+                        <div class="input-box">
+                            <ul>
+                                <li>
+                                    <input type="checkbox" name="destination_accessorials[]" id="liftgate_delivery"  value="liftgate_delivery" <?php if (Mage::getSingleton('checkout/session')->getData('liftgate_delivery')) echo 'checked'; ?>>
+                                    <label for="liftgate_delivery" >liftgate_delivery</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox" name="destination_accessorials[]" id="inside_delivery"  value="inside_delivery" <?php if (Mage::getSingleton('checkout/session')->getData('inside_delivery')) echo 'checked'; ?>>
+                                    <label for="inside_delivery" >inside_delivery</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox" name="destination_accessorials[]" id="notify_prior_delivery"  value="notify_prior_delivery" <?php if (Mage::getSingleton('checkout/session')->getData('notify_prior_delivery')) echo 'checked'; ?>>
+                                    <label for="notify_prior_delivery" >notify_prior_delivery</label>
+                                </li>
+                                <li>
+                                    <input type="checkbox" name="destination_accessorials[]" id="schedule_appointment_delivery"  value="schedule_appointment_delivery" <?php if (Mage::getSingleton('checkout/session')->getData('schedule_appointment_delivery')) echo 'checked'; ?>>
+                                    <label for="schedule_appointment_delivery" >schedule_appointment_delivery</label>
+                                </li>
+                            </ul>
+                        </div>
+                        <script type="text/javascript">
+                        //<![CDATA[
+                        $$('input[type="checkbox"][name="destination_accessorials[]"]').each(function(el){
+                            Event.observe(el, 'click', function(){
+                                if (el.checked == true) {
+                                    setDestinationAccessorials(el.value, 0);
+                                }
+
+                                if (el.checked == false) {
+                                    setDestinationAccessorials(el.value, 1);
+                                }
+                            });
+                        });
+
+                        function setDestinationAccessorials(accessories, unset_id) {
+                            var url = 'shiphawk/index/prioraccessorials';
+                            var baseMagentoUrl = '<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB); ?>';
+
+                            url = baseMagentoUrl + url;
+
+                            var parameters = {
+                                accessories_id: accessories,
+                                unset_id: unset_id
+                            };
+
+                            new Ajax.Request(url, {
+                                method: 'post',
+                                parameters: parameters,
+                                onSuccess: function(transport) {
+
+                                },
+                                onLoading:function(transport)
+                                {
+                                    $(accessories).disable();
+                                },
+                                onComplete:function(){
+                                    $(accessories).enable();
+                                }
+                            });
+                        }
+                        //]]>
+                        </script
+                    </div>
+                </li>
                 <?php if(!$this->isCustomerLoggedIn()): ?>
 
         <?php $_dob = $this->getLayout()->createBlock('customer/widget_dob') ?>

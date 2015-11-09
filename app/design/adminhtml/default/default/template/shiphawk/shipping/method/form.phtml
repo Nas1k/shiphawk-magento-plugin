@@ -35,6 +35,7 @@
     }
 </style>
 <?php $_shippingRateGroups = $this->getShippingRates(); ?>
+<?php $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code'); ?>
 <?php if ($_shippingRateGroups): ?>
     <div id="order-shipping-method-choose" style="display:none">
         <dl class="shipment-methods">
@@ -48,6 +49,7 @@
                             $_radioProperty = 'name="order[shipping_method]" type="radio" class="shipping-ratios" data-rate="' .$_rate->getRateId() . '"';
                             ?>
                             <?php $_code=$_rate->getCode() ?>
+                        <?php if (($code == 'shiphawk_shipping') && ($multi_zip_code) && ($_rate->getCode() != 'shiphawk_shipping_Shipping_from_multiple_location')) continue; ?>
                             <li>
                                 <?php if ($_rate->getErrorMessage()): ?>
                                     <ul class="messages">

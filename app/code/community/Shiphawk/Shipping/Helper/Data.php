@@ -14,6 +14,16 @@ class Shiphawk_Shipping_Helper_Data extends
     }
 
     /**
+     * Get Calculate Rate on Cart Change
+     *
+     * @return mixed
+     */
+    public function getCalcRateOnCartChange()
+    {
+        return Mage::getStoreConfig('carriers/shiphawk_shipping/calc_rate_on_cart_change');
+    }
+
+    /**
      * Get callback url for shipments
      *
      * @return mixed
@@ -173,6 +183,8 @@ class Shiphawk_Shipping_Helper_Data extends
     }
 
     public function getOriginalShipHawkShippingPrice($shipping_code, $shipping_method_value) {
+        $result = false;
+        if (!is_array($shipping_code))
         $result = strpos($shipping_code, $shipping_method_value);
         return $result;
     }
@@ -203,25 +215,20 @@ class Shiphawk_Shipping_Helper_Data extends
     public function getSummaryPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null, $custom_packing_price = null, $custom_packing_price_amount = null) {
 
         if(!$opt_to_self_pack) {
-            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
         }else{
             if (( $opt_to_self_pack == 1) && ($custom_packing_price == 1)) {
 
                 if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
-                    return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+                    return $object->shipping->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
                 }
-
-                return $object->shipping->price + $object->delivery->price + $object->insurance->price + $custom_packing_price_amount;
-
+                return $object->shipping->price + $object->delivery->price + $object->insurance->price + $custom_packing_price_amount + $this->_getPreAccessorialsPrice($object);
             }else{
                 if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
-                    return $object->shipping->price + $object->delivery->price + $object->insurance->price;
+                    return $object->shipping->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
                 }
-
-
             }
-            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
-
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
         }
 
     }
@@ -229,13 +236,21 @@ class Shiphawk_Shipping_Helper_Data extends
     public function getShipHawkPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null) {
 
         if(!$opt_to_self_pack) {
-            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price;
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
         }else{
-
-            return $object->shipping->price + $object->delivery->price + $object->insurance->price;
-
+            return $object->shipping->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
         }
 
+    }
+
+    protected function _getPreAccessorialsPrice($object) {
+        $price = 0;
+        if(property_exists($object, 'accessorials'))
+            if(count($object->accessorials)> 0)
+            foreach($object->accessorials as $acc) {
+                $price += $acc->price;
+            }
+        return $price;
     }
 
     public function ChargeCustomerForPacking($opt_to_self_pack = null, $charge_customer_for_packing = null) {
@@ -252,13 +267,13 @@ class Shiphawk_Shipping_Helper_Data extends
     }
 
     public function getCustomPackingPriceSumm($items) {
-        $packing_summ = 0;
+        $packing_sum = 0;
         foreach($items as $item) {
             if(isset($item['shiphawk_custom_packing_price']))
-            $packing_summ +=   $item['shiphawk_custom_packing_price']*$item['quantity'];
+            $packing_sum +=   $item['shiphawk_custom_packing_price']*$item['quantity'];
         }
 
-        return $packing_summ;
+        return $packing_sum;
     }
 
     public function getSelfPacked() {
@@ -460,13 +475,30 @@ class Shiphawk_Shipping_Helper_Data extends
         return $accessoriesPrice;
     }
 
+    public function getCurrentAccessoriesPrice($accessories, $orderAccessories) {
+        $orderAccessories = json_decode($orderAccessories, true);
+        $ids_array = array();
+        foreach($accessories as $id_acc=>$id_value) {
+            $ids_array[] = "'".$id_value['id']."'";;
+        }
+
+        $price = 0;
+        foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
+            foreach($orderAccessor as $id=>$data) {
+                if(in_array($id, $ids_array)) {
+                    $price += $data['value'];
+                }
+            }
+        }
+
+        return $price;
+    }
+
     public function getChosenAccessoriesForCurrentRate($accessories, $orderAccessories) {
 
         if (empty($accessories) || empty($orderAccessories)) {
-            return array();
+            return null;
         }
-
-        $helper = Mage::helper('shiphawk_shipping');
 
         $orderAccessories = json_decode($orderAccessories, true);
         $itemsAccessories = array();
@@ -492,7 +524,6 @@ class Shiphawk_Shipping_Helper_Data extends
         }
 
         return $price;
-
     }
 
     public function  checkIsItCartPage() {
@@ -505,8 +536,55 @@ class Shiphawk_Shipping_Helper_Data extends
         {
             return true;
         }
-
         return false;
+    }
+
+    public function preSetAccessories() {
+        $destinationAccessories = array('liftgate_delivery', 'inside_delivery', 'notify_prior_delivery', 'schedule_appointment_delivery');
+        return $destinationAccessories;
+    }
+
+    public function getPreAccessoriesInSession() {
+        $presetaccessories = array();
+        $presetaccessories_array = $this->preSetAccessories();
+
+        foreach($presetaccessories_array as $access_id) {
+            $exist_accessor = Mage::getSingleton('checkout/session')->getData($access_id);
+            if (!empty($exist_accessor)) {
+                $presetaccessories[] = $access_id;
+            }
+        }
+        return $presetaccessories;
+    }
+
+    public function clearCustomAccessoriesInSession() {
+        $presetaccessories = $this->getPreAccessoriesInSession();
+        if (count($presetaccessories) > 0)
+        foreach($presetaccessories as $access_id) {
+            Mage::getSingleton('checkout/session')->unsetData($access_id);
+        }
+    }
+
+    public function checkIfOrderIsBackend($order) {
+        $ip = $order->getRemoteIp();
+        if(!empty($ip)){
+            //place online
+            return false;
+        }
+        return true;
+        // place by admin
+    }
+
+    public function getRegions($county_code = 'US') {
+        $regions = array();
+        $regionCollection = Mage::getModel('directory/region_api')->items($county_code);
+        foreach($regionCollection as $region) {
+            $regions[]= array(
+                'value' => $region['code'],
+                'label' => $region['name']
+            );
+        }
+        return $regions;
     }
 
 }

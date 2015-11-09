@@ -74,6 +74,16 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </shiphawk_error_message>
+                        <calc_rate_on_cart_change translate="label">
+                            <label>Calculate Rate on Cart Change</label>
+                            <comment>Disabling this will decrease cart load time, but not provided updated shipping rates</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>19</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </calc_rate_on_cart_change>
                         <api_key translate="label">
                             <label>Api Key</label>
                             <frontend_type>text</frontend_type>
@@ -228,6 +238,15 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </updates_tracking_url>
+                        <showmethod translate="label">
+                            <label>Show Method if Not Applicable</label>
+                            <frontend_type>select</frontend_type>
+                            <sort_order>66</sort_order>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </showmethod>
                         <sallowspecific translate="label">
                             <label>Available for specific countries only</label>
                             <frontend_type>select</frontend_type>
@@ -290,8 +309,8 @@
                         </origin_city>
                         <origin_state translate="label">
                             <label>Origin State</label>
-                            <frontend_type>text</frontend_type>
-                            <comment>2 letter abbrev.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>shiphawk_shipping/source_states</source_model>
                             <sort_order>85</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
