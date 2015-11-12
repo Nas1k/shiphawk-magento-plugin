@@ -31,7 +31,8 @@ class Shiphawk_Checkout_Model_Cart extends Mage_Checkout_Model_Cart
             } else if ($previousCartSubTotal != $this->getQuote()->getSubtotal()) {
 
                 $this->getQuote()->getShippingAddress()->removeAllShippingRates();
-                $this->getQuote()->getShippingAddress()->setShippingMethod('')->setShippingDescription('');
+                $this->getQuote()->getShippingAddress()->setShippingMethod(false)->setShippingDescription('')->setCollectShippingRates(false);
+                //$this->getQuote()->getShippingAddress()->setShippingMethod('')->setShippingDescription('');
             }
 
             $this->getQuote()->collectTotals();
