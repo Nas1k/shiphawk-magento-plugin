@@ -373,7 +373,13 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                     $responseObject = $this->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
 
-                    //todo if error ?
+                    if(is_object($responseObject))
+                        if (property_exists($responseObject, 'error')) {
+                            $helper->shlog('ShipHawk response: '.$responseObject->error);
+                            $helper->sendErrorMessageToShipHawk($responseObject->error);
+                            continue;
+                        };
+
                     foreach ($responseObject as $response) {
                         $shipping_price = (string) $helper->getShipHawkPrice($response, $self_pack);
                         if($is_backend_order) {
@@ -426,7 +432,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         $shipment = $this->_initShipHawkShipment($order,$rates_data[0]);
                         $shipment->register();
                         $shippingShipHawkAmount = $shipping_price + $accessoriesPrice;
-                        $this->_saveShiphawkShipment($shipment, $rate_name, $shippingShipHawkAmount, $package_info);
+                        $this->_saveShiphawkShipment($shipment, $rate_name, $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
                         // add track
                         if($track_data->details->id) {
@@ -443,18 +449,21 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 }
             }else {
                 foreach ($shiphawk_rate_data as $rate_id => $products_ids) {
-                    $shipment = $this->_initShipHawkShipment($order, $products_ids);
+                    //todo if this shipment not correct shiphawk ? $shipping_code = $order->getShippingMethod() - check?;
 
+                    //package info for single parcel shipment, saved early in order place after event
+                    $package_info    = $order->getShiphawkShippingPackageInfo();
+                    $shipment = $this->_initShipHawkShipment($order, $products_ids);
                     $shipment->register();
                     $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
                     $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
                     $shippingShipHawkAmount = $products_ids['price'] + $accessoriesPrice;
-                    $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount);
 
                     $self_pack = $products_ids['self_pack'];
 
                     // add book, auto booking - true
                     $track_data = $this->toBook($order, $rate_id, $products_ids, $accessoriesPriceData, true, $self_pack);
+                    $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
                     $helper->shlog($track_data, 'shiphawk-book-response.log');
 
@@ -527,12 +536,14 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
      * @param Mage_Sales_Model_Order_Shipment $shipment
      * @return Mage_Adminhtml_Sales_Order_ShipmentController
      */
-    public function _saveShiphawkShipment($shipment, $shiphawk_shipment_title = null, $shiphawk_shipment_price = null, $shiphawk_package_info = null)
+    public function _saveShiphawkShipment($shipment, $shiphawk_shipment_title = null, $shiphawk_shipment_price = null, $shiphawk_package_info = null, $shipment_id = null)
     {
+        $shipment_id = (integer) $shipment_id;
         $shipment->getOrder()->setIsInProcess(true);
         $shipment->setShiphawkShippingMethodTitle($shiphawk_shipment_title);
         $shipment->setShiphawkShippingPrice($shiphawk_shipment_price);
         $shipment->setShiphawkPackageInfo($shiphawk_package_info);
+        $shipment->setShiphawkShippingShipmentId($shipment_id);
         $transactionSave = Mage::getModel('core/resource_transaction')
             ->addObject($shipment)
             ->addObject($shipment->getOrder())
@@ -696,7 +707,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
-
+        curl_close($curl);
         return $arr_res;
 
     }

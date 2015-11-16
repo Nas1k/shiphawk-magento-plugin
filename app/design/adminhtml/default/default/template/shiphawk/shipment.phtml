@@ -1,6 +1,6 @@
 <?php
     $order =  $this->getOrder();
-
+//todo multi parcel, &accessorial
     $result = $this->getNewShipHawkRate($order);
 
     if(($result == null) or ($result['error'])) {
@@ -115,7 +115,7 @@
     new Event.observe($('submitshiphawk'), 'click', function(e){
         e.stop();
         doAjax();
-       
+        setTimeout('parent.location.reload()', 3000);
     });
 
     /* For couple rates */

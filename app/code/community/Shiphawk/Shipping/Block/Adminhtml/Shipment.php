@@ -8,6 +8,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
      */
     public function getNewShipHawkRate($order) {
 
+        //todo move above code to function, in carrier !
+
         $carrier = Mage::getModel('shiphawk_shipping/carrier');
         $api = Mage::getModel('shiphawk_shipping/api');
         $helper = Mage::helper('shiphawk_shipping');
@@ -63,6 +65,8 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
         $result['multiple_shipments_id'] = null;
         //default origin zip code
         $from_zip = Mage::getStoreConfig('carriers/shiphawk_shipping/default_origin');
+
+
 
         /* items has various carrier type */
         if($is_multi_carrier) {

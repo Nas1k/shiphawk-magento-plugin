@@ -6,6 +6,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Sales_Order_View extends Mage_Adminhtml_
 
         $order_id = $this->getOrderId();
         $order = $this->getOrder();
+        $helper = Mage::helper('shiphawk_shipping');
 
         $manual_shipping =  Mage::getStoreConfig('carriers/shiphawk_shipping/book_shipment');
         $shipping_code = $order->getShippingMethod();
@@ -13,7 +14,7 @@ class Shiphawk_Shipping_Block_Adminhtml_Sales_Order_View extends Mage_Adminhtml_
         $confirm_messsage = $this->__('Are you sure to process?');
         $check_shiphawk = Mage::helper('shiphawk_shipping')->isShipHawkShipping($shipping_code);
         if($check_shiphawk !== false) {
-            if ($order->canShip()) {
+            if (($helper->checkShipmentExist($order))) {
                 if($manual_shipping) {
                     $this->_addButton('shiphawk_shipping', array(
                         'label'     => Mage::helper('shiphawk_shipping')->__('ShipHawk Shipment'),

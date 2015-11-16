@@ -190,26 +190,28 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $shippingAmount     = $address->getShippingInclTax();
         $baseShippingAmount = $address->getBaseShippingInclTax();
         $session            = Mage::getSingleton('checkout/session');
+        $params = $event->getRequest()->getPost();
 
+        $chosen_shipping_methods = array();
+        foreach ($params as $key => $value) {
+            if(($key != 'shiphawk_shipping_multi_parcel_price') && ($key != 'shipping_method') && ($key != 'accessories')&& ($key != 'hdaccess') ) {
+                $chosen_shipping_methods[] = "'".$value."'";
+            }
+        }
+
+        // chosen shipping methods
+        Mage::getSingleton('checkout/session')->setData('chosen_multi_shipping_methods', $chosen_shipping_methods);
+        Mage::log($chosen_shipping_methods, null, 'accessories.log');
+
+        Mage::log($accessories, null, 'accessories.log');
         if($event->getRequest()->getPost('shipping_method') == 'shiphawk_shipping_Shipping_from_multiple_location') {
             $shippingAmount = $event->getRequest()->getPost('shiphawk_shipping_multi_parcel_price');
-
-            $params = $event->getRequest()->getPost();
-            $chosen_shipping_methods = array();
-            foreach ($params as $key => $value) {
-                if(($key != 'shiphawk_shipping_multi_parcel_price') && ($key != 'shipping_method') && ($key != 'accessories')&& ($key != 'hdaccess') ) {
-                    $chosen_shipping_methods[] = $value;
-                }
-            }
 
             Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
             if (!empty($params['hdaccess'])) {
                 // chosen accessories per carrier
                 Mage::getSingleton('checkout/session')->setData('chosen_accessories_per_carrier', $params['hdaccess']);
             }
-
-            // chosen shipping methods
-            Mage::getSingleton('checkout/session')->setData('chosen_multi_shipping_methods', $chosen_shipping_methods);
 
             $rates = $address->collectShippingRates()->getGroupedAllShippingRates();
 
@@ -236,13 +238,36 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $accessoriesPrice   = 0;
         $accessoriesData    = array();
-        foreach($accessories as $typeName => $type) {
-            foreach($type as $name => $values) {
-                foreach($values as $key => $value) {
-                    $accessoriesData[$typeName][$key]['name'] = $name;
-                    $accessoriesData[$typeName][$key]['value'] = (float)$value;
+        if($event->getRequest()->getPost('shipping_method') == 'shiphawk_shipping_Shipping_from_multiple_location') {
 
-                    $accessoriesPrice += (float)$value;
+            //foreach($chosen_shipping_methods as $shipping_code) {
+
+                    foreach($accessories as $typeName => $type) {
+                        foreach($type as $name => $values) {
+                            if(in_array($name, $chosen_shipping_methods)){
+                                foreach($values as $key => $value) {
+                                    foreach($value as $id=>$price) {
+                                        $accessoriesData[$typeName][$key]['name'] = $key;
+                                        $accessoriesData[$typeName][$key]['value'] = (float)$price;
+
+                                        $accessoriesPrice += (float)$price;
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+
+            //}
+        }else{
+            foreach($accessories as $typeName => $type) {
+                foreach($type as $name => $values) {
+                    foreach($values as $key => $value) {
+                        $accessoriesData[$typeName][$key]['name'] = $name;
+                        $accessoriesData[$typeName][$key]['value'] = (float)$value;
+
+                        $accessoriesPrice += (float)$value;
+                    }
                 }
             }
         }

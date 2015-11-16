@@ -105,7 +105,7 @@ class Shiphawk_Shipping_Helper_Data extends
         return false;
     }
 
-    public  function generateRandomString($length = 10) {
+    public function generateRandomString($length = 26) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
         $randomString = '';
@@ -212,23 +212,23 @@ class Shiphawk_Shipping_Helper_Data extends
      * @return mixed
      */
 
-    public function getSummaryPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null, $custom_packing_price = null, $custom_packing_price_amount = null) {
+    public function getSummaryPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null, $custom_packing_price = null, $custom_packing_price_amount = null, $default_accessories_price = null) {
 
         if(!$opt_to_self_pack) {
-            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object) + $default_accessories_price;
         }else{
             if (( $opt_to_self_pack == 1) && ($custom_packing_price == 1)) {
 
                 if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
-                    return $object->shipping->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
+                    return $object->shipping->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object) + $default_accessories_price;
                 }
-                return $object->shipping->price + $object->delivery->price + $object->insurance->price + $custom_packing_price_amount + $this->_getPreAccessorialsPrice($object);
+                return $object->shipping->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $custom_packing_price_amount + $this->_getPreAccessorialsPrice($object) + $default_accessories_price;
             }else{
                 if($this->ChargeCustomerForPacking($opt_to_self_pack, $charge_customer_for_packing) == false) {
-                    return $object->shipping->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
+                    return $object->shipping->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object) + $default_accessories_price;
                 }
             }
-            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object) + $default_accessories_price;
         }
 
     }
@@ -236,9 +236,9 @@ class Shiphawk_Shipping_Helper_Data extends
     public function getShipHawkPrice($object, $opt_to_self_pack = null, $charge_customer_for_packing = null) {
 
         if(!$opt_to_self_pack) {
-            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
+            return $object->shipping->price + $object->packing->price + $object->pickup->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
         }else{
-            return $object->shipping->price + $object->delivery->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
+            return $object->shipping->price + $object->delivery->price + $object->final_mile->price + $object->insurance->price + $this->_getPreAccessorialsPrice($object);
         }
 
     }
@@ -301,6 +301,8 @@ class Shiphawk_Shipping_Helper_Data extends
 
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
+
+        curl_close($curl);
 
         return $arr_res;
 
@@ -585,6 +587,25 @@ class Shiphawk_Shipping_Helper_Data extends
             );
         }
         return $regions;
+    }
+
+    public function checkShipmentExist($order) {
+
+        $shipments = $order->getShipmentsCollection();
+
+        if (!empty($shipments))
+            foreach ($shipments as $shipment) {
+                if($shipment->getShiphawkShippingShipmentId()) {
+                    return false;
+                }
+            }
+
+        return true;
+    }
+
+    public function checkIfOrderHasOnlyBackupShiphawkMethod($order) {
+        //todo
+        return false;
     }
 
 }

@@ -197,7 +197,7 @@
                             <label>Manual book shipment</label>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
-                            <sort_order>61</sort_order>
+                            <sort_order>44</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -206,7 +206,7 @@
                             <label>Send order receipts to:</label>
                             <frontend_type>select</frontend_type>
                             <source_model>shiphawk_shipping/source_received</source_model>
-                            <sort_order>62</sort_order>
+                            <sort_order>51</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -214,7 +214,7 @@
                         <administrator_email translate="label">
                             <label>Administrator Email</label>
                             <frontend_type>text</frontend_type>
-                            <sort_order>63</sort_order>
+                            <sort_order>52</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -224,7 +224,7 @@
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
                             <comment>There can be many updates for each shipment</comment>
-                            <sort_order>64</sort_order>
+                            <sort_order>53</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -233,7 +233,7 @@
                             <label>Email tracking URL to customer?</label>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
-                            <sort_order>65</sort_order>
+                            <sort_order>54</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -241,18 +241,75 @@
                         <showmethod translate="label">
                             <label>Show Method if Not Applicable</label>
                             <frontend_type>select</frontend_type>
-                            <sort_order>66</sort_order>
+                            <sort_order>55</sort_order>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
                         </showmethod>
+                        <!--Flat rate should have next settings:
+                        1. Applicable (select): For all carts, For separate parcels in multi-parcel carts, Disabled.
+                        2. Rate title (input)
+                        3. Type (select): Per Item, Per Parcel
+                        4. Price (input)-->
+                        <separator_field>
+                            <label> </label>
+                            <frontend_model>shiphawk_shipping/adminhtml_separator</frontend_model>
+                            <sort_order>66</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <can_be_empty>1</can_be_empty>
+                        </separator_field>
+                        <applicable translate="label">
+                            <label>Applicable for:</label>
+                            <sort_order>67</sort_order>
+                            <frontend_type>select</frontend_type>
+                            <source_model>shiphawk_shipping/source_applicable</source_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </applicable>
+                        <rate_title translate="label">
+                            <label>Rate title</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>68</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </rate_title>
+                        <rate_type translate="label">
+                            <label>Type</label>
+                            <sort_order>69</sort_order>
+                            <frontend_type>select</frontend_type>
+                            <source_model>shiphawk_shipping/source_ratetype</source_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </rate_type>
+                        <rate_price translate="label">
+                            <label>Price</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>70</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </rate_price>
+                        <separator_field2>
+                            <label> </label>
+                            <frontend_model>shiphawk_shipping/adminhtml_separator</frontend_model>
+                            <sort_order>71</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <can_be_empty>1</can_be_empty>
+                        </separator_field2>
                         <sallowspecific translate="label">
                             <label>Available for specific countries only</label>
                             <frontend_type>select</frontend_type>
                             <frontend_class>shipping-applicable-country</frontend_class>
                             <source_model>adminhtml/system_config_source_shipping_allspecificcountries</source_model>
-                            <sort_order>70</sort_order>
+                            <sort_order>71</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -260,7 +317,7 @@
                         <specificcountry translate="label">
                             <label>Ship to Specific Countries</label>
                             <frontend_type>multiselect</frontend_type>
-                            <sort_order>71</sort_order>
+                            <sort_order>72</sort_order>
                             <source_model>adminhtml/system_config_source_country</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -364,7 +421,7 @@
                         <importbutton translate="label">
                             <frontend_type>button</frontend_type>
                             <frontend_model>shiphawk_shipping/adminhtml_system_config_form_button</frontend_model>
-                            <sort_order>60</sort_order>
+                            <sort_order>51</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>

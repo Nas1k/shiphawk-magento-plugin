@@ -123,13 +123,19 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
                             <?php
                             if($_rate->method_description && !empty($methodDescription->destination)): ?>
                                 <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins<?php echo $i; ?>">Destination:</span>
-
+                                <?php $pre_accerories = Mage::helper('shiphawk_shipping')->preSetAccessories(); ?>
                                 <?php foreach($methodDescription->destination as $origin_acc) {?>
+                                    <?php if (in_array($origin_acc->accessorial_type, $pre_accerories)) {?>
                                     <li class="shipping-ratio-origins<?php echo $i; ?> shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
-                                        <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" onclick=" var el_id = 'hiddenaccessorial_' + id; if ($(el_id).disabled) { $(el_id).disabled = false; }else{ $(el_id).disabled = true;}" />
-                                        <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
-                                        <input type="hidden" id="hiddenaccessorial_<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" disabled name="hdaccess['s_method_<?php echo $_rate->getCode() ?>']['<?php echo $origin_acc->id ?>']" value="<?php echo $origin_acc->id ?>">
+                                        <?php if ($origin_acc->default) {?>
+                                        <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" checked  type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" onclick="return false" />
+                                        <?php } else { ?>
+                                            <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" onclick=" var el_id = 'hiddenaccessorial_' + id; if ($(el_id).disabled) { $(el_id).disabled = false; }else{ $(el_id).disabled = true;}" />
+                                        <?php } ?>
+                                        <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type))); echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                        <input type="hidden" id="hiddenaccessorial_<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" <?php if($origin_acc->default == false) echo 'disabled'; ?>  name="hdaccess['s_method_<?php echo $_rate->getCode() ?>']['<?php echo $origin_acc->id ?>']" value="<?php echo $origin_acc->id ?>">
                                     </li>
+                                    <?php }?>
                                 <?php  } ?>
 
                             <? endif; ?>
@@ -226,7 +232,7 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
                 //console.log(el.target);
                 var shippingNumber = el.target.getAttribute('data-shipping-method');
 
-                jQuery('.shipping-ratio-origins'+ shippingNumber + ' input[type=checkbox]').prop('checked', false);
+                //jQuery('.shipping-ratio-origins'+ shippingNumber + ' input[type=checkbox]').prop('checked', false);
                 jQuery('.shipping-ratio-origins'+ shippingNumber).hide();
 
                 var sh_checked = jQuery("input.shipping-ratios-multiple:checked");
@@ -290,15 +296,17 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
                         <?php if (!$hideAccessoriesOnFrontend):?>
                             <?php if($_rate->method_description){ ?>
                                 <?php $methodDescription = unserialize($_rate->method_description); ?>
-
+                                <?php $pre_accerories = Mage::helper('shiphawk_shipping')->preSetAccessories(); ?>
                                 <?php
                                 if($_rate->method_description && !empty($methodDescription->destination)): ?>
-                                    <span class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">Destination:</span>
+                                    <!--<span class="shipping-ratio-origins shipping-ratio-<?php /*echo $_rate->getRateId();*/?>-origins">Destination:</span>-->
                                     <?php foreach($methodDescription->destination as $origin_acc) {?>
+                                        <?php if (in_array($origin_acc->accessorial_type, $pre_accerories)) {?>
                                         <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
-                                            <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
-                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                            <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" <?php if($origin_acc->default) echo 'checked'; ?> type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
+                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type)));   echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
                                         </li>
+                                        <?php }?>
                                     <?php  }
                                 endif; ?>
                             <?php } ?>
@@ -339,7 +347,7 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
     /* For couple rates */
     jQuery("input.shipping-ratios").change(function() {
         jQuery('.shipping-ratio-origins').hide();
-        jQuery('.shipping-ratio-origins input[type=checkbox]').prop('checked', false);
+        //jQuery('.shipping-ratio-origins input[type=checkbox]').prop('checked', false);
 
         var ratioId = jQuery("input.shipping-ratios:checked").data('rate');
 
