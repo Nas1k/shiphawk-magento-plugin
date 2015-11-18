@@ -53,7 +53,7 @@
         <?php if (!empty($accessories['data'])):?>
             <p><?php echo $this->__('Accessories:');?></p>
             <?php foreach($accessories['data'] as $type => $accessor):?>
-                <span class="shipping-ratio-origins-type"><?php echo str_replace("'", '' , $type);?></span>
+                <!--<span class="shipping-ratio-origins-type"><?php /*echo str_replace("'", '' , $type);*/?></span>-->
                 <ul>
                     <?php foreach($accessor as $values):?>
                         <li><?php echo str_replace("'", '', $values['name'] . ' - ' . $currencySymbol . $values['value']);?></li>

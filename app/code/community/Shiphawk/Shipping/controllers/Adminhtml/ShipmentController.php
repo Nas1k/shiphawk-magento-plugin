@@ -112,7 +112,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             $orderAccessories = $order->getData('shiphawk_shipping_accessories');
                             if($multi_front) {
                                 $accessoriesPrice = $helper->getCurrentAccessoriesPrice($accessories, $orderAccessories);
-                            }else{
+                            }else{//todo ?
                                 $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
                             }
 
@@ -183,16 +183,19 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                         if(round($original_shipping_price,2) == round($shipping_price,2)) {
                             $rate_id        = $response->id;
-                            $accessories    = $response->shipping->carrier_accessorial;
+                            //$accessories    = $response->shipping->carrier_accessorial;
+                            $accessories = $api->getAccessoriesForBookSingleParcel($accessoriesPriceData);
                             $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
                             $is_rate = true;
+                            $multi_front = true;
                             break;
                         }
                     }
 
                     if($is_rate == true) {
                         // add book
-                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessoriesPriceData, true, $self_pack);
+                        //$track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack);
+                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front);
 
                         if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");

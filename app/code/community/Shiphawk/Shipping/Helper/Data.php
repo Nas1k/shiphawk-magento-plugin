@@ -466,10 +466,10 @@ class Shiphawk_Shipping_Helper_Data extends
         if(!empty($accessoriesPriceData)) {
             foreach($accessoriesPriceData as $typeName => $type) {
                 foreach($type as $name => $values) {
-                    foreach($values as $key => $value) {
+                    //foreach($values as $key => $value) {
 
-                        $accessoriesPrice += (float)$value;
-                    }
+                        $accessoriesPrice += (float)$values->value;
+                    //}
                 }
             }
         }
@@ -481,13 +481,13 @@ class Shiphawk_Shipping_Helper_Data extends
         $orderAccessories = json_decode($orderAccessories, true);
         $ids_array = array();
         foreach($accessories as $id_acc=>$id_value) {
-            $ids_array[] = "'".$id_value['id']."'";;
+            $ids_array[] = "'".$id_value['id']."'";
         }
 
         $price = 0;
         foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
             foreach($orderAccessor as $id=>$data) {
-                if(in_array($id, $ids_array)) {
+                if(in_array($data['id'], $ids_array)) {
                     $price += $data['value'];
                 }
             }

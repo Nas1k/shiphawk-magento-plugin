@@ -47,7 +47,7 @@ document.observe("dom:loaded", function() {
 
 
     var origin_fields = new Array($('shiphawk_origin_firstname'), $('shiphawk_origin_lastname'), $('shiphawk_origin_addressline1'),
-        $('shiphawk_origin_city'), $('shiphawk_origin_state'), $('shiphawk_origin_zipcode'), $('shiphawk_origin_phonenum'),
+        $('shiphawk_origin_city'), $('shiphawk_origin_zipcode'), $('shiphawk_origin_phonenum'),
         $('shiphawk_origin_email'), $('shiphawk_origin_location'));
 
     function setOriginRequiredFields() {

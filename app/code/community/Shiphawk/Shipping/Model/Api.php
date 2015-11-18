@@ -459,10 +459,13 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
                     $shippingShipHawkAmount = $products_ids['price'] + $accessoriesPrice;
 
+                    $accessories = $this->getAccessoriesForBookSingleParcel($accessoriesPriceData);
+
                     $self_pack = $products_ids['self_pack'];
 
                     // add book, auto booking - true
-                    $track_data = $this->toBook($order, $rate_id, $products_ids, $accessoriesPriceData, true, $self_pack);
+                    //$track_data = $this->toBook($order, $rate_id, $products_ids, $accessories, true, $self_pack);
+                    $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front = true);
                     $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
                     $helper->shlog($track_data, 'shiphawk-book-response.log');
@@ -509,7 +512,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     }
 
     public function _getItems($order, $products_ids) {
-        //todo bundle?
+
         $qty = array();
         if(is_object($order)) {
             foreach($order->getAllItems() as $eachOrderItem){
@@ -522,7 +525,26 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         - $eachOrderItem->getQtyCanceled();
                     $qty[$eachOrderItem->getId()] = $Itemqty;
                 }else{
-                    $qty[$eachOrderItem->getId()] = 0;
+                    // if type = bundle.
+                    // //get child product IDs
+                    if($eachOrderItem->getProductType() == 'bundle') {
+                        $bundle_product = Mage::getModel('catalog/product')->load($eachOrderItem->getProductId());
+                        $children_ids_by_option = $bundle_product
+                            ->getTypeInstance($bundle_product)
+                            ->getChildrenIds($bundle_product->getId(),false);
+                            foreach($children_ids_by_option as $key=>$id) {
+                                if(in_array($id, $products_ids['product_ids'])){
+                                        $Itemqty = $eachOrderItem->getQtyOrdered()
+                                        - $eachOrderItem->getQtyShipped()
+                                        - $eachOrderItem->getQtyRefunded()
+                                        - $eachOrderItem->getQtyCanceled();
+                                    $qty[$eachOrderItem->getId()] = $Itemqty;
+                                    break;
+                                }
+                            }
+                    }else{
+                        $qty[$eachOrderItem->getId()] = 0;
+                    }
                 }
             }
         }
@@ -779,6 +801,24 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 }
             }
         }
+
+        return $itemsAccessories;
+    }
+
+    public function getAccessoriesForBookSingleParcel($accessoriesPriceData) {
+        $itemsAccessories = array();
+
+        if(!empty($accessoriesPriceData)) {
+            foreach($accessoriesPriceData as $typeName => $type) {
+                foreach($type as $name => $values) {
+                    //foreach($values as $key => $value) {
+                        $itemsAccessories[] = array('id' => trim($values->id, "'"));
+                    //}
+                }
+            }
+        }
+
+
 
         return $itemsAccessories;
     }
