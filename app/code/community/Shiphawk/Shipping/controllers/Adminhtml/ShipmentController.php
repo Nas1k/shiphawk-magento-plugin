@@ -92,7 +92,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                     if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
                                         $rate_id        = $response->id;
                                         $accessories_from_rate    = $response->shipping->carrier_accessorial;
-                                        $accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers);
+                                        $accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers, $accessories_from_rate);
                                         $rate_name      = $carrier_model->_getServiceName($response);
                                         $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                         $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);

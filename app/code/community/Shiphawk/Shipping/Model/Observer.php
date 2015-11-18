@@ -257,8 +257,6 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             }
         }
 
-        Mage::log($accessoriesData, null, 'AccessoriesData.log');
-
         $params['data']                 = $accessoriesData;
         $params['grand_total']          = $grandTotal;
         $params['base_grand_total']     = $baseGrandTotal;

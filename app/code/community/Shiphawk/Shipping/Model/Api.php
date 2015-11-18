@@ -449,7 +449,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 }
             }else {
                 foreach ($shiphawk_rate_data as $rate_id => $products_ids) {
-                    //todo if this shipment not correct shiphawk ? $shipping_code = $order->getShippingMethod() - check?;
 
                     //package info for single parcel shipment, saved early in order place after event
                     $package_info    = $order->getShiphawkShippingPackageInfo();
@@ -465,22 +464,29 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                     // add book, auto booking - true
                     //$track_data = $this->toBook($order, $rate_id, $products_ids, $accessories, true, $self_pack);
-                    $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front = true);
-                    $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
+                    $is_it_backup_shiphawk_rate = $helper->checkIfOrderHasOnlyBackupShiphawkMethod($order);
+                    if($is_it_backup_shiphawk_rate === false) {
+                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front = true);
+                        $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
-                    $helper->shlog($track_data, 'shiphawk-book-response.log');
+                        $helper->shlog($track_data, 'shiphawk-book-response.log');
 
-                    if (property_exists($track_data, 'error')) {
-                        Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
-                        $helper->shlog('ShipHawk response: ' . $track_data->error);
-                        return;
-                    }
+                        if (property_exists($track_data, 'error')) {
+                            Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
+                            $helper->shlog('ShipHawk response: ' . $track_data->error);
+                            return;
+                        }
 
-                    // add track
-                    if ($track_number = $track_data->details->id) {
-                        $this->addTrackNumber($shipment, $track_number);
-                        // subscribe automatic after booking
-                        $this->subscribeToTrackingInfo($shipment->getId());
+                        // add track
+                        if ($track_number = $track_data->details->id) {
+                            $this->addTrackNumber($shipment, $track_number);
+                            // subscribe automatic after booking
+                            $this->subscribeToTrackingInfo($shipment->getId());
+                        }
+
+                    }else{
+                        // no booking for backup ShipHawk method
+                        $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, null);
                     }
                 }
             }
@@ -790,7 +796,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $itemsAccessories;
     }
 
-    public function getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers) {
+    public function getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers, $acessories_from_rate = array()) {
         $itemsAccessories = array();
         if (is_array($accessories_per_carriers)) {
             $helper = Mage::helper('shiphawk_shipping');
@@ -811,14 +817,10 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         if(!empty($accessoriesPriceData)) {
             foreach($accessoriesPriceData as $typeName => $type) {
                 foreach($type as $name => $values) {
-                    //foreach($values as $key => $value) {
-                        $itemsAccessories[] = array('id' => trim($values->id, "'"));
-                    //}
+                    $itemsAccessories[] = array('id' => trim($values->id, "'"));
                 }
             }
         }
-
-
 
         return $itemsAccessories;
     }

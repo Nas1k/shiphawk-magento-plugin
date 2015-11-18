@@ -1094,7 +1094,7 @@ class Shiphawk_Shipping_Model_Carrier
         }
 
         if($shipping_origin_id) {
-            // get zip code from Shiping Origin
+            // get zip code from Shipping Origin
             $shipping_origin = Mage::getModel('shiphawk_shipping/origins')->load($shipping_origin_id);
             $product_origin_zip_code = $shipping_origin->getData('shiphawk_origin_location');
             return $product_origin_zip_code;

@@ -177,7 +177,6 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
 
                         <?php endif; ?>
                         checkQuoteBaseGrandTotal = quoteBaseGrandTotal;
-                        //return false;
                     }
 
                     $('s_method_shiphawk_shipping_multi_parcel').checked = true;
@@ -219,10 +218,9 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
 
             /* For couple rates */
             jQuery("input.shipping-ratios-multiple").change(function(el) {
-                //console.log(el.target);
+
                 var shippingNumber = el.target.getAttribute('data-shipping-method');
 
-                //jQuery('.shipping-ratio-origins'+ shippingNumber + ' input[type=checkbox]').prop('checked', false);
                 jQuery('.shipping-ratio-origins'+ shippingNumber).hide();
 
                 var sh_checked = jQuery("input.shipping-ratios-multiple:checked");
@@ -233,16 +231,6 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
                     });
                 }
             });
-
-            /* For checked rate */
-            /*if (jQuery("input.shipping-ratios-multiple:checked").length > 0) {
-
-                jQuery("input.shipping-ratios-multiple:checked").each(function(el){
-                    var id = el.data('rate');
-
-                    showOrigins(id);
-                });
-            }*/
 
             function showOrigins(id) {
                 jQuery('.shipping-ratio-' + id + '-origins').show();
@@ -341,7 +329,6 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
     /* For couple rates */
     jQuery("input.shipping-ratios").change(function() {
         jQuery('.shipping-ratio-origins').hide();
-        //jQuery('.shipping-ratio-origins input[type=checkbox]').prop('checked', false);
 
         var ratioId = jQuery("input.shipping-ratios:checked").data('rate');
 
