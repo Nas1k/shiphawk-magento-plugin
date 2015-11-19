@@ -129,12 +129,14 @@
                                         <td class="value">
                                             <?php
                                                 if (!empty($shiphawkShippingAccessories)) {
-                                                    foreach($shiphawkShippingAccessories as $type => $accessor) {
-                                                        echo '<span style="text-transform: capitalize; font-weight: bold;">' .  Mage::helper('sales')->__(str_replace("'", '', $type) . ':') . '</span>';
+                                                    foreach($shiphawkShippingAccessories as $rate_code => $accessor) {
+                                                        echo '<span style="text-transform: capitalize; font-weight: bold;">' .  Mage::helper('sales')->__(str_replace("'", '', $rate_code) . ':') . '</span>';
                                                         echo '<ul>';
 
-                                                        foreach($accessor as $values) {
-                                                            echo '<li>' . str_replace("'", '', $values['name']) . ' - ' . $currensy_symbol . $values['value'] . '</li>';
+                                                        foreach($accessor as $type=>$values) {
+                                                            foreach($values as $value) {
+                                                                echo '<li>' . str_replace("'", '', $value['name']) . ' - ' . $currensy_symbol . $value['value'] . '</li>';
+                                                            }
                                                         }
 
                                                         echo '</ul>';

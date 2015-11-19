@@ -23,7 +23,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
             $shiphawk_rate_data = unserialize($order->getData('shiphawk_book_id')); // rate id
             $shiphawk_multi_shipping = unserialize($order->getData('shiphawk_multi_shipping')); // rates grouped by items
-            $chosen_shipping_methods = unserialize($order->getChosenMultiShippingMethods()); // get chosen multi shipping rates
+            $chosen_shipping_methods = unserialize($order->getChosenMultiShippingMethods()); // get chosen multi shipping rates empty for admin order ?
 
             $api = Mage::getModel('shiphawk_shipping/api');
             $helper = Mage::helper('shiphawk_shipping');
@@ -40,7 +40,10 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
             $accessories_for_rates = unserialize($order->getShiphawkCustomerAccessorials());
 
-            $accessories_per_carriers = unserialize($order->getChosenAccessoriesPerCarrier());
+            //$accessories_per_carriers = unserialize($order->getChosenAccessoriesPerCarrier());
+            //mage::log($accessories_per_carriers, null, 'accessories_per_carries.log');// delete maybe
+
+            $orderAccessories = json_decode($order->getShiphawkShippingAccessories());
 
             if (!empty($accessories_for_rates))
             foreach ($accessories_for_rates as $access_rate) {
@@ -79,7 +82,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                 foreach ($shiphawk_rate_data as $rate_data) {
                                     if(round ($rate_data['price'], 2) == $shipping_price) {
                                         $rate_id        = $response->id;
-                                        $accessories    = $response->shipping->carrier_accessorial;
+                                        //$accessories    = $response->shipping->carrier_accessorial; // no accessorials for admin
                                         $rate_name      = $carrier_model->_getServiceName($response);
                                         $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                         $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
@@ -92,7 +95,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                     if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
                                         $rate_id        = $response->id;
                                         $accessories_from_rate    = $response->shipping->carrier_accessorial;
-                                        $accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers, $accessories_from_rate);
+                                        //$accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers, $accessories_from_rate);
+                                        $accessories = $api->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
                                         $rate_name      = $carrier_model->_getServiceName($response);
                                         $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                         $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
@@ -107,15 +111,14 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         if($is_rate == true) {
 
                             // add book
-                            $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories, false, $self_pack, null, $multi_front);
+                            $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front); // multi front?
 
-                            $orderAccessories = $order->getData('shiphawk_shipping_accessories');
-                            if($multi_front) {
+                           /* if($multi_front) {
                                 $accessoriesPrice = $helper->getCurrentAccessoriesPrice($accessories, $orderAccessories);
                             }else{//todo ?
                                 $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
-                            }
-
+                            }*/
+                            $accessoriesPrice = $accessories['price'];
                             if (property_exists($track_data, 'error')) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                                 $helper->shlog('ShipHawk response: '.$track_data->error);
@@ -173,8 +176,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         continue;
                     };
 
-                    $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
-                    $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($accessoriesPriceData);
+                    // if it is single parcel shipping, then only one shipping rate code
+                    $shipping_code = $chosen_shipping_methods[0];
+                    $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
                     // ShipHawk Shipping Amount includes accessories price
                     $original_shipping_price = floatval($order->getShiphawkShippingAmount() - $accessoriesPrice);
                     foreach ($responseObject as $response) {
@@ -183,8 +187,8 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                         if(round($original_shipping_price,2) == round($shipping_price,2)) {
                             $rate_id        = $response->id;
-                            //$accessories    = $response->shipping->carrier_accessorial;
-                            $accessories = $api->getAccessoriesForBookSingleParcel($accessoriesPriceData);
+                            $accessories_from_rate    = $response->shipping->carrier_accessorial;
+                            $accessories = $api->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
                             $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
                             $is_rate = true;
                             $multi_front = true;
@@ -195,7 +199,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                     if($is_rate == true) {
                         // add book
                         //$track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack);
-                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front);
+                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories['accessories'], false, $self_pack, null, $multi_front);
 
                         if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -206,7 +210,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                         $shipment = $api->_initShipHawkShipment($order,$products_ids);
                         $shipment->register();
-                        $shippingShipHawkAmount = $products_ids['price'] + $accessoriesPrice;
+                        $shippingShipHawkAmount = $products_ids['price'] + $accessories['price'];
                         $api->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
                         // add track

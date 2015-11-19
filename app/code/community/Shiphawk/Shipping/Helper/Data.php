@@ -464,68 +464,17 @@ class Shiphawk_Shipping_Helper_Data extends
         $accessoriesPrice = 0;
 
         if(!empty($accessoriesPriceData)) {
-            foreach($accessoriesPriceData as $typeName => $type) {
-                foreach($type as $name => $values) {
-                    //foreach($values as $key => $value) {
+            foreach($accessoriesPriceData as $rate_code => $types) {
+                foreach($types as $type => $values) {
+                    foreach($values as $key => $data) {
 
-                        $accessoriesPrice += (float)$values->value;
-                    //}
-                }
-            }
-        }
-
-        return $accessoriesPrice;
-    }
-
-    public function getCurrentAccessoriesPrice($accessories, $orderAccessories) {
-        $orderAccessories = json_decode($orderAccessories, true);
-        $ids_array = array();
-        foreach($accessories as $id_acc=>$id_value) {
-            $ids_array[] = "'".$id_value['id']."'";
-        }
-
-        $price = 0;
-        foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
-            foreach($orderAccessor as $id=>$data) {
-                if(in_array($data['id'], $ids_array)) {
-                    $price += $data['value'];
-                }
-            }
-        }
-
-        return $price;
-    }
-
-    public function getChosenAccessoriesForCurrentRate($accessories, $orderAccessories) {
-
-        if (empty($accessories) || empty($orderAccessories)) {
-            return null;
-        }
-
-        $orderAccessories = json_decode($orderAccessories, true);
-        $itemsAccessories = array();
-        $price =0;
-
-        foreach ($accessories as $accessoriesType => $accessor) {
-            foreach($accessor as $accessorRow) {
-                foreach($orderAccessories as $orderAccessoriesType => $orderAccessor) {
-                    foreach($orderAccessor as $orderAccessorValues) {
-                        $orderAccessorValuesName = str_replace("'", '', $orderAccessorValues['name']);
-                        $orderAccessorValuesName = trim($orderAccessorValuesName);
-
-                        $accessorName = (string)$accessorRow->accessorial_type . ' (' . (string)$accessorRow->accessorial_options . ')';
-                        $accessorName = trim($accessorName);
-
-                        if (str_replace("'", '', $orderAccessoriesType) == $accessoriesType && $accessorName == $orderAccessorValuesName) {
-                            $itemsAccessories[] = array('id' => $accessorRow->id);
-                            $price += $accessorRow->price;
-                        }
+                        $accessoriesPrice += (float)$data->value;
                     }
                 }
             }
         }
 
-        return $price;
+        return $accessoriesPrice;
     }
 
     public function  checkIsItCartPage() {

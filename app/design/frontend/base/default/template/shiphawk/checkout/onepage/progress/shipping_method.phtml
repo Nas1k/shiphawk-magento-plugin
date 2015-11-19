@@ -52,11 +52,13 @@
         ?>
         <?php if (!empty($accessories['data'])):?>
             <p><?php echo $this->__('Accessorials:');?></p>
-            <?php foreach($accessories['data'] as $type => $accessor):?>
+            <?php foreach($accessories['data'] as $code_rate => $accessor):?>
                 <!--<span class="shipping-ratio-origins-type"><?php /*echo str_replace("'", '' , $type);*/?></span>-->
                 <ul>
                     <?php foreach($accessor as $values):?>
-                        <li><?php echo str_replace("'", '', $values['name'] . ' - ' . $currencySymbol . $values['value']);?></li>
+                        <?php foreach($values as $value):?>
+                            <li><?php echo str_replace("'", '', $value['name'] . ' - ' . $currencySymbol . $value['value']);?></li>
+                        <?php endforeach;?>
                     <?php endforeach;?>
                 </ul>
                 <br/>

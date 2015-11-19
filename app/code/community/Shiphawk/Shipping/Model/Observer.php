@@ -35,7 +35,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $order->setShiphawkMultiShipping(serialize($shiphawk_multi_shipping));
 
             $chosen_shipping_methods = Mage::getSingleton('checkout/session')->getData('chosen_multi_shipping_methods');
-            $order->setChosenMultiShippingMethods(serialize($chosen_shipping_methods));
+
 
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
 
@@ -43,11 +43,11 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $shiphawkRateFilter = Mage::getSingleton('core/session')->getShiphawkRateFilter();
             $order->setShiphawkRateFilter($shiphawkRateFilter);
 
-            $chosen_accessories_per_carrier = Mage::getSingleton('checkout/session')->getData('chosen_accessories_per_carrier');
-            $order->setChosenAccessoriesPerCarrier(serialize($chosen_accessories_per_carrier));
+            //$chosen_accessories_per_carrier = Mage::getSingleton('checkout/session')->getData('chosen_accessories_per_carrier');
+            //$order->setChosenAccessoriesPerCarrier(serialize($chosen_accessories_per_carrier));
 
             //shiphawk_shipping_amount
-            if($multi_zip_code == false) {
+            if($multi_zip_code == false) {//if single parcel shipping
 
                 $shiphawk_book_id  = $helper->getShipHawkCode($shiphawk_book_id, $shipping_code);
                 foreach ($shiphawk_book_id as $rate_id=>$method_data) {
@@ -69,14 +69,23 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 /* For accessories */
                 $accessoriesPrice   = 0;
                 $accessoriesData    = array();
-                foreach($accessories as $typeName => $type) {
-                    foreach($type as $name => $values) {
-                        foreach($values as $key => $value) {
-                            $accessoriesData[$typeName][$key]['name'] = $name;
-                            $accessoriesData[$typeName][$key]['value'] = (float)$value;
+                //$chosen_shipping_methods - get shipping method from post
+                $order_data = Mage::app()->getRequest()->getPost('order', array());
+                $chosen_shipping_methods[] = "'" . $order_data['shipping_method'] . "'";
 
-                            $accessoriesPrice += (float)$value;
-                        }
+                foreach($accessories as $typeName => $type) { //$typeName - destination, origin
+                    foreach($type as $name => $values) { // name - shipping rate code
+
+                            foreach($values as $key => $value) {
+                                foreach($value as $id=>$price) {
+                                    $accessoriesData[$name][$typeName][$key]['name'] = $key;
+                                    $accessoriesData[$name][$typeName][$key]['value'] = (float)$price;
+                                    $accessoriesData[$name][$typeName][$key]['id'] = $id;
+
+                                    $accessoriesPrice += (float)$price;
+                                }
+                            }
+
                     }
                 }
 
@@ -93,7 +102,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             }else{
                 // it is for frontend order - accessories already saved in checkout_type_onepage_save_order event
                 $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
-                $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData);
+                $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData); //price of all accessorials
                 $accessoriesPrice = round($accessoriesPrice, 2);
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
             }
@@ -101,6 +110,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             // save pre *destination* accessorials for future re rate in booking
             $accessories_for_rates = $helper->getPreAccessoriesInSession();
             $order->setShiphawkCustomerAccessorials(serialize($accessories_for_rates));
+
+            $order->setChosenMultiShippingMethods(serialize($chosen_shipping_methods));
 
             $helper->clearCustomAccessoriesInSession();
 
@@ -241,14 +252,14 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $accessoriesPrice   = 0;
         $accessoriesData    = array();
 
-        foreach($accessories as $typeName => $type) {
-            foreach($type as $name => $values) {
+        foreach($accessories as $typeName => $type) { //$typeName - destination, origin
+            foreach($type as $name => $values) { // name - shipping rate code
                 if(in_array($name, $chosen_shipping_methods)){
                     foreach($values as $key => $value) {
                         foreach($value as $id=>$price) {
-                            $accessoriesData[$name][$key]['name'] = $key;
-                            $accessoriesData[$name][$key]['value'] = (float)$price;
-                            $accessoriesData[$name][$key]['id'] = $id;
+                            $accessoriesData[$name][$typeName][$key]['name'] = $key;
+                            $accessoriesData[$name][$typeName][$key]['value'] = (float)$price;
+                            $accessoriesData[$name][$typeName][$key]['id'] = $id;
 
                             $accessoriesPrice += (float)$price;
                         }

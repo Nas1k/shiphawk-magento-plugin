@@ -41,12 +41,14 @@
     <?php if (!empty($accessories['data'])):?>
         <tr>
             <td class="a-right" colspan="3">
-                <?php echo $this->helper('sales')->__('Accessories:') ?><br/>
-                <?php foreach($accessories['data'] as $type => $accessor):?>
-                    <!--<span class="shipping-ratio-origins-type"><?php /*echo str_replace("'", '', $type);*/?></span>-->
+                <?php echo $this->helper('sales')->__('Accessorials:') ?><br/>
+                <?php foreach($accessories['data'] as $code_rate => $accessor):?>
+                    <!--<span class="shipping-ratio-origins-type"><?php /*echo str_replace("'", '' , $type);*/?></span>-->
                     <ul>
                         <?php foreach($accessor as $values):?>
-                            <li><?php echo str_replace("'", '', $values['name'] . ' - ' . $currencySymbol . $values['value']);?></li>
+                            <?php foreach($values as $value):?>
+                                <li><?php echo str_replace("'", '', $value['name'] . ' - ' . $currencySymbol . $value['value']);?></li>
+                            <?php endforeach;?>
                         <?php endforeach;?>
                     </ul>
                     <br/>
