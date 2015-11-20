@@ -114,7 +114,7 @@ class Shiphawk_Shipping_Model_Carrier
                         $fixed_rate_id = $method_title . '_' . $from_zip . '_' . $to_zip . '_' . $fixed_price;
                         $result->append($this->_getShiphawkFixedRateObject($fixed_price, $fixed_rate_id));
 
-                        $toOrder[$fixed_rate_id]['product_ids'] = $this->getProductIds($product_items);
+                        /*$toOrder[$fixed_rate_id]['product_ids'] = $this->getProductIds($product_items);
                         $toOrder[$fixed_rate_id]['price'] = $fixed_price;
                         $toOrder[$fixed_rate_id]['name'] = $method_title;
                         $toOrder[$fixed_rate_id]['items'] = $product_items;
@@ -127,7 +127,7 @@ class Shiphawk_Shipping_Model_Carrier
                         $toOrder[$fixed_rate_id]['shiphawk_discount_percentage'] = null;
                         $toOrder[$fixed_rate_id]['self_pack'] = $self_pack;
                         $toOrder[$fixed_rate_id]['custom_products_packing_price'] = 0;
-                        $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                        $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);*/
                     }
                 }else{
                     $grouped_items_by_zip = $this->getGroupedItemsByZip($product_items);

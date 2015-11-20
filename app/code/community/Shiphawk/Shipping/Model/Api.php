@@ -389,7 +389,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                             foreach ($shiphawk_rate_data as $rate_data) {
                                 if(round ($rate_data['price'], 2) == $shipping_price) {
                                     $rate_id        = $response->id;
-                                    $accessories    = $response->shipping->carrier_accessorial;
+                                    //accessories    = $response->shipping->carrier_accessorial; // no accessorials for backend multi parcel order
                                     $rate_name      = $carrier_model->_getServiceName($response);
                                     $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                     $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
@@ -417,14 +417,12 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                     if($is_rate == true) {
                         // add book
-                        $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front); // multi front?
-
-
-                        /*if($multi_front) {
-                            $accessoriesPrice = $helper->getCurrentAccessoriesPrice($accessories, $orderAccessories);
+                        if($accessories['accessories']) {
+                            $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front);
                         }else{
-                            $accessoriesPrice = Mage::helper('shiphawk_shipping')->getChosenAccessoriesForCurrentRate($accessories, $orderAccessories);
-                        }*/
+                            $track_data = $api->toBook($order, $rate_id, $rates_data[0], array(), false, $self_pack, null, $multi_front);
+                        }
+
                         $accessoriesPrice = $accessories['price'];
                         if (property_exists($track_data, 'error')) {
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
@@ -764,9 +762,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
         $helper = Mage::helper('shiphawk_shipping');
 
-        //mage::log($orderAccessories, null, 'orderAccessories.log');
-        //mage::log($accessories, null, 'accessories_from_rate.log');
-
         $result = array();
         $itemsAccessories = array();
         $price = 0;
@@ -811,22 +806,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $result;
     }
 
-   /* public function getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers, $acessories_from_rate = array()) {
-        Mage::log($acessories_from_rate, null, 'acessories_from_rate.log');
-        $itemsAccessories = array();
-        if (is_array($accessories_per_carriers)) {
-            $helper = Mage::helper('shiphawk_shipping');
-            foreach ($accessories_per_carriers as $code=>$acc_data) {
-                if($helper->getOriginalShipHawkShippingPrice($code, $shipping_price)) {
-                    foreach($acc_data as $acc_id)
-                        $itemsAccessories[] = array('id' => $acc_id);
-                }
-            }
-        }
-
-        return $itemsAccessories;
-    }*/
-
     public function getAccessoriesForAutoBookSingleParcel($accessoriesPriceData) {
         $itemsAccessories = array();
 
@@ -842,6 +821,10 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         }
 
         return $itemsAccessories;
+    }
+
+    public function getDataForTateRequest() {
+
     }
 
 }
