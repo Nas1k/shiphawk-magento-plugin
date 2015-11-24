@@ -14,14 +14,16 @@ class Shiphawk_Shipping_Block_Adminhtml_Sales_Order_View extends Mage_Adminhtml_
         $confirm_messsage = $this->__('Are you sure to process?');
         $check_shiphawk = Mage::helper('shiphawk_shipping')->isShipHawkShipping($shipping_code);
         if($check_shiphawk !== false) {
-            if (($helper->checkShipmentExist($order))) {
-                if($manual_shipping) {
-                    $this->_addButton('shiphawk_shipping', array(
-                        'label'     => Mage::helper('shiphawk_shipping')->__('ShipHawk Shipment'),
-                        //'onclick' => "confirmSetLocation('{$confirm_messsage}', '{$this->getShipHawkUrl($order_id)}')",
-                        'onclick' => "reBook('{$this->getShipHawkUrl($order_id)}', '{$order_id}', '{$this->getNewShipHawkUrl($order_id)}')",
-                        'class'     => 'go'
-                    ), 0, 100, 'header', 'header');
+            if ($order->canShip()) {
+                if (($helper->checkShipmentExist($order))) {
+                    //if($manual_shipping) {
+                        $this->_addButton('shiphawk_shipping', array(
+                            'label'     => Mage::helper('shiphawk_shipping')->__('ShipHawk Shipment'),
+                            //'onclick' => "confirmSetLocation('{$confirm_messsage}', '{$this->getShipHawkUrl($order_id)}')",
+                            'onclick' => "reBook('{$this->getShipHawkUrl($order_id)}', '{$order_id}', '{$this->getNewShipHawkUrl($order_id)}')",
+                            'class'     => 'go'
+                        ), 0, 100, 'header', 'header');
+                    //}
                 }
             }
         }else{

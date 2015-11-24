@@ -552,11 +552,11 @@ class Shiphawk_Shipping_Helper_Data extends
         return true;
     }
 
-    public function checkIfOrderHasOnlyBackupShiphawkMethod($order) {
+    /*public function checkIfOrderHasOnlyBackupShiphawkMethod($order) {
         $backup_method_title = Mage::getStoreConfig('carriers/shiphawk_shipping/rate_title');
         $order_shipping_method_title = $order->getShippingDescription();
         $is_it_backup_shiphawk_rate = strpos($order_shipping_method_title, $backup_method_title);
         return $is_it_backup_shiphawk_rate;
-    }
+    }*/
 
 }

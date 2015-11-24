@@ -101,7 +101,7 @@ class Shiphawk_Shipping_Model_Carrier
                 if($disable == 1) {
                     //disable the ShipHawk shipping method at the product level
                     $api_error = true;
-                    if ($fixed_rate_applicable == 0) {
+                    if (($fixed_rate_applicable == 0)||(($fixed_rate_applicable == 1)&&($is_multi_zip == false))) {
                         $error = Mage::getModel('shipping/rate_result_error');
                         $error->setCarrier('shiphawk_shipping');
                         $error->setCarrierTitle('ShipHawk');
@@ -114,7 +114,7 @@ class Shiphawk_Shipping_Model_Carrier
                         $fixed_rate_id = $method_title . '_' . $from_zip . '_' . $to_zip . '_' . $fixed_price;
                         $result->append($this->_getShiphawkFixedRateObject($fixed_price, $fixed_rate_id));
 
-                        /*$toOrder[$fixed_rate_id]['product_ids'] = $this->getProductIds($product_items);
+                        $toOrder[$fixed_rate_id]['product_ids'] = $this->getProductIds($product_items);
                         $toOrder[$fixed_rate_id]['price'] = $fixed_price;
                         $toOrder[$fixed_rate_id]['name'] = $method_title;
                         $toOrder[$fixed_rate_id]['items'] = $product_items;
@@ -122,12 +122,13 @@ class Shiphawk_Shipping_Model_Carrier
                         $toOrder[$fixed_rate_id]['to_zip'] = $to_zip;
                         $toOrder[$fixed_rate_id]['carrier'] = 'ShipHawk';
                         $toOrder[$fixed_rate_id]['packing_info'] = '';
-                        $toOrder[$fixed_rate_id]['carrier_type'] = 'ShipHawk';
+                        $toOrder[$fixed_rate_id]['carrier_type'] = null;
                         $toOrder[$fixed_rate_id]['shiphawk_discount_fixed'] = null;
                         $toOrder[$fixed_rate_id]['shiphawk_discount_percentage'] = null;
                         $toOrder[$fixed_rate_id]['self_pack'] = $self_pack;
                         $toOrder[$fixed_rate_id]['custom_products_packing_price'] = 0;
-                        $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);*/
+                        $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                        $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                     }
                 }else{
                     $grouped_items_by_zip = $this->getGroupedItemsByZip($product_items);
@@ -241,6 +242,7 @@ class Shiphawk_Shipping_Model_Carrier
                                                 $toOrder[$fixed_rate_id]['self_pack'] = $self_pack;
                                                 $toOrder[$fixed_rate_id]['custom_products_packing_price'] = $custom_products_packing_price;
                                                 $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                                                $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                                             }
                                         }
                                     }
@@ -326,6 +328,7 @@ class Shiphawk_Shipping_Model_Carrier
                                                     $toOrder[$fixed_rate_id]['self_pack'] = $self_pack;
                                                     $toOrder[$fixed_rate_id]['custom_products_packing_price'] = $custom_products_packing_price;
                                                     $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                                                    $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                                                 }
                                             }
 
@@ -429,6 +432,7 @@ class Shiphawk_Shipping_Model_Carrier
                                             $toOrder[$fixed_rate_id]['self_pack'] = $self_pack;
                                             $toOrder[$fixed_rate_id]['custom_products_packing_price'] = $custom_products_packing_price;
                                             $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                                            $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                                         }
                                     }
 
@@ -519,6 +523,7 @@ class Shiphawk_Shipping_Model_Carrier
                                                 $toOrder[$fixed_rate_id]['self_pack'] = $self_pack;
                                                 $toOrder[$fixed_rate_id]['custom_products_packing_price'] = $custom_products_packing_price;
                                                 $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                                                $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                                             }
                                         }
                                     }
@@ -589,6 +594,7 @@ class Shiphawk_Shipping_Model_Carrier
                         $toOrder[$fixed_rate_id]['self_pack'] = $api_calls_params[$i]['self_pack'];
                         $toOrder[$fixed_rate_id]['custom_products_packing_price'] = $api_calls_params[$i]['custom_products_packing_price'];
                         $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                        $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                         break;
 
                     }
@@ -629,6 +635,7 @@ class Shiphawk_Shipping_Model_Carrier
                         $toOrder[$fixed_rate_id]['self_pack'] = $api_calls_params[$i]['self_pack'];
                         $toOrder[$fixed_rate_id]['custom_products_packing_price'] = $api_calls_params[$i]['custom_products_packing_price'];
                         $toOrder[$fixed_rate_id]['rate_price_for_group'] = round($fixed_price, 2);
+                        $toOrder[$fixed_rate_id]['shiphawk_disabled'] = 1;
                         break;
                     }
                 } else {
@@ -646,6 +653,9 @@ class Shiphawk_Shipping_Model_Carrier
                             $rate_price_for_group = $helper->getProductDiscountMarkupPrice($service_price, $percentage_markup_discount, $flat_markup_discount);
                         }
 
+                        // fix for pre destination accessories
+                        $rate_price_for_group = $rate_price_for_group + $this->getDefaultAccessoriesPrice($api_responses[$i][0]->shipping->carrier_accessorial);
+
                         $toOrder[$api_responses[$i][0]->id]['product_ids'] = $this->getProductIds($api_calls_params[$i]['discount_items']);
                         $toOrder[$api_responses[$i][0]->id]['price'] = $service_price;
                         $toOrder[$api_responses[$i][0]->id]['name'] = $api_responses[$i][0]->shipping->service;
@@ -660,6 +670,7 @@ class Shiphawk_Shipping_Model_Carrier
                         $toOrder[$api_responses[$i][0]->id]['self_pack'] = $api_calls_params[$i]['self_pack'];
                         $toOrder[$api_responses[$i][0]->id]['custom_products_packing_price'] = $api_calls_params[$i]['custom_products_packing_price'];
                         $toOrder[$api_responses[$i][0]->id]['rate_price_for_group'] = round($rate_price_for_group, 2);
+                        $toOrder[$api_responses[$i][0]->id]['shiphawk_disabled'] = null;
                     } else {
 
                         foreach ($api_responses[$i] as $responseItem) {
@@ -673,9 +684,12 @@ class Shiphawk_Shipping_Model_Carrier
                                 $rate_price_for_group = $helper->getProductDiscountMarkupPrice($service_price, $percentage_markup_discount, $flat_markup_discount);
                             }
 
+                            // fix for pre destination accessories
+                            $rate_price_for_group = $rate_price_for_group + $this->getDefaultAccessoriesPrice($api_responses[$i][0]->shipping->carrier_accessorial);
+
                             $toOrder[$responseItem->id]['product_ids'] = $this->getProductIds($api_calls_params[$i]['discount_items']);
                             $toOrder[$responseItem->id]['price'] = $helper->getShipHawkPrice($responseItem, $self_pack, $charge_customer_for_packing);
-                            $toOrder[$responseItem->id]['name'] = $responseItem->shipping->service;//
+                            $toOrder[$responseItem->id]['name'] = $responseItem->shipping->service;
                             $toOrder[$responseItem->id]['items'] = $api_calls_params[$i]['discount_items'];
                             $toOrder[$responseItem->id]['from_zip'] = $api_calls_params[$i]['from_zip'];
                             $toOrder[$responseItem->id]['to_zip'] = $api_calls_params[$i]['to_zip'];
@@ -687,6 +701,7 @@ class Shiphawk_Shipping_Model_Carrier
                             $toOrder[$responseItem->id]['self_pack'] = $api_calls_params[$i]['self_pack'];
                             $toOrder[$responseItem->id]['custom_products_packing_price'] = $api_calls_params[$i]['custom_products_packing_price'];
                             $toOrder[$responseItem->id]['rate_price_for_group'] = round($rate_price_for_group, 2);
+                            $toOrder[$responseItem->id]['shiphawk_disabled'] = null;
                         }
                     }
                 }
@@ -895,7 +910,7 @@ class Shiphawk_Shipping_Model_Carrier
         return $rate;
     }
 
-    protected function _getFixedPrice($products = array()) {
+    public function _getFixedPrice($products = array()) {
         $price = Mage::getStoreConfig('carriers/shiphawk_shipping/rate_price');
         $rate_type = Mage::getStoreConfig('carriers/shiphawk_shipping/rate_type');
         if($rate_type == 2) {
@@ -1231,21 +1246,23 @@ class Shiphawk_Shipping_Model_Carrier
                     $accessorial = $object->shipping->carrier_accessorial;
                     $services[$object->id]['accessorial'] = $accessorial;
 
-                    $default_accessories_price = 0;
+                    /*$default_accessories_price = 0;
                     if(!empty($accessorial)) {
                         $pre_accerories = Mage::helper('shiphawk_shipping')->preSetAccessories();
                         foreach($accessorial as $orderAccessoriesType => $orderAccessor) {
                             if ($orderAccessoriesType == 'destination') {
                                 foreach($orderAccessor as $orderAccessorValues) {
-                                    if(!in_array($orderAccessorValues->accessorial_type, $pre_accerories)) {
+                                    //if(!in_array($orderAccessorValues->accessorial_type, $pre_accerories)) {
                                         if($orderAccessorValues->default){
                                             $default_accessories_price += $orderAccessorValues->price;
                                         }
-                                    }
+                                    //}
                                 }
                             }
                         }
-                    }
+                    }*/
+
+                    $default_accessories_price = $this->getDefaultAccessoriesPrice($accessorial);
 
                     // price for customer
                     $services[$object->id]['price'] = $helper->getSummaryPrice($object, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting, $custom_products_packing_price, $default_accessories_price);
@@ -1273,6 +1290,26 @@ class Shiphawk_Shipping_Model_Carrier
         }
 
         return $services;
+    }
+
+    public function getDefaultAccessoriesPrice($accessorial) {
+        $default_accessories_price = 0;
+        if(!empty($accessorial)) {
+            $pre_accerories = Mage::helper('shiphawk_shipping')->preSetAccessories();
+            foreach($accessorial as $orderAccessoriesType => $orderAccessor) {
+                if ($orderAccessoriesType == 'destination') {
+                    foreach($orderAccessor as $orderAccessorValues) {
+                        //if(!in_array($orderAccessorValues->accessorial_type, $pre_accerories)) {
+                        if($orderAccessorValues->default){
+                            $default_accessories_price += $orderAccessorValues->price;
+                        }
+                        //}
+                    }
+                }
+            }
+        }
+
+        return $default_accessories_price;
     }
 
     public function  getPackeges($object) {
