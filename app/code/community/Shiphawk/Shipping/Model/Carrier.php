@@ -685,7 +685,7 @@ class Shiphawk_Shipping_Model_Carrier
                             }
 
                             // fix for pre destination accessories
-                            $rate_price_for_group = $rate_price_for_group + $this->getDefaultAccessoriesPrice($api_responses[$i][0]->shipping->carrier_accessorial);
+                            $rate_price_for_group = $rate_price_for_group + $this->getDefaultAccessoriesPrice($responseItem->shipping->carrier_accessorial);
 
                             $toOrder[$responseItem->id]['product_ids'] = $this->getProductIds($api_calls_params[$i]['discount_items']);
                             $toOrder[$responseItem->id]['price'] = $helper->getShipHawkPrice($responseItem, $self_pack, $charge_customer_for_packing);
@@ -1178,12 +1178,16 @@ class Shiphawk_Shipping_Model_Carrier
             $tmp[serialize($data['product_ids'])][] = $data['rate_price_for_group'];
         }
 
+        mage::log($tmp);
+
         $t_rate = array();
         foreach($_rates as $_rate){
             if($_rate->getCarrier() !== 'shiphawk_shipping') continue;
             $t_price = (string) round($_rate->getPrice(),2);
             $t_rate[$t_price] = $_rate;
         }
+
+       // mage::log($t_rate);
 
         $tt = array();
             foreach ($tmp as $pr_ids=>$prices) {
@@ -1192,6 +1196,8 @@ class Shiphawk_Shipping_Model_Carrier
                     $tt[$pr_ids][] = $t_rate[$t_price];
                 }
             }
+
+       // mage::log($tt);
 
         return $tt;
     }
@@ -1245,22 +1251,6 @@ class Shiphawk_Shipping_Model_Carrier
                     /* accesorial info */
                     $accessorial = $object->shipping->carrier_accessorial;
                     $services[$object->id]['accessorial'] = $accessorial;
-
-                    /*$default_accessories_price = 0;
-                    if(!empty($accessorial)) {
-                        $pre_accerories = Mage::helper('shiphawk_shipping')->preSetAccessories();
-                        foreach($accessorial as $orderAccessoriesType => $orderAccessor) {
-                            if ($orderAccessoriesType == 'destination') {
-                                foreach($orderAccessor as $orderAccessorValues) {
-                                    //if(!in_array($orderAccessorValues->accessorial_type, $pre_accerories)) {
-                                        if($orderAccessorValues->default){
-                                            $default_accessories_price += $orderAccessorValues->price;
-                                        }
-                                    //}
-                                }
-                            }
-                        }
-                    }*/
 
                     $default_accessories_price = $this->getDefaultAccessoriesPrice($accessorial);
 

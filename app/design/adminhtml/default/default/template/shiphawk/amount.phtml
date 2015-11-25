@@ -197,11 +197,13 @@
 
                     }
                 ?>
-                <ul>
-                    <?php foreach($tracknums as $ship_num) { ?>
-                        <li><a onclick="bolpdf(this)" class="bol_link" style="cursor: pointer" id="<?php echo $ship_num; ?>">Get BOL PDF for <?php echo $ship_num ?> shipment</a></li>
-                    <?php } ?>
-                </ul>
+                    <?php if (is_array($tracknums)) {?>
+                        <ul>
+                            <?php foreach($tracknums as $ship_num) { ?>
+                                <li><a onclick="bolpdf(this)" class="bol_link" style="cursor: pointer" id="<?php echo $ship_num; ?>">Get BOL PDF for <?php echo $ship_num ?> shipment</a></li>
+                            <?php } ?>
+                        </ul>
+                    <?php }?>
                 <?php } ?>
 
             </fieldset>

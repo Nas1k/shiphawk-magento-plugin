@@ -83,12 +83,33 @@
                                     <?php foreach ($accessories as $accessor): ?>
                                         <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId(); ?>-origins"
                                             style="display: none;">
+                                            <?php if($type == 'origin'){ ?>
                                             <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                    type="checkbox" value="<?php echo $accessor->price ?>"
                                                    name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
                                                    class="checkbox accessor"/>
                                             <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                    class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
+                                            <?php } else {?>
+                                                <!-- if accessorials->default = true than accessorials price already added to shipping price and we set accessorial price to 0 -->
+                                                <?php if ($accessor->default) {?>
+                                                <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
+                                                       type="checkbox"
+                                                       value="0"
+                                                       name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
+                                                       class="checkbox accessor"/>
+                                                <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
+                                                       class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . 0 ?></label>
+                                                <?php } else {?>
+                                                    <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
+                                                           type="checkbox"
+                                                           value="<?php echo $accessor->price ?>"
+                                                           name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
+                                                           class="checkbox accessor"/>
+                                                    <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
+                                                           class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
+                                                <?php }?>
+                                            <?php }?>
                                         </li>
                                     <?php endforeach; ?>
                                 <?php endforeach; ?>
