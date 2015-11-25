@@ -47,7 +47,7 @@
                     <ul>
                         <?php foreach($accessor as $values):?>
                             <?php foreach($values as $value):?>
-                                <li><?php echo str_replace("'", '', $value['name'] . ' - ' . $currencySymbol . $value['value']);?></li>
+                                <li><?php $actype = ucwords(implode(' ', explode('_', $value['name']))); echo ucfirst(str_replace("'", '', $actype . ' - ' . $currencySymbol . $value['value']));?></li>
                             <?php endforeach;?>
                         <?php endforeach;?>
                     </ul>

@@ -130,12 +130,14 @@
                                             <?php
                                                 if (!empty($shiphawkShippingAccessories)) {
                                                     foreach($shiphawkShippingAccessories as $rate_code => $accessor) {
+                                                        /* accessories from New ShipHawk Shipment */
                                                         if(($rate_code == 'origin') || ($rate_code == 'destination')) {
                                                             echo '<span style="text-transform: capitalize; font-weight: bold;">' .  Mage::helper('sales')->__(str_replace("'", '', $rate_code) . ':') . '</span>';
                                                             echo '<ul>';
 
                                                             foreach($accessor as $values) {
-                                                                echo '<li>' . str_replace("'", '', $values['name']) . ' - ' . $currensy_symbol . $values['value'] . '</li>';
+                                                                $actype = ucwords(implode(' ', explode('_', $values['name'])));
+                                                                echo '<li>' . ucfirst(str_replace("'", '', $actype)) . ' - ' . $currensy_symbol . $values['value'] . '</li>';
                                                             }
 
                                                             echo '</ul>';
@@ -146,7 +148,8 @@
 
                                                             foreach($accessor as $type=>$values) {
                                                                 foreach($values as $value) {
-                                                                    echo '<li>' . str_replace("'", '', $value['name']) . ' - ' . $currensy_symbol . $value['value'] . '</li>';
+                                                                    $actype = ucwords(implode(' ', explode('_', $value['name'])));
+                                                                    echo '<li>' . ucfirst(str_replace("'", '', $actype)) . ' - ' . $currensy_symbol . $value['value'] . '</li>';
                                                                 }
                                                             }
 
