@@ -29,6 +29,7 @@
 $hideAccessoriesOnFrontend = Mage::getStoreConfig('carriers/shiphawk_shipping/hide_accessories_on_frontend');
 
 $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
+$currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
 ?>
 <?php if (!$_shippingRateGroups): ?>
     <p><?php echo $this->__('Sorry, no quotes are available for this order at this time.') ?></p>
@@ -129,13 +130,13 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
                                     <li class="shipping-ratio-origins<?php echo $i; ?> shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
                                         <?php if ($origin_acc->default) {?>
                                         <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" checked type="checkbox" value="0" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" onclick="return false" />
-                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type))); echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . 0 ?></label>
-                                        <?php } else { ?>
+                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type))); echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . ' ' . 'included' ?></label>
+                                        <?php } else {
+                                            $acc_price  = ($origin_acc->price) ? ($currency_symbol . $origin_acc->price) : 'included';
+                                            ?>
                                             <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox"  />
-                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type))); echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                            <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type))); echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . ' ' . $acc_price ?></label>
                                         <?php } ?>
-                                        <!--<label for="<?php /*echo $origin_acc->id . '-' . $_rate->getRateId(); */?>" class="shipping-ratio-origins-label"><?php /*$actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type))); echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price */?></label>-->
-                                        <!--<input type="hidden" id="hiddenaccessorial_<?php /*echo $origin_acc->id . '-' . $_rate->getRateId(); */?>" <?php /*if($origin_acc->default == false) echo 'disabled'; */?>  name="hdaccess['s_method_<?php /*echo $_rate->getCode() */?>']['<?php /*echo $origin_acc->id */?>']" value="<?php /*echo $origin_acc->id */?>">-->
                                     </li>
                                     <?php }?>
                                 <?php  } ?>
@@ -283,15 +284,13 @@ $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
                                         <?php if (in_array($origin_acc->accessorial_type, $pre_accerories)) {?>
                                         <li class="shipping-ratio-origins shipping-ratio-<?php echo $_rate->getRateId();?>-origins">
                                             <?php if ($origin_acc->default) {?>
-                                                <!--<input id="<?php /*echo $origin_acc->id . '-' . $_rate->getRateId(); */?>" checked type="checkbox" value="<?php /*echo $origin_acc->price */?>" name="accessories['destination']['<?php /*echo $_rate->getCode(); */?>']['<?php /*echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';*/?>']['<?php /*echo $origin_acc->id; */?>']" class="checkbox" onclick="return false" />-->
                                                 <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" checked type="checkbox" value="0" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" onclick="return false" />
-                                                <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type)));   echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . 0 ?></label>
-                                            <?php } else { ?>
+                                                <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type)));   echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . ' ' . 'included' ?></label>
+                                            <?php } else {
+                                                $acc_price  = ($origin_acc->price) ? ($currency_symbol . $origin_acc->price) : 'included'; ?>
                                                 <input id="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" type="checkbox" value="<?php echo $origin_acc->price ?>" name="accessories['destination']['<?php echo $_rate->getCode(); ?>']['<?php echo $origin_acc->accessorial_type . ' (' . $origin_acc->accessorial_options . ')';?>']['<?php echo $origin_acc->id; ?>']" class="checkbox" />
-                                                <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type)));   echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price ?></label>
+                                                <label for="<?php echo $origin_acc->id . '-' . $_rate->getRateId(); ?>" class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type)));   echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . ' ' . $acc_price ?></label>
                                             <?php } ?>
-                                            <!--<label for="<?php /*echo $origin_acc->id . '-' . $_rate->getRateId(); */?>" class="shipping-ratio-origins-label"><?php /*$actype = ucwords(implode(' ', explode('_', $origin_acc->accessorial_type)));   echo $actype . ' (' . $origin_acc->accessorial_options . ')' . ' + ' . '$' . $origin_acc->price */?></label>-->
-                                            <!--<input type="hidden" id="hiddenaccessorial_<?php /*echo $origin_acc->id . '-' . $_rate->getRateId(); */?>" <?php /*if($origin_acc->default == false) echo 'disabled'; */?>  name="hdaccess['s_method_<?php /*echo $_rate->getCode() */?>']['<?php /*echo $origin_acc->id */?>']" value="<?php /*echo $origin_acc->id */?>">-->
                                         </li>
                                         <?php }?>
                                     <?php  }

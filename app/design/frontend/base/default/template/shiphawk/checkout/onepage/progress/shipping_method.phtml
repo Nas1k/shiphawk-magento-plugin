@@ -57,7 +57,7 @@
                 <ul>
                     <?php foreach($accessor as $values):?>
                         <?php foreach($values as $value):?>
-                            <li><?php $actype = ucwords(implode(' ', explode('_', $value['name']))); echo ucfirst(str_replace("'", '', $actype . ' - ' . $currencySymbol . $value['value']));?></li>
+                            <li><?php $acc_price  = ($value['value']) ? ($currencySymbol . $value['value']) : 'included'; $actype = ucwords(implode(' ', explode('_', $value['name']))); echo ucfirst(str_replace("'", '', $actype . ' - ' . $acc_price));?></li>
                         <?php endforeach;?>
                     <?php endforeach;?>
                 </ul>

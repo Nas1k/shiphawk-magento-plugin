@@ -35,7 +35,9 @@
     }
 </style>
 <?php $_shippingRateGroups = $this->getShippingRates(); ?>
-<?php $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code'); ?>
+<?php $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
+      $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
+?>
 <?php if ($_shippingRateGroups): ?>
     <div id="order-shipping-method-choose" style="display:none">
         <dl class="shipment-methods">
@@ -89,7 +91,7 @@
                                                    name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
                                                    class="checkbox accessor"/>
                                             <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
-                                                   class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
+                                                   class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . $currency_symbol . $accessor->price ?></label>
                                             <?php } else {?>
                                                 <!-- if accessorials->default = true than accessorials price already added to shipping price and we set accessorial price to 0 -->
                                                 <?php if ($accessor->default) {?>
@@ -99,15 +101,16 @@
                                                        name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
                                                        class="checkbox accessor"/>
                                                 <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
-                                                       class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . 0 ?></label>
+                                                       class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . ' ' . 'included' ?></label>
                                                 <?php } else {?>
                                                     <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                            type="checkbox"
                                                            value="<?php echo $accessor->price ?>"
                                                            name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
                                                            class="checkbox accessor"/>
+                                                    <?php $acc_price  = ($accessor->price) ? ($currency_symbol . $accessor->price) : 'included'; ?>
                                                     <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
-                                                           class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . '$' . $accessor->price ?></label>
+                                                           class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . ' ' . $acc_price ?></label>
                                                 <?php }?>
                                             <?php }?>
                                         </li>

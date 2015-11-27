@@ -82,6 +82,7 @@
                     $shiphawk_shipping_package_info = $_order->getShiphawkShippingPackageInfo();
                     $shiphawkShippingAccessories    = $_order->getShiphawkShippingAccessories();
                     $shiphawkShippingAccessories    = !empty($shiphawkShippingAccessories) ? json_decode($shiphawkShippingAccessories, true) : array();
+                $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
                 ?>
                 <?php if ($shiphawk_shipping_amount) : ?>
                     <div class="entry-edit">
@@ -95,7 +96,7 @@
                                         <td class="label"><label><?php echo Mage::helper('sales')->__('ShipHawk Shipping Amount') ?></label></td>
                                         <td class="value">
                                             <?php $currensy_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol(); ?>
-                                            <?php echo $currensy_symbol . $shiphawk_shipping_amount; ?>
+                                            <?php echo $currensy_symbol . $shiphawk_shipping_amount;  ?>
                                         </td>
                                     </tr>
 
@@ -137,19 +138,21 @@
 
                                                             foreach($accessor as $values) {
                                                                 $actype = ucwords(implode(' ', explode('_', $values['name'])));
-                                                                echo '<li>' . ucfirst(str_replace("'", '', $actype)) . ' - ' . $currensy_symbol . $values['value'] . '</li>';
+                                                                $acc_price  = ($values['value']) ? ($currency_symbol . $values['value']) : 'included';
+                                                                echo '<li>' . ucfirst(str_replace("'", '', $actype)) . ' - ' . $acc_price . '</li>';
                                                             }
 
                                                             echo '</ul>';
                                                             echo '<br/>';
                                                         }else{
-                                                            echo '<span style="text-transform: capitalize; font-weight: bold;">' .  Mage::helper('sales')->__(str_replace("'", '', $rate_code) . ':') . '</span>';
+                                                            //echo '<span style="text-transform: capitalize; font-weight: bold;">' .  Mage::helper('sales')->__(str_replace("'", '', $rate_code) . ':') . '</span>';
                                                             echo '<ul>';
 
                                                             foreach($accessor as $type=>$values) {
                                                                 foreach($values as $value) {
                                                                     $actype = ucwords(implode(' ', explode('_', $value['name'])));
-                                                                    echo '<li>' . ucfirst(str_replace("'", '', $actype)) . ' - ' . $currensy_symbol . $value['value'] . '</li>';
+                                                                    $acc_price  = ($value['value']) ? ($currency_symbol . $value['value']) : 'included';
+                                                                    echo '<li>' . ucfirst(str_replace("'", '', $actype)) . ' - ' . $acc_price . '</li>';
                                                                 }
                                                             }
 
