@@ -539,22 +539,23 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         - $eachOrderItem->getQtyCanceled();
                     $qty[$eachOrderItem->getId()] = $Itemqty;
                 }else{
-                    // if type = bundle.
+                    // if type = bundle or configurable
                     // //get child product IDs
-                    if($eachOrderItem->getProductType() == 'bundle') {
+                    if(($eachOrderItem->getProductType() == 'bundle') || ($eachOrderItem->getProductType() == 'configurable')) {
                         $bundle_product = Mage::getModel('catalog/product')->load($eachOrderItem->getProductId());
-                        $children_ids_by_option = $bundle_product
-                            ->getTypeInstance($bundle_product)
-                            ->getChildrenIds($bundle_product->getId(),false);
-                            foreach($children_ids_by_option as $key=>$id) {
-                                if(in_array($id, $products_ids['product_ids'])){
+                        $children_ids_by_option = $bundle_product->getTypeInstance($bundle_product)->getChildrenIds($bundle_product->getId(),false);
+                            foreach($children_ids_by_option as $ids) {
+                                foreach ($ids as $id) {
+                                    if(in_array($id, $products_ids['product_ids'])){
                                         $Itemqty = $eachOrderItem->getQtyOrdered()
-                                        - $eachOrderItem->getQtyShipped()
-                                        - $eachOrderItem->getQtyRefunded()
-                                        - $eachOrderItem->getQtyCanceled();
-                                    $qty[$eachOrderItem->getId()] = $Itemqty;
-                                    break;
+                                            - $eachOrderItem->getQtyShipped()
+                                            - $eachOrderItem->getQtyRefunded()
+                                            - $eachOrderItem->getQtyCanceled();
+                                        $qty[$eachOrderItem->getId()] = $Itemqty;
+                                        break 2;
+                                    }
                                 }
+
                             }
                     }else{
                         $qty[$eachOrderItem->getId()] = 0;

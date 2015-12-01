@@ -541,9 +541,19 @@ class Shiphawk_Shipping_Model_Carrier
                 curl_multi_add_handle($mh, $api_data['api_call']);
             }
 
+            $active = null;
             do {
-                curl_multi_exec($mh, $running);
-            } while ($running);
+                $mrc = curl_multi_exec($mh, $active);
+            } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+
+            while ($active && $mrc == CURLM_OK){
+                if (curl_multi_select($mh) == -1){
+                    continue;
+                }
+                do{
+                    $mrc = curl_multi_exec($mh, $active);
+                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+            }
 
             foreach ($api_calls_params as $api_data) {
                 curl_multi_remove_handle($mh, $api_data['api_call']);
@@ -1178,8 +1188,6 @@ class Shiphawk_Shipping_Model_Carrier
             $tmp[serialize($data['product_ids'])][] = $data['rate_price_for_group'];
         }
 
-        mage::log($tmp);
-
         $t_rate = array();
         foreach($_rates as $_rate){
             if($_rate->getCarrier() !== 'shiphawk_shipping') continue;
@@ -1187,17 +1195,13 @@ class Shiphawk_Shipping_Model_Carrier
             $t_rate[$t_price] = $_rate;
         }
 
-       // mage::log($t_rate);
-
         $tt = array();
-            foreach ($tmp as $pr_ids=>$prices) {
-                foreach ($prices as $price) {
-                    $t_price = (string) round($price,2);
-                    $tt[$pr_ids][] = $t_rate[$t_price];
-                }
+        foreach ($tmp as $pr_ids=>$prices) {
+            foreach ($prices as $price) {
+                $t_price = (string) round($price,2);
+                $tt[$pr_ids][] = $t_rate[$t_price];
             }
-
-       // mage::log($tt);
+        }
 
         return $tt;
     }
