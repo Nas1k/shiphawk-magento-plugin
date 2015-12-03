@@ -1,7 +1,9 @@
 <?php
 class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 {
-    public function buildShiphawkRequest($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType, $destination_accessorials = null){
+    public function buildShiphawkRequest($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType,
+                                         $destination_accessorials = null, $to_country_code = 'US', $from_country_code = 'US')
+    {
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
         //$url_api_rates = $helper->getApiUrl() . 'rates/full?api_key=' . $api_key;
@@ -17,6 +19,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'items' => $items,
                 'from_type' => $location_type,
                 'to_type' => $shLocationType,
+                'from_county_code' => $from_country_code,
+                'to_country_code' => $to_country_code,
                 'destination_accessorials' => $destination_accessorials,
             );
         }else{
@@ -28,6 +32,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'items' => $items,
                 'from_type' => $location_type,
                 'to_type' => $shLocationType,
+                'from_county_code' => $from_country_code,
+                'to_country_code' => $to_country_code,
                 'destination_accessorials' => $destination_accessorials,
             );
         }

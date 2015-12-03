@@ -60,6 +60,8 @@ $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->g
             $toOrder = Mage::getSingleton('core/session')->getShiphawkBookId();
             $carrier_model = Mage::getModel('shiphawk_shipping/carrier');
             $rates_grouped_by_items = $carrier_model->groupRatesByItems($toOrder, $_rates);
+            $quote_items = Mage::getSingleton('checkout/session')->getQuote()->getAllVisibleItems();
+
         ?>
         <dt><?php echo $this->escapeHtml($this->getCarrierName($code)) ?></dt>
         <dd>
@@ -74,15 +76,18 @@ $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->g
             foreach($rates_grouped_by_items as $items_ids=>$_shiphawk_rates) {?>
                 <div class="sub-left">
                 <?php
-                    $product_ids = array_unique(unserialize($items_ids));
-                    foreach ($product_ids as $pr_id) {
-                        $_product = Mage::getModel('catalog/product')->load($pr_id);
-                        $product_name = $_product->getName();
-                        $img = (string)Mage::helper('catalog/image')->init($_product, 'image')->resize(200);
-                        echo '<img src ="' .$img.'" alt="' .$product_name.'" width=200 height=200 />';
-                        echo $product_name;
-                        echo '<br>';
-                    }
+
+                //$product_ids = array_unique(unserialize($items_ids));
+                $product_ids = (unserialize($items_ids));
+                foreach ($product_ids as $pr_id) {
+                    $_product = Mage::getModel('catalog/product')->load($pr_id);
+                    $product_name = $_product->getName();
+                    $img = (string)Mage::helper('catalog/image')->init($_product, 'thumbnail')->resize(200);
+                    echo '<img src ="' .$img.'" alt="' .$product_name.'" width=200 height=200 />';
+                    echo $product_name;
+                    echo '<br>';
+                }
+
                 ?>
                 </div>
                 <div class="sub-right">
