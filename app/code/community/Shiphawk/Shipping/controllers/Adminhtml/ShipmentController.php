@@ -81,12 +81,13 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                     continue;
                                 };
 
+                            $accessories['accessories'] = null;
+
                             foreach ($responseObject as $response) {
-                                $shipping_price = (string) $helper->getShipHawkPrice($response, $self_pack);
-                                if($is_backend_order) {
-                                    $shipping_price = round ($helper->getShipHawkPrice($response, $self_pack),2);
+                                $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
+                                if($is_backend_order) {// TODO if admin then cheapest rate must be booking, + accessories with default true must be booking too
                                     foreach ($shiphawk_rate_data as $rate_data) {
-                                        if(round ($rate_data['price'], 2) == $shipping_price) {
+                                        if(round ($rate_data['price'], 2) == round ($shipping_price, 2)) {
                                             $rate_id        = $response->id;
                                             //$accessories    = $response->shipping->carrier_accessorial; // no accessorials for admin
                                             $rate_name      = $carrier_model->_getServiceName($response);
@@ -98,17 +99,17 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                     }
                                 }else{
                                     foreach($chosen_shipping_methods as $shipping_code) {
-                                        if($helper->getOriginalShipHawkShippingPrice($shipping_code, $shipping_price)) {
+                                        if($helper->getOriginalShipHawkShippingPrice($shipping_code, (string) $shipping_price)) {
                                             $rate_id        = $response->id;
                                             $accessories_from_rate    = $response->shipping->carrier_accessorial;
-                                            //$accessories = $api->getAccessoriesForBookMultiParcel($shipping_price, $accessories_per_carriers, $accessories_from_rate);
-                                            // todo if no accessories ? Notice: Trying to get property of non-object
+                                            if(!empty($accessories_from_rate))
                                             $accessories = $api->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
                                             $rate_name      = $carrier_model->_getServiceName($response);
                                             $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                             $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
                                             $is_rate = true;
                                             $multi_front = true;
+                                            unset($chosen_shipping_methods[array_search($shipping_code,$chosen_shipping_methods)]);
                                             break 2;
                                         }
                                     }
@@ -117,14 +118,16 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                             if($is_rate == true) {
 
+                                $accessoriesPrice = 0;
                                 // add book
                                 if($accessories['accessories']) {// todo undefined accessories
                                     $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front);
+                                    $accessoriesPrice = $accessories['price'];
                                 }else{
                                     $track_data = $api->toBook($order, $rate_id, $rates_data[0], array(), false, $self_pack, null, $multi_front);
                                 }
 
-                                $accessoriesPrice = $accessories['price']; //todo Undefined index price
+
                                 if (property_exists($track_data, 'error')) {
                                     Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                                     $helper->shlog('ShipHawk response: '.$track_data->error);
@@ -496,6 +499,38 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             $this->getResponse()->setBody('accessories price is empty.');
             return;
         }*/
+
+        if ((floatval($shiphawk_override_cost) >= 0)&&($shiphawk_override_cost != '')) {
+            $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
+
+            $overrideCost   = floatval($shiphawk_override_cost);
+            $subTotal       = $quote->getSubtotal();
+            $totals = $quote->getTotals();
+
+            //$totals = $quote->getTotals();
+            $discount = 0;
+            if(isset($totals['discount']) && $totals['discount']->getValue()) {
+                $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
+            }
+            $tax = 0;
+            if(isset($totals['tax']) && $totals['tax']->getValue()) {
+                $tax = round($totals['tax']->getValue(), 2); //Tax value if applied
+            }
+
+            $grandTotal = $subTotal + $overrideCost + $discount + $tax;
+
+            $quote->setShippingAmount($overrideCost);
+            $quote->setBaseShippingAmount($overrideCost);
+            $quote->setGrandTotal($grandTotal);
+            $quote->setBaseGrandTotal($grandTotal);
+
+            $quote->setTotalsCollectedFlag(false)->save();
+            $quote->collectTotals();
+
+            $totals = $quote->getTotals();
+
+            $quote->save();
+        }
 
         Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
         Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');

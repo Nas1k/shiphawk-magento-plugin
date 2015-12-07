@@ -334,8 +334,9 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         if ((floatval($overrideCost) < 0)||($overrideCost === null)||( $overrideCost === "")) {
             return;
         }
+        $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
 
-        $totals = Mage::getSingleton('adminhtml/session_quote')->getQuote()->getTotals();
+        $totals = $quote->getTotals();
         $discount = 0;
         if(isset($totals['discount']) && $totals['discount']->getValue()) {
             $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
@@ -353,6 +354,9 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $order->setBaseShippingAmount($overrideCost);
         $order->setGrandTotal($grandTotal);
         $order->setBaseGrandTotal($grandTotal);
+
+        $quote->collectTotals();
+        $quote->save();
 
         $order->save();
     }

@@ -724,50 +724,59 @@ class Shiphawk_Shipping_Model_Carrier
                 /* get error and backup rate is disable */
             }else{
                 if(!empty($api_responses)) {
-                    $services = $this->getServices($api_responses, $toOrder, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting);
 
-                    $cheapest_rate_id = $this->_getCheapestRateId($services);
+                    foreach ($api_responses as $api_response) {
+                        if (property_exists($api_response, 'error'))
+                        continue;
+                        $services = $this->getServices($api_response, $toOrder, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting);
 
-                    foreach ($services as $id_service => $service) {
-                        //add ShipHawk shipping
-                        //$shipping_price = $helper->getTotalDiscountShippingPrice($service['price'], $toOrder[$id_service]);
-                        $shipping_price = $service['price'];
-                        if ((empty($service['shiphawk_discount_fixed'])) && (empty($service['shiphawk_discount_percentage']))) {
-                            $shipping_price = $helper->getDiscountShippingPrice($service['price']);
-                        } else {
-                            $shipping_price = $helper->getProductDiscountMarkupPrice($service['price'], $service['shiphawk_discount_percentage'], $service['shiphawk_discount_fixed']);
-                        }
+                        $cheapest_rate_id = $this->_getCheapestRateId($services);
 
-                        if ($free_shipping_setting != 'none') {
-                            if ($request->getFreeShipping()) {
+                        foreach ($services as $id_service => $service) {
+                            //add ShipHawk shipping
+                            //$shipping_price = $helper->getTotalDiscountShippingPrice($service['price'], $toOrder[$id_service]);
+                            $shipping_price = $service['price'];
+                            if ((empty($service['shiphawk_discount_fixed'])) && (empty($service['shiphawk_discount_percentage']))) {
+                                $shipping_price = $helper->getDiscountShippingPrice($service['price']);
+                            } else {
+                                $shipping_price = $helper->getProductDiscountMarkupPrice($service['price'], $service['shiphawk_discount_percentage'], $service['shiphawk_discount_fixed']);
+                            }
 
-                                // get cheapest rate id
-                                if ($cheapest_rate_id == $id_service) {
-                                    $shipping_price = 0;
-                                }
+                            if ($free_shipping_setting != 'none') {
+                                if ($request->getFreeShipping()) {
 
-                                if ($free_shipping_setting == 'all') {
-                                    $shipping_price = 0;
+                                    // get cheapest rate id
+                                    if ($cheapest_rate_id == $id_service) {
+                                        $shipping_price = 0;
+                                    }
+
+                                    if ($free_shipping_setting == 'all') {
+                                        $shipping_price = 0;
+                                    }
                                 }
                             }
-                        }
 
-                        if ($is_admin == false) {
-                            $result->append($this->_getShiphawkRateObject($service['name'], $shipping_price, $service['shiphawk_price'], $service['accessorial'], $id_service, $is_multi_zip));
-                        } else {
-                            $result->append($this->_getShiphawkRateObject($service['name'] . ' - ' . $service['carrier'], $shipping_price, $service['shiphawk_price'], $service['accessorial'], $id_service, $is_multi_zip));
+                            if ($is_admin == false) {
+                                $result->append($this->_getShiphawkRateObject($service['name'], $shipping_price, $service['shiphawk_price'], $service['accessorial'], $id_service, $is_multi_zip));
+                            } else {
+                                $result->append($this->_getShiphawkRateObject($service['name'] . ' - ' . $service['carrier'], $shipping_price, $service['shiphawk_price'], $service['accessorial'], $id_service, $is_multi_zip));
+                            }
                         }
                     }
+
                 }
 
                 if ($is_multi_zip) {
                     $multiple_price = Mage::getSingleton('checkout/session')->getData('multiple_price_checkout');
                     if (is_null($multiple_price)) {
-                        $multiple_price = $this->getSumOfCheapestRates($toOrder);
+                        $multiple_price = $this->getSumOfCheapestRates($toOrder); // TODO if backup flat rate exist and normal shiphawk exist
 
                         if ($free_shipping_setting != 'none') {
                             if ($request->getFreeShipping()) {
-                                $multiple_price = 0;
+
+                                if ($free_shipping_setting == 'all') {
+                                    $multiple_price = 0;
+                                }
                             }
                         }
                     }
@@ -781,8 +790,6 @@ class Shiphawk_Shipping_Model_Carrier
 
             //save rate_id info for Book
             Mage::getSingleton('core/session')->setShiphawkBookId($toOrder);
-
-            //$helper->shlog($toOrder, 'shiphawk-toOrder.log');
 
             //save rate filter to order
             Mage::getSingleton('core/session')->setShiphawkRateFilter($rate_filter);
@@ -1210,7 +1217,8 @@ class Shiphawk_Shipping_Model_Carrier
     public function groupRatesByItems($toOrder, $_rates = null) {
         $tmp = array();
         foreach($toOrder as $rate_id=>$data) {
-            $tmp[serialize($data['product_ids'])][] = $data['rate_price_for_group'];
+            //$tmp[serialize($data['product_ids'])][] = $data['rate_price_for_group'];
+            $tmp[serialize($data['product_ids'])][] = $data['price'];
         }
 
         $t_rate = array();
@@ -1226,7 +1234,8 @@ class Shiphawk_Shipping_Model_Carrier
             foreach ($prices as $price) {
                 $t_price = round($price,2);
                 foreach($t_rate as $id=>$rate_object) {
-                    if($t_price == $rate_object->getPrice()) {
+                    //if($t_price == $rate_object->getPrice()) { // check price in rate code
+                    if(Mage::helper('shiphawk_shipping')->getOriginalShipHawkShippingPrice($rate_object->getCode(), (string) $t_price)) {
                         $tt[$pr_ids][] = $rate_object;
                         unset($t_rate[$id]);
                         break;
@@ -1266,12 +1275,12 @@ class Shiphawk_Shipping_Model_Carrier
         return $rate_id;
     }
 
-    public function getServices($ship_responses, $toOrder, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting) {
+    public function getServices($ship_response, $toOrder, $self_pack, $charge_customer_for_packing, $custom_packing_price_setting) {
 
         $services = array();
         $helper = Mage::helper('shiphawk_shipping');
-        foreach($ship_responses as $ship_response) {
-            if(is_array($ship_response)) {
+        //foreach($ship_responses as $ship_response) {
+          //  if(is_array($ship_response)) {
                 $custom_products_packing_price = 0;
                 foreach($ship_response as $object) {
                     $services[$object->id]['name'] = $this->_getServiceName($object);
@@ -1312,8 +1321,8 @@ class Shiphawk_Shipping_Model_Carrier
                         }
                     }
                 }
-            }
-        }
+            //}
+        //}
 
         return $services;
     }

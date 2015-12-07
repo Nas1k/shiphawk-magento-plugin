@@ -98,6 +98,8 @@
                                                 <input id="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                        type="checkbox"
                                                        value="0"
+                                                       checked
+                                                       onclick="return false"
                                                        name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
                                                        class="checkbox accessor"/>
                                                 <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
@@ -181,7 +183,7 @@
 
     $$("input.shipping-ratios").invoke('observe', 'change', function() {
         $$('.shipping-ratio-origins').invoke('hide');
-        $$('.shipping-ratio-origins input[type=checkbox]').invoke('setValue', false);
+        //$$('.shipping-ratio-origins input[type=checkbox]').invoke('setValue', false);
 
         var ratioId = $$("input.shipping-ratios:checked").invoke('readAttribute' ,'data-rate');
         showOrigins(ratioId);
