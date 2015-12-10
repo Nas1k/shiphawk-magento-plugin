@@ -8,8 +8,6 @@ class Shiphawk_Shipping_Block_Adminhtml_Shipment extends Mage_Core_Block_Templat
      */
     public function getNewShipHawkRate($order) {
 
-        //todo move above code to function, in carrier !
-
         $carrier = Mage::getModel('shiphawk_shipping/carrier');
         $api = Mage::getModel('shiphawk_shipping/api');
         $helper = Mage::helper('shiphawk_shipping');

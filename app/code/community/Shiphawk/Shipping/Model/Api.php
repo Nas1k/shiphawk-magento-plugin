@@ -340,7 +340,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         try {
             $order = Mage::getModel('sales/order')->load($orderId);
             $helper = Mage::helper('shiphawk_shipping');
-            $api = Mage::getModel('shiphawk_shipping/api');
 
             $shLocationType = $order->getShiphawkLocationType();
 
@@ -392,27 +391,31 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                         $accessories['accessories'] = null;
 
-                        foreach ($responseObject as $response) {
-                            $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
-                            if($is_backend_order) {
-                                foreach ($shiphawk_rate_data as $rate_data) {
-                                    if(round ($rate_data['price'], 2) == round ($shipping_price, 2)) {
-                                        $rate_id        = $response->id;
-                                        //accessories    = $response->shipping->carrier_accessorial; // no accessorials for backend multi parcel order
-                                        $rate_name      = $carrier_model->_getServiceName($response);
-                                        $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
-                                        $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
-                                        $is_rate = true;
-                                        break 2;
-                                    }
+                        if($is_backend_order) {
+                            $cheapest_rate_id = $carrier_model->getCheapestRateIdForBooking($responseObject, $self_pack);
+                            foreach ($responseObject as $response) {
+                                if($response->id == $cheapest_rate_id) {
+                                    $rate_id        = $response->id;
+                                    $accessories_from_rate    = $response->shipping->carrier_accessorial;
+                                    if(!empty($accessories_from_rate))
+                                    $accessories = $this->getDefaultAccessoriesForBook($accessories_from_rate); // return array with accessories and price of this accessorials
+                                    $rate_name      = $carrier_model->_getServiceName($response);
+                                    $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
+                                    $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
+                                    $is_rate = true;
+                                    $multi_front = true;//todo remove from function, not need
+                                    break;
                                 }
-                            }else{
+                            }
+                        }else{
+                            foreach ($responseObject as $response) {
+                                $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                 foreach($chosen_shipping_methods as $shipping_code) {
                                     if($helper->getOriginalShipHawkShippingPrice($shipping_code, (string) $shipping_price)) {
                                         $rate_id        = $response->id;
                                         $accessories_from_rate    = $response->shipping->carrier_accessorial;
                                         if(!empty($accessories_from_rate))
-                                            $accessories = $api->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
+                                        $accessories = $this->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
                                         $rate_name      = $carrier_model->_getServiceName($response);
                                         $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                                         $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
@@ -429,10 +432,10 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                             $accessoriesPrice = 0;
                             // add book
                             if($accessories['accessories']) {
-                                $track_data = $api->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front);
+                                $track_data = $this->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front);
                                 $accessoriesPrice = $accessories['price'];
                             }else{
-                                $track_data = $api->toBook($order, $rate_id, $rates_data[0], array(), false, $self_pack, null, $multi_front);
+                                $track_data = $this->toBook($order, $rate_id, $rates_data[0], array(), false, $self_pack, null, $multi_front);
                             }
 
 
@@ -817,6 +820,32 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
             $helper->shlog($itemsAccessories, 'shiphawk-book.log');
         }
+
+        return $result;
+    }
+
+    public function getDefaultAccessoriesForBook($accessories) {
+        $default_accessories_price = 0;
+        $itemsAccessories = array();
+        $result = array();
+        if(!empty($accessories)) {
+
+            foreach($accessories as $orderAccessoriesType => $orderAccessor) {
+                if ($orderAccessoriesType == 'destination') {
+                    foreach($orderAccessor as $orderAccessorValues) {
+                        //if(!in_array($orderAccessorValues->accessorial_type, $pre_accerories)) {
+                        if($orderAccessorValues->default){
+                            $default_accessories_price += $orderAccessorValues->price;
+                            $itemsAccessories[] = array('id' => $orderAccessorValues->id);
+                        }
+                        //}
+                    }
+                }
+            }
+        }
+
+        $result['accessories'] = $itemsAccessories;
+        $result['price'] = $default_accessories_price;
 
         return $result;
     }

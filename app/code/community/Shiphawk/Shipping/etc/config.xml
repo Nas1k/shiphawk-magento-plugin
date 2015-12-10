@@ -12,6 +12,11 @@
                     <cart>Shiphawk_Checkout_Model_Cart</cart>
                 </rewrite>
             </checkout>
+            <sales>
+                <rewrite>
+                    <quote_address_total_shipping>Shiphawk_Sales_Model_Shipping</quote_address_total_shipping>
+                </rewrite>
+            </sales>
             <shiphawk_shipping>
                 <class>Shiphawk_Shipping_Model</class>
                 <resourceModel>shiphawk_resource</resourceModel>
@@ -93,15 +98,6 @@
                     </shiphawk_recalculation_totals>
                 </observers>
             </checkout_type_onepage_save_order>
-            <!--<sales_quote_collect_totals_after>
-                <observers>
-                    <show_shiphawk_rate_error>
-                        <type>singleton</type>
-                        <class>shiphawk_shipping/observer</class>
-                        <method>showShiphawkRateError</method>
-                    </show_shiphawk_rate_error>
-                </observers>
-            </sales_quote_collect_totals_after>-->
             <checkout_controller_onepage_save_shipping_method>
                 <observers>
                     <show_shiphawk_rate_error_controller>

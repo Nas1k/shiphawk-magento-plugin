@@ -85,20 +85,27 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                                     $accessoriesPrice += (float)$price;
                                 }
                             }
-
                     }
                 }
 
-                $newAccessoriesPrice    = $order->getShippingAmount() + $accessoriesPrice;
-                $newGrandTotal          = $order->getGrandTotal() + $accessoriesPrice;
+                $accessories_price_already_in_rate = Mage::getSingleton('core/session')->getData('accessories_price_already_in_rate');
+                if(isset($accessories_price_already_in_rate)) {
+                    $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
+                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
+                }else{
+                    $newAccessoriesPrice    = $order->getShippingAmount() + $accessoriesPrice;
+                    $newGrandTotal          = $order->getGrandTotal() + $accessoriesPrice;
 
-                $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
-                $order->setShippingAmount($newAccessoriesPrice);
-                $order->setBaseShippingAmount($newAccessoriesPrice);
-                $order->setGrandTotal($newGrandTotal);
-                $order->setBaseGrandTotal($newGrandTotal);
+                    $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
+                    $order->setShippingAmount($newAccessoriesPrice);
+                    $order->setBaseShippingAmount($newAccessoriesPrice);
+                    $order->setGrandTotal($newGrandTotal);
+                    $order->setBaseGrandTotal($newGrandTotal);
 
-                $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
+                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
+                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
+                }
+
             }else{
                 // it is for frontend order - accessories already saved in checkout_type_onepage_save_order event
                 $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
@@ -134,6 +141,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getSingleton('checkout/session')->unsetData('shiphawk_multi_shipping');
         Mage::getSingleton('checkout/session')->unsetData('chosen_multi_shipping_methods');
         Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
+        Mage::getSingleton('core/session')->unsetData('accessories_price_already_in_rate');
     }
 
     /**
@@ -329,9 +337,9 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $order          = $event->getOrder();
         $subTotal       = $order->getSubtotal();
 
-        $overrideCost   = Mage::app()->getRequest()->getPost('sh_override_shipping_cost', 0);
 
-        if ((floatval($overrideCost) < 0)||($overrideCost === null)||( $overrideCost === "")) {
+
+        /*if ((floatval($overrideCost) < 0)||($overrideCost === null)||( $overrideCost === "")) {
             return;
         }
         $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
@@ -354,11 +362,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $order->setBaseShippingAmount($overrideCost);
         $order->setGrandTotal($grandTotal);
         $order->setBaseGrandTotal($grandTotal);
-
-        $quote->collectTotals();
-        $quote->save();
-
-        $order->save();
+        $order->save();*/
     }
 
     /**
@@ -389,11 +393,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $event          = $observer->getEvent();
         $address        = $event->getQuoteAddress();
 
-        $accessories_price_admin = Mage::getSingleton('core/session')->getData('admin_accessories_price');
+        //Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+        //Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
 
-        $shiphawk_override_cost = Mage::getSingleton('core/session')->getData('shiphawk_override_cost');
-
-        $shippingAmount     = $address->getShippingAmount();
+        /*$shippingAmount     = $address->getShippingAmount();
 
         if(empty($shippingAmount)) {
             return;
@@ -406,8 +409,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $newShippingPrice       = $shippingAmount + $accessories_price_admin;
         $newShippingBasePrice   = $baseShippingAmount + $accessories_price_admin;
-
-        $totals = Mage::getSingleton('adminhtml/session_quote')->getQuote()->getTotals();
+        $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
+        $totals = $quote->getTotals();
         $discount = 0;
         if(isset($totals['discount']) && $totals['discount']->getValue()) {
             $discount = round($totals['discount']->getValue(), 2); //Discount value if applied
@@ -433,13 +436,12 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $subTotal       = $address->getSubtotal();
         $grandTotal = $subTotal + $overrideCost + $discount + $tax;
 
-
         $address->setShippingAmount($overrideCost);
         $address->setBaseShippingAmount($overrideCost);
         $address->setGrandTotal($grandTotal);
         $address->setBaseGrandTotal($grandTotal);
 
-        Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
+        Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');*/
 
     }
 

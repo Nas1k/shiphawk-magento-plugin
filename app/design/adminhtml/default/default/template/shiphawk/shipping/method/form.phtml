@@ -180,10 +180,13 @@
     order.overlay('address-shipping-overlay', <?php if ($this->getQuote()->isVirtual()): ?>false<?php else: ?>true<?php endif; ?>);
 
     /* For couple rates */
-
     $$("input.shipping-ratios").invoke('observe', 'change', function() {
-        $$('.shipping-ratio-origins').invoke('hide');
-        //$$('.shipping-ratio-origins input[type=checkbox]').invoke('setValue', false);
+        $$('.shipping-ratio-origins').each(function(el) {
+            el.setStyle({display: 'none'});
+            if(el.down()) {
+                el.down().disabled = true;
+            }
+        });
 
         var ratioId = $$("input.shipping-ratios:checked").invoke('readAttribute' ,'data-rate');
         showOrigins(ratioId);
@@ -197,7 +200,12 @@
     }
 
     function showOrigins(id) {
-        $$('.shipping-ratio-' + id + '-origins').invoke('show');
+        $$('.shipping-ratio-' + id + '-origins').each(function(el) {
+            el.setStyle({display: 'block'});
+            if(el.down()) {
+                el.down().disabled = false;
+            }
+        });
     }
 
     var ajaxUrl = '<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB); ?>';
