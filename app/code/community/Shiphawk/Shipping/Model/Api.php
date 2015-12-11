@@ -486,7 +486,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $shipment->register();
 
                     if(!$disabled) {
-                        $track_data = $api->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front = true);
+                        $track_data = $this->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front = true);
 
                         $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
@@ -674,6 +674,13 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 $arr_res = json_decode($resp);
 
                 $helper->shlog($arr_res, 'shiphawk-tracking.log');
+
+                if(is_object($arr_res)) {
+                    if(property_exists($arr_res, 'error')) {
+                        Mage::getSingleton('core/session')->addError('Subscribe to tracking: '. $arr_res->error);
+                        return;
+                    }
+                }
 
                 if (!empty($arr_res)) {
                     $comment = '';

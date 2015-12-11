@@ -1,0 +1,163 @@
+<?php
+
+class Shiphawk_Sales_Model_Shipping extends Mage_Sales_Model_Quote_Address_Total_Shipping {
+    /**
+     * Collect totals information about shipping
+     *
+     * @param   Mage_Sales_Model_Quote_Address $address
+     * @return  Mage_Sales_Model_Quote_Address_Total_Shipping
+     */
+    public function collect(Mage_Sales_Model_Quote_Address $address)
+    {
+        parent::collect($address);
+
+        $oldWeight = $address->getWeight();
+        $address->setWeight(0);
+        $address->setFreeMethodWeight(0);
+        $this->_setAmount(0)
+            ->_setBaseAmount(0);
+
+        $items = $this->_getAddressItems($address);
+        if (!count($items)) {
+            return $this;
+        }
+
+        $method     = $address->getShippingMethod();
+        $freeAddress= $address->getFreeShipping();
+
+        $addressWeight      = $address->getWeight();
+        $freeMethodWeight   = $address->getFreeMethodWeight();
+
+        $addressQty = 0;
+
+        foreach ($items as $item) {
+            /**
+             * Skip if this item is virtual
+             */
+            if ($item->getProduct()->isVirtual()) {
+                continue;
+            }
+
+            /**
+             * Children weight we calculate for parent
+             */
+            if ($item->getParentItem()) {
+                continue;
+            }
+
+            if ($item->getHasChildren() && $item->isShipSeparately()) {
+                foreach ($item->getChildren() as $child) {
+                    if ($child->getProduct()->isVirtual()) {
+                        continue;
+                    }
+                    $addressQty += $child->getTotalQty();
+
+                    if (!$item->getProduct()->getWeightType()) {
+                        $itemWeight = $child->getWeight();
+                        $itemQty    = $child->getTotalQty();
+                        $rowWeight  = $itemWeight*$itemQty;
+                        $addressWeight += $rowWeight;
+                        if ($freeAddress || $child->getFreeShipping()===true) {
+                            $rowWeight = 0;
+                        } elseif (is_numeric($child->getFreeShipping())) {
+                            $freeQty = $child->getFreeShipping();
+                            if ($itemQty>$freeQty) {
+                                $rowWeight = $itemWeight*($itemQty-$freeQty);
+                            }
+                            else {
+                                $rowWeight = 0;
+                            }
+                        }
+                        $freeMethodWeight += $rowWeight;
+                        $item->setRowWeight($rowWeight);
+                    }
+                }
+                if ($item->getProduct()->getWeightType()) {
+                    $itemWeight = $item->getWeight();
+                    $rowWeight  = $itemWeight*$item->getQty();
+                    $addressWeight+= $rowWeight;
+                    if ($freeAddress || $item->getFreeShipping()===true) {
+                        $rowWeight = 0;
+                    } elseif (is_numeric($item->getFreeShipping())) {
+                        $freeQty = $item->getFreeShipping();
+                        if ($item->getQty()>$freeQty) {
+                            $rowWeight = $itemWeight*($item->getQty()-$freeQty);
+                        }
+                        else {
+                            $rowWeight = 0;
+                        }
+                    }
+                    $freeMethodWeight+= $rowWeight;
+                    $item->setRowWeight($rowWeight);
+                }
+            }
+            else {
+                if (!$item->getProduct()->isVirtual()) {
+                    $addressQty += $item->getQty();
+                }
+                $itemWeight = $item->getWeight();
+                $rowWeight  = $itemWeight*$item->getQty();
+                $addressWeight+= $rowWeight;
+                if ($freeAddress || $item->getFreeShipping()===true) {
+                    $rowWeight = 0;
+                } elseif (is_numeric($item->getFreeShipping())) {
+                    $freeQty = $item->getFreeShipping();
+                    if ($item->getQty()>$freeQty) {
+                        $rowWeight = $itemWeight*($item->getQty()-$freeQty);
+                    }
+                    else {
+                        $rowWeight = 0;
+                    }
+                }
+                $freeMethodWeight+= $rowWeight;
+                $item->setRowWeight($rowWeight);
+            }
+        }
+
+        if (isset($addressQty)) {
+            $address->setItemQty($addressQty);
+        }
+
+        $address->setWeight($addressWeight);
+        $address->setFreeMethodWeight($freeMethodWeight);
+
+        $address->collectShippingRates();
+
+        $this->_setAmount(0)
+            ->_setBaseAmount(0);
+
+        $method = $address->getShippingMethod();
+
+        if ($method) {
+            foreach ($address->getAllShippingRates() as $rate) {
+                if ($rate->getCode()==$method) {
+                    $shiphawk_override_cost = Mage::getSingleton('core/session')->getData('shiphawk_override_cost');
+                    $accessories_price = Mage::getSingleton('core/session')->getData('admin_accessories_price');
+                    Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+                    Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
+
+                    $amountPrice = $address->getQuote()->getStore()->convertPrice($rate->getPrice(), false);
+                    if(isset($shiphawk_override_cost)) {
+                        $amountPrice = $address->getQuote()->getStore()->convertPrice($shiphawk_override_cost, false);
+                        $rate->setPrice($amountPrice)->save();
+                    }else{
+                        if(isset($accessories_price)) {
+                            $amountPrice = $rate->getPrice() + $accessories_price;
+                            $amountPrice = $address->getQuote()->getStore()->convertPrice($amountPrice, false);
+                            $rate->setPrice($amountPrice)->save();
+                            Mage::getSingleton('core/session')->setData('accessories_price_already_in_rate', 1);
+                        }
+                    }
+
+                    $this->_setAmount($amountPrice);
+                    $this->_setBaseAmount($rate->getPrice());
+                    $shippingDescription = $rate->getCarrierTitle() . ' - ' . $rate->getMethodTitle();
+                    $address->setShippingDescription(trim($shippingDescription, ' -'));
+                    break;
+                }
+            }
+        }
+
+        return $this;
+    }
+}

@@ -101,7 +101,7 @@
                                                        checked
                                                        onclick="return false"
                                                        name="accessories[<?php echo $type ?>]['<?php echo $_rate->getCode(); ?>']['<?php echo $accessor->accessorial_type . ' (' . $accessor->accessorial_options . ')'; ?>']['<?php echo $accessor->id ?>']"
-                                                       class="checkbox accessor"/>
+                                                       class="checkbox accessor" disabled/>
                                                 <label for="<?php echo $accessor->id . '-' . $_rate->getRateId(); ?>"
                                                        class="shipping-ratio-origins-label"><?php $actype = ucwords(implode(' ', explode('_', $accessor->accessorial_type))); echo $actype . ' (' . $accessor->accessorial_options . ')' . ' + ' . ' ' . 'included' ?></label>
                                                 <?php } else {?>
@@ -169,9 +169,9 @@
     </div>
 <?php endif; ?>
 <!--For reload accessories-->
-<div id="order-shipping-method-summary-hidden" style="display: none;">
+<div id="order-shipping-method-summary-hidden" style="display: block;">
     <a href="#" onclick="order.loadShippingRates();return false">
-        <?php echo Mage::helper('sales')->__('Get shipping methods and rates') ?>
+        <?php echo Mage::helper('sales')->__('Reload shipping methods and rates') ?>
     </a>
 </div>
 <div style="display:none;" id="shipping-method-overlay" class="overlay"><span><?php echo $this->__('Shipping method selection is not applicable') ?></span></div>
@@ -255,11 +255,19 @@
     function updateTotalsAccessories() {
         var accessories_checked_array = $$('.accessor:checked');
         var accessories_price;
+        var accessories_checked_enable_array = [];
+
+        accessories_checked_array.each(function(el) {
+            if(el.offsetParent !== null) {
+                accessories_checked_enable_array.push(el);
+            }
+
+        });
 
         var shiphawk_override_cost = $('sh-override-shipping-cost').value;
 
-        if (typeof accessories_checked_array != 'undefined' && accessories_checked_array.length > 0) {
-            accessories_price = accessories_checked_array.invoke('readAttribute' ,'value').reduce(function(previousValue, currentValue, index, array) {
+        if (typeof accessories_checked_enable_array != 'undefined' && accessories_checked_enable_array.length > 0) {
+            accessories_price = accessories_checked_enable_array.invoke('readAttribute' ,'value').reduce(function(previousValue, currentValue, index, array) {
                 return parseFloat(previousValue) + parseFloat(currentValue);
             });
         }

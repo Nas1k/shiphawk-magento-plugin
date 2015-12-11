@@ -205,8 +205,12 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         // if it is single parcel shipping, then only one shipping rate code
                         $shipping_code = $chosen_shipping_methods[0];
                         $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
-                        // ShipHawk Shipping Amount includes accessories price
-                        $original_shipping_price = floatval($order->getShiphawkShippingAmount() - $accessoriesPrice);
+                        if($is_backend_order) {
+                            $original_shipping_price = floatval($order->getShiphawkShippingAmount());
+                        }else{
+                            $original_shipping_price = floatval($order->getShiphawkShippingAmount() - $accessoriesPrice);
+                        }
+
                         foreach ($responseObject as $response) {
 
                             // shipping rate price from new response
@@ -231,7 +235,6 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             }else{
                                 $track_data = $api->toBook($order, $rate_id, $products_ids, array(), false, $self_pack, null, $multi_front);
                             }
-
 
                             if (property_exists($track_data, 'error')) {
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
