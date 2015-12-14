@@ -30,6 +30,16 @@
                 </entities>
             </shiphawk_resource>
         </models>
+        <sales>
+            <quote>
+                <totals>
+                    <accessorials>
+                        <class>shiphawk_shipping/quote_address_total_accessorials</class>
+                        <after>grand_total</after>
+                    </accessorials>
+                </totals>
+            </quote>
+        </sales>
         <blocks>
             <shiphawk_shipping>
                 <class>Shiphawk_Shipping_Block</class>

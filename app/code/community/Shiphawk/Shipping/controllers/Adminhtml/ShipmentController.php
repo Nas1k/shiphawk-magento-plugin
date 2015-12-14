@@ -11,10 +11,10 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
     {
         $orderId= $this->getRequest()->getParam('order_id');
         $sUrl = $this->getRequest()->getParam('sUrl');
-        $response = array();
-        $response['error_text'] = null;
-        $response['order_id'] = null;
-        $response['sUrl'] = null;
+        $result = array();
+        $result['error_text'] = null;
+        $result['order_id'] = null;
+        $result['sUrl'] = null;
 
         try {
             $order = Mage::getModel('sales/order')->load($orderId);
@@ -75,9 +75,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                     Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                                     $helper->shlog('ShipHawk response: '.$responseObject->error);
                                     $helper->sendErrorMessageToShipHawk($responseObject->error);
-                                    $response['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
-                                    $response['order_id'] = $orderId;
-                                    $response['sUrl'] = $sUrl;
+                                    $result['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
+                                    $result['order_id'] = $orderId;
+                                    $result['sUrl'] = $sUrl;
                                     continue;
                                 };
 
@@ -158,9 +158,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                 Mage::getSingleton('core/session')->addError("Unfortunately the method that was chosen by a customer during checkout is currently unavailable. Please contact ShipHawk's customer service to manually book this shipment.");
                                 Mage::getSingleton('core/session')->setErrorPriceText("Sorry, we can't find the rate identical to the one that this order has. Please select another rate:");
 
-                                $response['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
-                                $response['order_id'] = $orderId;
-                                $response['sUrl'] = $sUrl;
+                                $result['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
+                                $result['order_id'] = $orderId;
+                                $result['sUrl'] = $sUrl;
                             }
                         }else{
                             // no booking for disabled items, save only magento shipping
@@ -196,26 +196,28 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                                 $helper->shlog('ShipHawk response: '.$responseObject->error);
                                 $helper->sendErrorMessageToShipHawk($responseObject->error);
-                                $response['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
-                                $response['order_id'] = $orderId;
-                                $response['sUrl'] = $sUrl;
+                                $result['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
+                                $result['order_id'] = $orderId;
+                                $result['sUrl'] = $sUrl;
                                 continue;
                             };
 
                         // if it is single parcel shipping, then only one shipping rate code
                         $shipping_code = $chosen_shipping_methods[0];
                         $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
-                        if($is_backend_order) {
+                        /*if($is_backend_order) {
                             $original_shipping_price = floatval($order->getShiphawkShippingAmount());
                         }else{
                             $original_shipping_price = floatval($order->getShiphawkShippingAmount() - $accessoriesPrice);
-                        }
+                        }*/
+                        $original_shipping_price = floatval($order->getShiphawkShippingAmount());
 
                         foreach ($responseObject as $response) {
 
                             // shipping rate price from new response
                             $shipping_price = $helper->getShipHawkPrice($response, $self_pack);
                             if(round($original_shipping_price,2) == round($shipping_price,2)) {
+                            //if($helper->getOriginalShipHawkShippingPrice($shipping_code, (string) $shipping_price)) {
                                 $rate_id        = $response->id;
                                 $accessories_from_rate    = $response->shipping->carrier_accessorial;
                                 if(!empty($accessories_from_rate))
@@ -265,9 +267,9 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         }else{
                             Mage::getSingleton('core/session')->setErrorPriceText("Sorry, we can't find the rate identical to the one that this order has. Please select another rate:");
 
-                            $response['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
-                            $response['order_id'] = $orderId;
-                            $response['sUrl'] = $sUrl;
+                            $result['error_text'] = "Sorry, we can't find the rate identical to the one that this order has. Please select another rate:";
+                            $result['order_id'] = $orderId;
+                            $result['sUrl'] = $sUrl;
                         }
                     }else{
                         // no booking for disabled items, save only magento shipping
@@ -287,16 +289,16 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         } catch (Mage_Core_Exception $e) {
             $this->_getSession()->addError($e->getMessage());
             //$this->_redirect('adminhtml/sales_order/view', array('order_id' => $orderId));
-            $this->getResponse()->setBody(json_encode($response));
+            $this->getResponse()->setBody(json_encode($result));
         } catch (Exception $e) {
             Mage::logException($e);
             $this->_getSession()->addError($this->__('Cannot save shipment.'));
-            $this->getResponse()->setBody(json_encode($response));
+            $this->getResponse()->setBody(json_encode($result));
           //  $this->_redirect('adminhtml/sales_order/view', array('order_id' => $orderId));
         }
 
         //$this->_redirect('adminhtml/sales_order/view', array('order_id' => $orderId));
-        $this->getResponse()->setBody(json_encode($response));
+        $this->getResponse()->setBody(json_encode($result));
     }
 
     /* Show PopUp for new ShipHawk Shipment */

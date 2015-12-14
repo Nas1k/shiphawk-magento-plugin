@@ -27,7 +27,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             if (!empty($shLocationType)) $order->setShiphawkLocationType($shLocationType);
 
-            //todo ship to multiple shipping address, only one shipping order save to session
+            //todo ship to multiple shipping address, only one shipping order save to session, maybe quote field not sessions?
             // set ShipHawk Rates data
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
@@ -64,6 +64,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             $order->setShiphawkBookId(serialize($shiphawk_book_id));
 
+            $accessories_price_already_in_rate = Mage::getSingleton('core/session')->getData('accessories_price_already_in_rate');
             // it's for admin order
             if (!empty($accessories)) {
                 /* For accessories */
@@ -88,8 +89,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                     }
                 }
 
-                $accessories_price_already_in_rate = Mage::getSingleton('core/session')->getData('accessories_price_already_in_rate');
-                if(isset($accessories_price_already_in_rate)) {
+                $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount); //todo
+
+                /*if(isset($accessories_price_already_in_rate)) {
                     $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
                     $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
                 }else{
@@ -102,16 +105,22 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                     $order->setGrandTotal($newGrandTotal);
                     $order->setBaseGrandTotal($newGrandTotal);
 
-                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
+                    //$order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
                     $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
-                }
+                }*/
 
             }else{
                 // it is for frontend order - accessories already saved in checkout_type_onepage_save_order event
                 $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
-                $accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData); //price of all accessorials
+                /*$accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData); //price of all accessorials
                 $accessoriesPrice = round($accessoriesPrice, 2);
-                $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
+                if(isset($accessories_price_already_in_rate)) {
+                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
+                }else{
+                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
+                }*/
+
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount); //todo
             }
 
             // save pre *destination* accessorials for future re rate in booking
@@ -187,11 +196,14 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         //$baseShippingAmount = empty($baseShippingAmount) ? $address->getBaseShippingAmount() : $baseShippingAmount;
         $baseShippingAmount = $address->getBaseShippingAmount();
 
-        $newShippingPrice       = $shippingAmount + $accessoriesPrice;
-        $newShippingBasePrice   = $baseShippingAmount + $accessoriesPrice;
+        //$newShippingPrice       = $shippingAmount + $accessoriesPrice;
+        $newShippingPrice       = $shippingAmount;
+        //$newShippingBasePrice   = $baseShippingAmount + $accessoriesPrice;
+        $newShippingBasePrice   = $baseShippingAmount;
 
         $address->setShippingAmount($newShippingPrice);
-        $address->setBaseShippingAmount($baseShippingAmount + $accessoriesPrice);
+        //$address->setBaseShippingAmount($baseShippingAmount + $accessoriesPrice);
+        $address->setBaseShippingAmount($baseShippingAmount);
         $address->setGrandTotal($grandTotal + $newShippingPrice + ($discount) + ($tax));
         $address->setBaseGrandTotal($baseGrandTotal + $newShippingBasePrice);
     }
@@ -288,6 +300,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         $params['base_shipping_amount'] = $baseShippingAmount;
 
         $session->setData("shipment_accessories", $params);
+        $session->unsetData('accessoriesprice');
         $session->setAccessoriesprice($accessoriesPrice);
     }
 
