@@ -67,13 +67,20 @@ class Shiphawk_Shipping_Model_Quote_Address_Total_Accessorials extends Mage_Sale
         // we have no accessories on cart page
         $is_it_cart_page = $helper->checkIsItCartPage();
         if(!$is_it_cart_page) {
-            if($helper->checkIsAdmin()) {
-                $amount = Mage::getSingleton('core/session')->getData('admin_accessories_price');
+            $override_shipping_cost = Mage::getSingleton('core/session')->getData('shiphawk_override_cost');
+            if(isset($override_shipping_cost)) {
+                Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
             }else{
-                $amount = Mage::getSingleton('checkout/session')->getAccessoriesprice();
+                if($helper->checkIsAdmin()) {
+                    $amount = Mage::getSingleton('core/session')->getData('admin_accessories_price');
+                  //  Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+                }else{
+                    $amount = Mage::getSingleton('checkout/session')->getAccessoriesprice();
+                   // Mage::getSingleton('checkout/session')->unsetData('accessoriesprice');
+                }
             }
-        }
 
+        }
 
         $address->setAccessorials($amount);
         $address->setBaseAccessorials($amount);

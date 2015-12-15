@@ -475,10 +475,11 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $package_info    = $order->getShiphawkShippingPackageInfo();
                     $disabled = $products_ids['shiphawk_disabled'];
 
-                    $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
-                    $shippingShipHawkAmount = $products_ids['price'] + $accessoriesPrice;
+                    //$accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
 
                     $accessories = $this->getAccessoriesForAutoBookSingleParcel($orderAccessories); // already chose accessories id
+
+                    $shippingShipHawkAmount = $products_ids['rate_price_for_group'] + $accessories['price'];
 
                     $self_pack = $products_ids['self_pack'];
 
@@ -486,7 +487,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $shipment->register();
 
                     if(!$disabled) {
-                        $track_data = $this->toBook($order, $rate_id, $products_ids, $accessories, false, $self_pack, null, $multi_front = true);
+                        $track_data = $this->toBook($order, $rate_id, $products_ids, $accessories['accessories'], false, $self_pack, null, $multi_front = true);
 
                         $this->_saveShiphawkShipment($shipment, $products_ids['name'], $shippingShipHawkAmount, $package_info, $track_data->details->id);
 
@@ -858,20 +859,25 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
     }
 
     public function getAccessoriesForAutoBookSingleParcel($accessoriesPriceData) {
+        $default_accessories_price = 0;
         $itemsAccessories = array();
+        $result = array();
 
         if(!empty($accessoriesPriceData)) {
             foreach($accessoriesPriceData as $rate_code => $types) {
                 foreach($types as $type => $values) {
                     foreach($values as $key => $data) {
-
+                        $default_accessories_price += $data->value;
                         $itemsAccessories[] = array('id' => trim($data->id, "'"));
                     }
                 }
             }
         }
 
-        return $itemsAccessories;
+        $result['accessories'] = $itemsAccessories;
+        $result['price'] = $default_accessories_price;
+
+        return $result;
     }
 
     public function getDataForTateRequest() {

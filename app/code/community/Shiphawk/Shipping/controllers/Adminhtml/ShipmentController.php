@@ -518,9 +518,12 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         if ((floatval($shiphawk_override_cost) >= 0)&&($shiphawk_override_cost != '')) {
             Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
             Mage::getSingleton('core/session')->setData('shiphawk_override_cost', $shiphawk_override_cost);
+            Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+        }else{
+            Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+            Mage::getSingleton('core/session')->setData('admin_accessories_price', $accessories_price);
         }
 
-        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
-        Mage::getSingleton('core/session')->setData('admin_accessories_price', $accessories_price);
+
     }
 }

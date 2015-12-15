@@ -151,6 +151,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getSingleton('checkout/session')->unsetData('chosen_multi_shipping_methods');
         Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
         Mage::getSingleton('core/session')->unsetData('accessories_price_already_in_rate');
+        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+        Mage::getSingleton('checkout/session')->unsetData('accessoriesprice');
     }
 
     /**
