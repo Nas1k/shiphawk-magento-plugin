@@ -552,6 +552,14 @@ class Shiphawk_Shipping_Helper_Data extends
         return true;
     }
 
+    public function checkIfShipHawkMultiParcelShipmentExist($rates) {
+        foreach($rates as $_rate) {
+            if ($_rate->getCode() == 'shiphawk_shipping_Shipping_from_multiple_location')
+               return true;
+        }
+        return false;
+    }
+
     /*public function checkIfOrderHasOnlyBackupShiphawkMethod($order) {
         $backup_method_title = Mage::getStoreConfig('carriers/shiphawk_shipping/rate_title');
         $order_shipping_method_title = $order->getShippingDescription();

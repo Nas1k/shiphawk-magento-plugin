@@ -32,9 +32,23 @@ class Shiphawk_Shipping_Model_Carrier
             return $result;
         }
 
+        if ($helper->checkIsAdmin()) {
+            $quote = Mage::getSingleton('adminhtml/session_quote')->getQuote();
+        }else{
+            /** @var $cart Mage_Checkout_Model_Cart */
+            $cart = Mage::getSingleton('checkout/cart');
+            $quote = $cart->getQuote();
+        }
+
         /* Parameters */
-        $to_zip = $this->getShippingZip();
-        $to_country_code = $this->getToCountryCode();
+        if (!$quote->getIsMultiShipping()) {
+            $to_zip = $this->getShippingZip();
+            $to_country_code = $this->getToCountryCode();
+        }else{
+            $to_zip = $request->getDestPostcode();
+            $to_country_code = $request->getDestCountryId();
+        }
+
         $items = $this->getShiphawkItems($request);
 
         $shLocationType = 'residential'; //default value
@@ -829,6 +843,25 @@ class Shiphawk_Shipping_Model_Carrier
             //save rate_id info for Book
             Mage::getSingleton('core/session')->setShiphawkBookId($toOrder);
 
+            if ($quote->getIsMultiShipping()) {// if multi destination address order
+                $shipping_address_id = $this->checkShippingAddress($request, $quote);
+
+                $shiphawk_book_id_from_quote = $quote->getShiphawkBookId();
+
+                if($shiphawk_book_id_from_quote) {
+                    $shiphawk_book_id_from_quote = unserialize($shiphawk_book_id_from_quote);
+                    $shiphawk_book_id_from_quote[$shipping_address_id] = $toOrder;
+                }else{
+                    $shiphawk_book_id_from_quote = array();
+                    $shiphawk_book_id_from_quote[$shipping_address_id] = $toOrder;
+                }
+
+                Mage::log($shiphawk_book_id_from_quote, null, 'toOrdermulti.log');
+                $quote->setShiphawkBookId(serialize($shiphawk_book_id_from_quote));
+                $quote->save();
+            }
+
+
             //save rate filter to order
             Mage::getSingleton('core/session')->setShiphawkRateFilter($rate_filter);
 
@@ -872,6 +905,27 @@ class Shiphawk_Shipping_Model_Carrier
             $products_ids[] = $_item['product_id'];
         }
         return $products_ids;
+    }
+
+    public function checkShippingAddress($request, $quote) {
+        $shippingAddresses = $quote->getAllShippingAddresses();
+        $request_data = array();
+
+        $request_data['dest_country_id'] = $request->getData('dest_country_id');
+        $request_data['dest_region_id'] = $request->getData('dest_region_id');
+        $request_data['dest_street'] = $request->getData('dest_street');
+        $request_data['dest_city'] = $request->getData('dest_city');
+        $request_data['dest_postcode'] = $request->getData('dest_postcode');
+
+        $customer_shipping_address_id = null;
+        //todo address->getStreet() = array , trim($address->getStreet()[0]) = first street
+        foreach($shippingAddresses as $address) {
+            if(($address->getCountryId() == $request_data['dest_country_id'])&&($address->getRegionId() == $request_data['dest_region_id'])&&(trim($address->getStreet()[0]) == trim($request_data['dest_street']))&&($address->getCity() == $request_data['dest_city'])&&($address->getPostcode() == $request_data['dest_postcode'])){
+                $customer_shipping_address_id = $address->getCustomerAddressId();
+            }
+        }
+
+        return $customer_shipping_address_id;
     }
 
     public function getSumOfCheapestRates($toOrder) {

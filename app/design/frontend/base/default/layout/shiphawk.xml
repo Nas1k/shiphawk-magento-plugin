@@ -62,5 +62,11 @@
             </action>
         </reference>
     </checkout_onepage_progress_shipping>
-</layout>   
-    
+    <checkout_multishipping_shipping translate="label">
+        <reference name="checkout_shipping">
+            <action method="setTemplate">
+                <template>shiphawk/checkout/multishipping/shipping.phtml</template>
+            </action>
+        </reference>
+    </checkout_multishipping_shipping>
+</layout>

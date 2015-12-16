@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.2.9</version>
+            <version>1.2.10</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -135,6 +135,9 @@
                 <shiphawk_shipping_accessories>
                     <to_order>*</to_order>
                 </shiphawk_shipping_accessories>
+                <!--<shiphawk_book_id>
+                    <to_order>*</to_order>
+                </shiphawk_book_id>-->
             </sales_convert_quote>
             <sales_convert_order>
                 <shiphawk_shipping_accessories>

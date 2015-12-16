@@ -83,7 +83,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
                             $accessories['accessories'] = null;
 
-                            if($is_backend_order) {
+                            if(($is_backend_order)||(!isset($chosen_shipping_methods))) {
                                 $cheapest_rate_id = $carrier_model->getCheapestRateIdForBooking($responseObject, $self_pack);
                                 foreach ($responseObject as $response) {
                                     if($response->id == $cheapest_rate_id) {
@@ -203,7 +203,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             };
 
                         // if it is single parcel shipping, then only one shipping rate code
-                        $shipping_code = $chosen_shipping_methods[0];
+                        $shipping_code = $chosen_shipping_methods[0]; //todo no chosen_shipping_methods for multishipping
                         $accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
                         /*if($is_backend_order) {
                             $original_shipping_price = floatval($order->getShiphawkShippingAmount());

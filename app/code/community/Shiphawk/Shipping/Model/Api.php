@@ -335,10 +335,10 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
      *
      *
      */
-    public function saveshipment($orderId)
+    public function saveshipment($order)
     {
         try {
-            $order = Mage::getModel('sales/order')->load($orderId);
+            //$order = Mage::getModel('sales/order')->load($orderId);
             $helper = Mage::helper('shiphawk_shipping');
 
             $shLocationType = $order->getShiphawkLocationType();
@@ -391,7 +391,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                         $accessories['accessories'] = null;
 
-                        if($is_backend_order) {
+                        if(($is_backend_order)||(!isset($chosen_shipping_methods))) {
                             $cheapest_rate_id = $carrier_model->getCheapestRateIdForBooking($responseObject, $self_pack);
                             foreach ($responseObject as $response) {
                                 if($response->id == $cheapest_rate_id) {
@@ -431,7 +431,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         if($is_rate == true) {
                             $accessoriesPrice = 0;
                             // add book
-                            if($accessories['accessories']) {
+                            if(isset($accessories['accessories'])) {
                                 $track_data = $this->toBook($order, $rate_id, $rates_data[0], $accessories['accessories'], false, $self_pack, null, $multi_front);
                                 $accessoriesPrice = $accessories['price'];
                             }else{

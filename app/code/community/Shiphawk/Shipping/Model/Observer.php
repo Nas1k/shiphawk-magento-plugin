@@ -18,6 +18,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         $manual_shipping =  Mage::getStoreConfig('carriers/shiphawk_shipping/book_shipment');
         $shipping_code = $order->getShippingMethod();
+        $quote = Mage::getModel('sales/quote')->load($order->getQuoteId());
 
         $check_shiphawk = Mage::helper('shiphawk_shipping')->isShipHawkShipping($shipping_code);
         if($check_shiphawk !== false) {
@@ -30,6 +31,12 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             //todo ship to multiple shipping address, only one shipping order save to session, maybe quote field not sessions?
             // set ShipHawk Rates data
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
+
+            if ($quote->getIsMultiShipping()) {
+                $shiphawk_multi_shipping_book_id = unserialize($quote->getShiphawkBookId()); mage::log(unserialize($shiphawk_multi_shipping_book_id), null, 'bookmulti.log');
+                $customer_shipping_address_id = $order->getShippingAddress()->getData('customer_address_id');
+                $shiphawk_book_id = $shiphawk_multi_shipping_book_id[$customer_shipping_address_id];
+            }
 
             $shiphawk_multi_shipping = Mage::getModel('shiphawk_shipping/carrier')->sortMultipleShiping($shiphawk_book_id);
             $order->setShiphawkMultiShipping(serialize($shiphawk_multi_shipping));
@@ -135,7 +142,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             if(!$manual_shipping) {
                 if ($order->canShip()) {
                     $api = Mage::getModel('shiphawk_shipping/api');
-                    $api->saveshipment($orderId);
+                    $api->saveshipment($order);
                 }
             }
         }
