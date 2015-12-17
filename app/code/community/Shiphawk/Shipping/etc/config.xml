@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Shiphawk_Shipping>
-            <version>1.2.10</version>
+            <version>1.2.11</version>
         </Shiphawk_Shipping>
     </modules>
     <global>
@@ -149,6 +149,17 @@
                     <to_order_item>*</to_order_item>
                 </shiphawk_api_id>
             </sales_convert_quote_item>
+            <sales_convert_quote_address>
+                <shiphawk_location_type>
+                    <to_order_address>*</to_order_address>
+                    <to_customer_address>*</to_customer_address>
+                </shiphawk_location_type>
+            </sales_convert_quote_address>
+            <customer_address>
+                <shiphawk_location_typet_id>
+                    <to_quote_address>*</to_quote_address>
+                </shiphawk_location_typet_id>
+            </customer_address>
         </fieldsets>
         <template>
             <email>

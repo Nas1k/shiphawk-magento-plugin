@@ -132,29 +132,11 @@ class Shiphawk_Sales_Model_Shipping extends Mage_Sales_Model_Quote_Address_Total
             foreach ($address->getAllShippingRates() as $rate) {
                 if ($rate->getCode()==$method) {
                     $shiphawk_override_cost = Mage::getSingleton('core/session')->getData('shiphawk_override_cost');
-                    //$accessories_price = Mage::getSingleton('core/session')->getData('admin_accessories_price');
-                    //Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
-                    //Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
-                    //$front_acc = Mage::getSingleton('checkout/session')->getAccessoriesprice();//
 
                     $amountPrice = $address->getQuote()->getStore()->convertPrice($rate->getPrice(), false);
                     if(isset($shiphawk_override_cost)) {
                         $amountPrice = $address->getQuote()->getStore()->convertPrice($shiphawk_override_cost, false);
                         $rate->setPrice($amountPrice)->save();
-                    }else{
-                        /*if(isset($accessories_price)) {
-                            $amountPrice = $rate->getPrice() + $accessories_price;
-                            $amountPrice = $address->getQuote()->getStore()->convertPrice($amountPrice, false);
-                            $rate->setPrice($amountPrice)->save();
-                            Mage::getSingleton('core/session')->setData('accessories_price_already_in_rate', 1);
-                        }else{
-                            if(isset($front_acc)&&(!Mage::getSingleton('core/session')->getData('accessories_price_already_in_rate'))) {
-                                $amountPrice = $rate->getPrice() + $front_acc;
-                                $amountPrice = $address->getQuote()->getStore()->convertPrice($amountPrice, false);
-                                $rate->setPrice($amountPrice)->save();
-                                Mage::getSingleton('core/session')->setData('accessories_price_already_in_rate', 1);
-                            }
-                        }*/
                     }
 
                     $this->_setAmount($amountPrice);

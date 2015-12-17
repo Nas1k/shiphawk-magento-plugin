@@ -124,9 +124,9 @@
                         <div class="field">
                             <label for="shipping:shiphawk-location-type"><?php echo $this->__('Location Type') ?></label>
                             <div class="input-box">
-                                <select id="shipping:shiphawk-location-type" type="text" name="shipping[shiphawk_location_type]" class="validate-select">
-                                    <option value="residential"><?php echo $this->__('Residential') ?></option>
-                                    <option value="commercial"><?php echo $this->__('Commercial') ?></option>
+                                <select id="shipping:shiphawk-location-type" name="shipping[shiphawk_location_type]" class="validate-select">
+                                    <option value="residential" <?php if($this->htmlEscape($this->getAddress()->getShiphawkLocationType() == 'residential')) echo 'selected' ?> ><?php echo $this->__('Residential') ?></option>
+                                    <option value="commercial" <?php if($this->htmlEscape($this->getAddress()->getShiphawkLocationType() == 'commercial')) echo 'selected' ?> ><?php echo $this->__('Commercial') ?></option>
                                 </select>
                             </div>
                         </div>

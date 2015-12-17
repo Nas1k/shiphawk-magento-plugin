@@ -856,7 +856,6 @@ class Shiphawk_Shipping_Model_Carrier
                     $shiphawk_book_id_from_quote[$shipping_address_id] = $toOrder;
                 }
 
-                Mage::log($shiphawk_book_id_from_quote, null, 'toOrdermulti.log');
                 $quote->setShiphawkBookId(serialize($shiphawk_book_id_from_quote));
                 $quote->save();
             }

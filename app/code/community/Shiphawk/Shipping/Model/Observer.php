@@ -28,12 +28,11 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             if (!empty($shLocationType)) $order->setShiphawkLocationType($shLocationType);
 
-            //todo ship to multiple shipping address, only one shipping order save to session, maybe quote field not sessions?
             // set ShipHawk Rates data
             $shiphawk_book_id = Mage::getSingleton('core/session')->getShiphawkBookId();
 
             if ($quote->getIsMultiShipping()) {
-                $shiphawk_multi_shipping_book_id = unserialize($quote->getShiphawkBookId()); mage::log(unserialize($shiphawk_multi_shipping_book_id), null, 'bookmulti.log');
+                $shiphawk_multi_shipping_book_id = unserialize($quote->getShiphawkBookId());
                 $customer_shipping_address_id = $order->getShippingAddress()->getData('customer_address_id');
                 $shiphawk_book_id = $shiphawk_multi_shipping_book_id[$customer_shipping_address_id];
             }
@@ -49,9 +48,6 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             // set ShipHawk rate filter
             $shiphawkRateFilter = Mage::getSingleton('core/session')->getShiphawkRateFilter();
             $order->setShiphawkRateFilter($shiphawkRateFilter);
-
-            //$chosen_accessories_per_carrier = Mage::getSingleton('checkout/session')->getData('chosen_accessories_per_carrier');
-            //$order->setChosenAccessoriesPerCarrier(serialize($chosen_accessories_per_carrier));
 
             //shiphawk_shipping_amount
             if($multi_zip_code == false) {//if single parcel shipping
@@ -71,7 +67,6 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             $order->setShiphawkBookId(serialize($shiphawk_book_id));
 
-            $accessories_price_already_in_rate = Mage::getSingleton('core/session')->getData('accessories_price_already_in_rate');
             // it's for admin order
             if (!empty($accessories)) {
                 /* For accessories */
@@ -99,33 +94,7 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount); //todo
 
-                /*if(isset($accessories_price_already_in_rate)) {
-                    $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
-                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
-                }else{
-                    $newAccessoriesPrice    = $order->getShippingAmount() + $accessoriesPrice;
-                    $newGrandTotal          = $order->getGrandTotal() + $accessoriesPrice;
-
-                    $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
-                    $order->setShippingAmount($newAccessoriesPrice);
-                    $order->setBaseShippingAmount($newAccessoriesPrice);
-                    $order->setGrandTotal($newGrandTotal);
-                    $order->setBaseGrandTotal($newGrandTotal);
-
-                    //$order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
-                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
-                }*/
-
             }else{
-                // it is for frontend order - accessories already saved in checkout_type_onepage_save_order event
-                $accessoriesPriceData = json_decode($order->getData('shiphawk_shipping_accessories'));
-                /*$accessoriesPrice = $helper->getAccessoriesPrice($accessoriesPriceData); //price of all accessorials
-                $accessoriesPrice = round($accessoriesPrice, 2);
-                if(isset($accessories_price_already_in_rate)) {
-                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
-                }else{
-                    $order->setShiphawkShippingAmount($shiphawk_shipping_amount + $accessoriesPrice);
-                }*/
 
                 $order->setShiphawkShippingAmount($shiphawk_shipping_amount); //todo
             }
@@ -147,19 +116,21 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             }
         }
 
-        Mage::getSingleton('core/session')->unsShiphawkBookId();
-        Mage::getSingleton('core/session')->unsMultiZipCode();
-        Mage::getSingleton('core/session')->unsSummPrice();
-        Mage::getSingleton('core/session')->unsPackageInfo();
+        if (!$quote->getIsMultiShipping()) {
+            Mage::getSingleton('core/session')->unsShiphawkBookId();
+            Mage::getSingleton('core/session')->unsMultiZipCode();
+            Mage::getSingleton('core/session')->unsSummPrice();
+            Mage::getSingleton('core/session')->unsPackageInfo();
 
-        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
-        Mage::getSingleton('checkout/session')->unsetData('multiple_price');
-        Mage::getSingleton('checkout/session')->unsetData('shiphawk_multi_shipping');
-        Mage::getSingleton('checkout/session')->unsetData('chosen_multi_shipping_methods');
-        Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
-        Mage::getSingleton('core/session')->unsetData('accessories_price_already_in_rate');
-        Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
-        Mage::getSingleton('checkout/session')->unsetData('accessoriesprice');
+            Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+            Mage::getSingleton('checkout/session')->unsetData('multiple_price');
+            Mage::getSingleton('checkout/session')->unsetData('shiphawk_multi_shipping');
+            Mage::getSingleton('checkout/session')->unsetData('chosen_multi_shipping_methods');
+            Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
+            Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
+            Mage::getSingleton('checkout/session')->unsetData('accessoriesprice');
+        }
+
     }
 
     /**
