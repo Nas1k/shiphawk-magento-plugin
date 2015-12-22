@@ -56,7 +56,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $curl;
     }
 
-    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType, $destination_accessorials = null) {
+    public function getShiphawkRate($from_zip, $to_zip, $items, $rate_filter, $carrier_type, $location_type, $shLocationType, $destination_accessorials = null, $to_country_code = 'US', $from_country_code = 'US') {
 
         $helper = Mage::helper('shiphawk_shipping');
         $api_key = $helper->getApiKey();
@@ -73,6 +73,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'items' => $items,
                 'from_type' => $location_type,
                 'to_type' => $shLocationType,
+                'from_county_code' => $from_country_code,
+                'to_country_code' => $to_country_code,
                 'destination_accessorials' => $destination_accessorials,
             );
         }else{
@@ -84,6 +86,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 'items' => $items,
                 'from_type' => $location_type,
                 'to_type' => $shLocationType,
+                'from_county_code' => $from_country_code,
+                'to_country_code' => $to_country_code,
                 'destination_accessorials' => $destination_accessorials,
             );
         }
@@ -189,7 +193,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     'city' => $ship_addr['city'],
                     'state' => $ship_addr['region'],
                     'zip' => $ship_addr['postcode'],
-                    'email' => $ship_addr['email']
+                    'email' => $ship_addr['email'],
+                    'country' => $ship_addr['country_id']
                 ),
             'billing_address' =>
                 array(
@@ -200,7 +205,8 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     'city' => $bill_addr['city'],
                     'state' => $bill_addr['region'], //'NY',
                     'zip' => $bill_addr['postcode'],
-                    'email' => $bill_addr['email']
+                    'email' => $bill_addr['email'],
+                    'country' => $bill_addr['country_id']
                 ),
             'pickup' =>
                 array(
@@ -378,9 +384,12 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     $carrier_type = $rates_data[0]['carrier_type'];
                     $self_pack = $rates_data[0]['self_pack'];
                     $disabled = $rates_data[0]['shiphawk_disabled'];
+                    $shLocationType = $rates_data[0]['to_type_address'];
+                    $pre_accessories = $rates_data[0]['destination_accessories'];
+                    $to_country_code = $rates_data[0]['to_country_code'];
 
                     if(!$disabled) {
-                        $responseObject = $this->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
+                        $responseObject = $this->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories, $to_country_code);
 
                         if(is_object($responseObject))
                             if (property_exists($responseObject, 'error')) {
@@ -468,7 +477,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         $this->_saveShiphawkShipment($shipment, $rates_data[0]['name'], $shippingShipHawkAmount, '',null);
                     }
                 }
-            }else {//single parcel
+            }else {//single parcel, no re-rate for auto booking
                 foreach ($shiphawk_rate_data as $rate_id => $products_ids) {
 
                     //package info for single parcel shipment, saved early in order place after event
@@ -478,8 +487,15 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                     //$accessoriesPrice = Mage::helper('shiphawk_shipping')->getAccessoriesPrice($orderAccessories);
 
                     $accessories = $this->getAccessoriesForAutoBookSingleParcel($orderAccessories); // already chose accessories id
+                    if(!isset($orderAccessories) && (!isset($chosen_shipping_methods))) { // no $chosen_shipping_methods for multishipping checkout
+                        $accessories = $products_ids['default_accessories']; // for multishipping checkout only default accessories is set
+                    }
 
-                    $shippingShipHawkAmount = $products_ids['rate_price_for_group'] + $accessories['price'];
+                    if(isset($accessories['price'])) {
+                        $shippingShipHawkAmount = $products_ids['rate_price_for_group'] + $accessories['price'];
+                    }else{
+                        $shippingShipHawkAmount = $products_ids['rate_price_for_group'];
+                    }
 
                     $self_pack = $products_ids['self_pack'];
 

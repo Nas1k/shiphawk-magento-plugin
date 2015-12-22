@@ -51,7 +51,6 @@ class Shiphawk_Shipping_Model_Carrier
 
         $items = $this->getShiphawkItems($request);
 
-        $shLocationType = 'residential'; //default value
         $toOrder= array();
         $api_error = false;
         $is_multi_zip = false;
@@ -93,6 +92,16 @@ class Shiphawk_Shipping_Model_Carrier
                 Mage::getSingleton('checkout/session')->setData('shiphawk_location_type_shipping', $shLocationType);
             } else {
                 $shLocationType = Mage::getSingleton('checkout/session')->getData('shiphawk_location_type_shipping');
+                $shLocationType = $shLocationType != 'commercial' && $shLocationType != 'residential' ? 'residential' : $shLocationType;
+            }
+        }
+        $shipping_address_id = $this->checkShippingAddress($request, $quote);
+        if ($quote->getIsMultiShipping()) {
+
+            if ($shipping_address_id) {
+                $address = Mage::getModel('customer/address')->load($shipping_address_id);
+                $shLocationType = $address->getShiphawkLocationType();
+                // destination address type should be residential or commercial, default value - residential
                 $shLocationType = $shLocationType != 'commercial' && $shLocationType != 'residential' ? 'residential' : $shLocationType;
             }
         }
@@ -732,6 +741,10 @@ class Shiphawk_Shipping_Model_Carrier
                         $toOrder[$api_responses[$i][0]->id]['custom_products_packing_price'] = $api_calls_params[$i]['custom_products_packing_price'];
                         $toOrder[$api_responses[$i][0]->id]['rate_price_for_group'] = round($rate_price_for_group, 2);
                         $toOrder[$api_responses[$i][0]->id]['shiphawk_disabled'] = null;
+                        $toOrder[$api_responses[$i][0]->id]['to_type_address'] = $shLocationType;
+                        $toOrder[$api_responses[$i][0]->id]['destination_accessories'] = $pre_accessories; //for re-rate
+                        $toOrder[$api_responses[$i][0]->id]['default_accessories'] = $api->getDefaultAccessoriesForBook($api_responses[$i][0]->shipping->carrier_accessorial);
+                        $toOrder[$api_responses[$i][0]->id]['to_country_code'] = $to_country_code;
                     } else {
 
                         foreach ($api_responses[$i] as $responseItem) {
@@ -763,6 +776,10 @@ class Shiphawk_Shipping_Model_Carrier
                             $toOrder[$responseItem->id]['custom_products_packing_price'] = $api_calls_params[$i]['custom_products_packing_price'];
                             $toOrder[$responseItem->id]['rate_price_for_group'] = round($rate_price_for_group, 2);
                             $toOrder[$responseItem->id]['shiphawk_disabled'] = null;
+                            $toOrder[$responseItem->id]['to_type_address'] = $shLocationType;
+                            $toOrder[$responseItem->id]['destination_accessories'] = $pre_accessories; // for re-rate
+                            $toOrder[$responseItem->id]['default_accessories'] = $api->getDefaultAccessoriesForBook($responseItem->shipping->carrier_accessorial);
+                            $toOrder[$responseItem->id]['to_country_code'] = $to_country_code;
                         }
                     }
                 }
@@ -844,7 +861,6 @@ class Shiphawk_Shipping_Model_Carrier
             Mage::getSingleton('core/session')->setShiphawkBookId($toOrder);
 
             if ($quote->getIsMultiShipping()) {// if multi destination address order
-                $shipping_address_id = $this->checkShippingAddress($request, $quote);
 
                 $shiphawk_book_id_from_quote = $quote->getShiphawkBookId();
 

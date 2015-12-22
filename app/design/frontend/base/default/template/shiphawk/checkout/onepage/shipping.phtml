@@ -120,6 +120,23 @@
                             </div>
                         </div>
                     </li>
+                    <?php $customer_address_id = $this->getAddress()->getCustomerAddressId(); ?>
+                    <?php if (isset($customer_address_id)) {
+                    $address = Mage::getModel('customer/address')->load($customer_address_id);
+                    $shLocationType = $address->getShiphawkLocationType();
+                    ?>
+                    <li class="fields">
+                        <div class="field">
+                            <label for="shipping:shiphawk-location-type"><?php echo $this->__('Location Type') ?></label>
+                            <div class="input-box">
+                                <select id="shipping:shiphawk-location-type" name="shipping[shiphawk_location_type]" class="validate-select">
+                                    <option value="residential" <?php if($shLocationType == 'residential') echo 'selected' ?> ><?php echo $this->__('Residential') ?></option>
+                                    <option value="commercial" <?php if($shLocationType == 'commercial') echo 'selected' ?> ><?php echo $this->__('Commercial') ?></option>
+                                </select>
+                            </div>
+                        </div>
+                    </li>
+                    <?php }else{ ?>
                     <li class="fields">
                         <div class="field">
                             <label for="shipping:shiphawk-location-type"><?php echo $this->__('Location Type') ?></label>
@@ -131,6 +148,7 @@
                             </div>
                         </div>
                     </li>
+                    <?php }?>
                 <?php if ($this->isCustomerLoggedIn() && $this->customerHasAddresses()):?>
                     <li class="control">
                         <input type="checkbox" name="shipping[save_in_address_book]" value="1" title="<?php echo $this->__('Save in address book') ?>" id="shipping:save_in_address_book" onchange="shipping.setSameAsBilling(false);"<?php if ($this->getAddress()->getSaveInAddressBook()):?> checked="checked"<?php endif;?> class="checkbox" /><label for="shipping:save_in_address_book"><?php echo $this->__('Save in address book') ?></label></li>

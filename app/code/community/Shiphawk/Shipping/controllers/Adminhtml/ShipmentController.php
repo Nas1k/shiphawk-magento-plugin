@@ -66,9 +66,12 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                         $carrier_type = $rates_data[0]['carrier_type'];
                         $self_pack = $rates_data[0]['self_pack'];
                         $disabled = $rates_data[0]['shiphawk_disabled'];
+                        $shLocationType = $rates_data[0]['to_type_address'];
+                        $pre_accessories = $rates_data[0]['destination_accessories'];
+                        $to_country_code = $rates_data[0]['to_country_code'];
 
                         if(!$disabled) {
-                            $responseObject = $api->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
+                            $responseObject = $api->getShiphawkRate($from_zip, $to_zip, $rates_data[0]['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories, $to_country_code);
 
                             if(is_object($responseObject))
                                 if (property_exists($responseObject, 'error')) {
@@ -184,12 +187,14 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                     $location_type = $products_ids['items'][0]['location_type'];
 
                     $carrier_type = $products_ids['carrier_type'];
-
+                    $shLocationType = $products_ids['to_type_address'];
+                    $pre_accessories = $products_ids['destination_accessories'];
                     $self_pack = $products_ids['self_pack'];
                     $disabled = $products_ids['shiphawk_disabled'];
+                    $to_country_code = $products_ids['to_country_code'];
 
                     if(!$disabled) {
-                        $responseObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories);
+                        $responseObject = $api->getShiphawkRate($from_zip, $products_ids['to_zip'], $products_ids['items'], $rate_filter, $carrier_type, $location_type, $shLocationType, $pre_accessories, $to_country_code);
 
                         if(is_object($responseObject))
                             if (property_exists($responseObject, 'error')) {
@@ -220,8 +225,14 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             //if($helper->getOriginalShipHawkShippingPrice($shipping_code, (string) $shipping_price)) {
                                 $rate_id        = $response->id;
                                 $accessories_from_rate    = $response->shipping->carrier_accessorial;
-                                if(!empty($accessories_from_rate))
-                                $accessories = $api->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
+                                if(!empty($accessories_from_rate)) {
+                                    if(isset($chosen_shipping_methods)) {
+                                        $accessories = $api->getAccessoriesForBook($accessories_from_rate, $orderAccessories->$shipping_code); // return array with accessories and price of this accessorials
+                                    }else{//no chosen_shipping_methods for multishipping
+                                        $accessories = $api->getDefaultAccessoriesForBook($accessories_from_rate); // only default accessories
+                                    }
+                                }
+
                                 $package_info    = Mage::getModel('shiphawk_shipping/carrier')->getPackeges($response);
                                 $is_rate = true;
                                 $multi_front = true;

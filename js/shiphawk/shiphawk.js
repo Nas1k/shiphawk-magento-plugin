@@ -163,6 +163,7 @@ document.observe("dom:loaded", function() {
     var shiphawk_type_of_product = document.getElementById("shiphawk_type_of_product");
 
     insertAfter(shiphawk_type_of_product, el);
+    shiphawk_type_of_product.setAttribute("autocomplete", "off");
 
     var typeloader;
     $('shiphawk_type_of_product').observe('keyup', function(event){
