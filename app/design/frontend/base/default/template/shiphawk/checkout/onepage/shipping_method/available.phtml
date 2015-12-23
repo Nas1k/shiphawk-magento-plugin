@@ -148,7 +148,7 @@ $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->g
                                     <?php }?>
                                 <?php  } ?>
 
-                            <? endif; ?>
+                            <?php endif; ?>
                         <?php } ?>
                     <?php endif;?>
                 <?php }?>
@@ -247,7 +247,7 @@ $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->g
             }
             //]]>
         </script>
-        <? }else { ?>
+        <?php }else { ?>
             <dt><?php echo $this->escapeHtml($this->getCarrierName($code)) ?></dt>
             <dd>
                 <ul>
