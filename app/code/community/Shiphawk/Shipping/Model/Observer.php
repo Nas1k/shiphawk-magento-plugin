@@ -92,11 +92,11 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
                 }
 
                 $order->setShiphawkShippingAccessories(json_encode($accessoriesData));
-                $order->setShiphawkShippingAmount($shiphawk_shipping_amount); //todo
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
 
             }else{
 
-                $order->setShiphawkShippingAmount($shiphawk_shipping_amount); //todo
+                $order->setShiphawkShippingAmount($shiphawk_shipping_amount);
             }
 
             // save pre *destination* accessorials for future re rate in booking
@@ -300,9 +300,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
         //clear session data
         $session->unsetData('shipment_accessories');
-
-        $order->setShiphawkShippingAccessories(json_encode($accessories['data']));
-        $order->save();
+        if(isset($accessories['data'])) {
+            $order->setShiphawkShippingAccessories(json_encode($accessories['data']));
+            $order->save();
+        }
     }
 
     /**

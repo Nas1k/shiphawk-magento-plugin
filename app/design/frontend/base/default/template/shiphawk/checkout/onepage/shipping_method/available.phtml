@@ -83,7 +83,8 @@ $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->g
                 foreach ($product_ids as $pr_id) {
                     $_product = Mage::getModel('catalog/product')->load($pr_id);
                     $product_name = $_product->getName();
-                    $img = (string)Mage::helper('catalog/image')->init($_product, 'thumbnail')->resize(200);
+                    //$img = (string)Mage::helper('catalog/image')->init($_product, 'thumbnail')->resize(200);
+                    $img = (string) Mage::helper('shiphawk_shipping')->getProductThumbnail($_product)->resize(200);
                     echo '<img src ="' .$img.'" alt="' .$product_name.'" width=200 height=200 />';
                     echo $product_name;
                     echo '<br>';

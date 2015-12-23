@@ -242,7 +242,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         $resp = curl_exec($curl);
         $arr_res = json_decode($resp);
 
-        //$helper->shlog($arr_res, 'shiphawk-book.log');
+        $helper->shlog($arr_res, 'shiphawk-book-response.log');
 
         curl_close($curl);
 
@@ -333,7 +333,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
         return $origin_address_product;
 
     }
-
 
     /**
      * Auto booking. Save shipment in sales_order_place_after event, if manual booking set to No
@@ -449,6 +448,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
 
                             if (property_exists($track_data, 'error')) {
+                                if($helper->showErrorsOnFrontend())
                                 Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                                 $helper->shlog('ShipHawk response: '.$track_data->error);
                                 $helper->sendErrorMessageToShipHawk($track_data->error);
@@ -510,6 +510,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                         $helper->shlog($track_data, 'shiphawk-book-response.log');
 
                         if (property_exists($track_data, 'error')) {
+                            if($helper->showErrorsOnFrontend())
                             Mage::getSingleton('core/session')->addError("The booking was not successful, please try again later.");
                             $helper->shlog('ShipHawk response: ' . $track_data->error);
                             return;
@@ -694,6 +695,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                 if(is_object($arr_res)) {
                     if(property_exists($arr_res, 'error')) {
+                        if($helper->showErrorsOnFrontend())
                         Mage::getSingleton('core/session')->addError('Subscribe to tracking: '. $arr_res->error);
                         return;
                     }

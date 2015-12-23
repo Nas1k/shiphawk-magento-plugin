@@ -258,6 +258,7 @@
                 <charge_customer_for_packing>1</charge_customer_for_packing>
                 <opt_to_self_pack>0</opt_to_self_pack>
                 <showmethod>1</showmethod>
+                <show_error_on_frontend>0</show_error_on_frontend>
             </shiphawk_shipping>
         </carriers>
     </default>

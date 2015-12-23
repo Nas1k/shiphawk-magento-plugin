@@ -560,11 +560,38 @@ class Shiphawk_Shipping_Helper_Data extends
         return false;
     }
 
-    /*public function checkIfOrderHasOnlyBackupShiphawkMethod($order) {
-        $backup_method_title = Mage::getStoreConfig('carriers/shiphawk_shipping/rate_title');
-        $order_shipping_method_title = $order->getShippingDescription();
-        $is_it_backup_shiphawk_rate = strpos($order_shipping_method_title, $backup_method_title);
-        return $is_it_backup_shiphawk_rate;
-    }*/
+    public function showErrorsOnFrontend(){
+        return Mage::getStoreConfig('carriers/shiphawk_shipping/show_error_on_frontend');
+    }
+
+    /**
+     * Get product thumbnail image
+     *
+     * @return Mage_Catalog_Model_Product_Image
+     */
+    public function getProductThumbnail($product)
+    {
+        if (!$product->getData('thumbnail')
+            || ($product->getData('thumbnail') == 'no_selection')
+            || (Mage::getStoreConfig('checkout/cart/configurable_product_image') == 'parent')
+            || (Mage::getStoreConfig('checkout/cart/grouped_product_image') == 'parent')) {
+            $parentIds = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
+            //get image from first parent product
+            if(is_array($parentIds))
+                if(isset($parentIds[0])){
+                    $parent_product = Mage::getModel('catalog/product')->load($parentIds[0]);
+                    return Mage::helper('catalog/image')->init($parent_product, 'thumbnail');
+                }else{
+                    //checked for grouped parent product
+                    $groupedParentsIds = Mage::getResourceSingleton('catalog/product_link')->getParentIdsByChild($product->getId(), Mage_Catalog_Model_Product_Link::LINK_TYPE_GROUPED);
+                    if(is_array($groupedParentsIds))
+                        if(isset($groupedParentsIds[0])){
+                            $parent_product = Mage::getModel('catalog/product')->load($groupedParentsIds[0]);
+                            return Mage::helper('catalog/image')->init($parent_product, 'thumbnail');
+                        }
+                }
+        }
+        return Mage::helper('catalog/image')->init($product, 'thumbnail');
+    }
 
 }
