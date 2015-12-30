@@ -71,10 +71,28 @@ class Shiphawk_Shipping_Model_Carrier
         $grouped_items_by_disabled_shipping = $this->getGroupedItemsByDisabledShipping($items);
         /*END*/
 
+        $shipping_address_id = $this->checkShippingAddress($request, $quote);
         /* For location type */
         if ($is_admin) {
             // if is admin this means that we have already set the value in setlocationtypeAction
-            $shLocationType = Mage::getSingleton('checkout/session')->getData('shiphawk_location_type_shipping');
+            //$shLocationType = Mage::getSingleton('checkout/session')->getData('shiphawk_location_type_shipping');
+            if ($shipping_address_id) {
+                $address = Mage::getModel('customer/address')->load($shipping_address_id);
+                $shLocationType = $address->getShiphawkLocationType();
+                $attribute_shiphawk_location_type = Mage::getSingleton('eav/config')->getAttribute('customer_address', 'shiphawk_location_type');
+                if ($attribute_shiphawk_location_type->usesSource()) {
+                    $options = $attribute_shiphawk_location_type->getSource()->getAllOptions(false);
+                    foreach ($options as $option) {
+                        if($shLocationType == $option['value']){
+                            $shLocationType = $option['label'];
+                            break;
+                        }
+                    }
+                }
+            }
+            // destination address type should be residential or commercial, default value - residential
+            $shLocationType = $shLocationType != 'commercial' && $shLocationType != 'residential' ? 'residential' : $shLocationType;
+
         } else {
             $shippingRequest    = Mage::app()->getRequest()->getPost();
 
@@ -95,9 +113,8 @@ class Shiphawk_Shipping_Model_Carrier
                 $shLocationType = $shLocationType != 'commercial' && $shLocationType != 'residential' ? 'residential' : $shLocationType;
             }
         }
-        $shipping_address_id = $this->checkShippingAddress($request, $quote);
-        if ($quote->getIsMultiShipping()) {
 
+        if ($quote->getIsMultiShipping()) {
             if ($shipping_address_id) {
                 $address = Mage::getModel('customer/address')->load($shipping_address_id);
                 $shLocationType = $address->getShiphawkLocationType();
@@ -111,8 +128,18 @@ class Shiphawk_Shipping_Model_Carrier
         /* accessories choose in cart */
         $pre_accessories = null;
         $accessories_for_rates = $helper->getPreAccessoriesInSession();
+        if(!empty($accessories_for_rates))
         foreach ($accessories_for_rates as $access_rate) {
             $pre_accessories[$access_rate] = 'true';
+        }
+
+        /* accessories choose in admin New Order view */
+        if ($helper->checkIsAdmin()) {
+            $accessories_for_rates = Mage::getSingleton('shiphawk_shipping/session')->getData('admin_pre_accessorials');
+            if(!empty($accessories_for_rates))
+            foreach ($accessories_for_rates as $access_rate) {
+                $pre_accessories[$access_rate] = 'true';
+            }
         }
 
         //building api calls
@@ -1104,7 +1131,8 @@ class Shiphawk_Shipping_Model_Carrier
                     'id' => $product->getShiphawkTypeOfProductValue(),
                     'zip'=> $this->getOriginZip($product),
                     'product_id'=> $product_id,
-                    'xid'=> $product_id,
+                    'xid'=> $item->getSku(),
+                    //'product_sku'=> $item->getSku(),
                     'origin'=> $this->getShiphawkShippingOrigin($product),
                     'location_type'=> $this->getOriginLocation($product),
                     'require_crating'=> false,
@@ -1115,6 +1143,7 @@ class Shiphawk_Shipping_Model_Carrier
                     'shiphawk_discount_percentage'=> $product->getShiphawkDiscountPercentage(),
                     'shiphawk_custom_packing_price'=> (($this->getIsPacked($product) == 'true')&&($custom_packing_price_setting)) ? null  : $product->getShiphawkCustomPackingPrice(),
                     'shiphawk_disable_shipping'=> (empty($disable_shiphawk_shipping)) ? null  : $disable_shiphawk_shipping,
+                    'quote_item_id'=> $item->getId()
                 );
             }
 
@@ -1148,7 +1177,8 @@ class Shiphawk_Shipping_Model_Carrier
                     'id' => $product->getShiphawkTypeOfProductValue(),
                     'zip'=> $this->getOriginZip($product),
                     'product_id'=> $product_id,
-                    'xid'=> $product_id,
+                    'xid'=> $item->getSku(),
+                    //'product_sku'=> $item->getSku(),
                     'origin'=> $this->getShiphawkShippingOrigin($product),
                     'location_type'=> $this->getOriginLocation($product),
                     'require_crating'=> false,
@@ -1159,6 +1189,7 @@ class Shiphawk_Shipping_Model_Carrier
                     'shiphawk_discount_percentage'=> $product->getShiphawkDiscountPercentage(),
                     'shiphawk_custom_packing_price'=> (($this->getIsPacked($product) == 'true')&&($custom_packing_price_setting)) ? null  : $product->getShiphawkCustomPackingPrice(),
                     'shiphawk_disable_shipping'=> (empty($disable_shiphawk_shipping)) ? null  : $disable_shiphawk_shipping,
+                    'quote_item_id'=> $item->getId()
                 );
             }
         }

@@ -42,7 +42,6 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
 
             $chosen_shipping_methods = Mage::getSingleton('checkout/session')->getData('chosen_multi_shipping_methods');
 
-
             $multi_zip_code = Mage::getSingleton('core/session')->getMultiZipCode();
 
             // set ShipHawk rate filter
@@ -103,6 +102,10 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             $accessories_for_rates = $helper->getPreAccessoriesInSession();
             $order->setShiphawkCustomerAccessorials(serialize($accessories_for_rates));
 
+            // save admin pre *destination* accessorials for future re rate in booking
+            $admin_accessories_for_rates = Mage::getSingleton('shiphawk_shipping/session')->getData('admin_pre_accessorials');
+            $order->setShiphawkAdminCustomerAccessorials(serialize($admin_accessories_for_rates));
+
             $order->setChosenMultiShippingMethods(serialize($chosen_shipping_methods));
 
             $helper->clearCustomAccessoriesInSession();
@@ -129,6 +132,8 @@ class Shiphawk_Shipping_Model_Observer extends Mage_Core_Model_Abstract
             Mage::getSingleton('checkout/session')->unsetData('chosen_accessories_per_carrier');
             Mage::getSingleton('core/session')->unsetData('admin_accessories_price');
             Mage::getSingleton('checkout/session')->unsetData('accessoriesprice');
+
+            Mage::getSingleton('shiphawk_shipping/session')->unsetData('admin_pre_accessorials');
         }
 
     }

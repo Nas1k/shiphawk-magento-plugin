@@ -49,9 +49,12 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
 
             $orderAccessories = json_decode($order->getShiphawkShippingAccessories());
 
-            if (!empty($accessories_for_rates))
-            foreach ($accessories_for_rates as $access_rate) {
-                $pre_accessories[$access_rate] = 'true';
+            if (!empty($accessories_for_rates)) {
+                foreach ($accessories_for_rates as $access_rate) {
+                    $pre_accessories[$access_rate] = 'true';
+                }
+            }else{
+
             }
 
             $accessories = array();
@@ -270,6 +273,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
                             if($track_data->details->id) {
                                 $api->addTrackNumber($shipment, $track_data->details->id);
                                 $api->subscribeToTrackingInfo($shipment->getId());
+                                //$api->editParticularShipment($shipment->getId(), $track_data->details->id); // todo get Invalid Shipment ID on existing shipment
                             }
 
                             $shipmentCreatedMessage = $this->__('The shipment has been created.');
@@ -525,6 +529,7 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
         $params = $this->getRequest()->getParams();
         $accessories_price = $params['accessories_price'];
         $shiphawk_override_cost = $params['shiphawk_override_cost'];
+        $shiphawk_override_title = $params['shiphawk_override_title'];
 
         if ((floatval($shiphawk_override_cost) >= 0)&&($shiphawk_override_cost != '')) {
             Mage::getSingleton('core/session')->unsetData('shiphawk_override_cost');
@@ -535,6 +540,48 @@ class Shiphawk_Shipping_Adminhtml_ShipmentController extends Mage_Adminhtml_Cont
             Mage::getSingleton('core/session')->setData('admin_accessories_price', $accessories_price);
         }
 
+        if (($shiphawk_override_title != '')) {
+            Mage::getSingleton('core/session')->unsetData('shiphawk_override_title');
+            Mage::getSingleton('core/session')->setData('shiphawk_override_title', $shiphawk_override_title);
+        }
+    }
 
+    /**
+     * Set required *destination* accessorials *prior* to getting a rate, in admin New Order view.
+     *
+     * @version 20150701
+     */
+    public function  adminprioraccessorialsAction() {
+        $params = $this->getRequest()->getParams();
+        $accessories_id = $params['accessories_id'];
+        $unset_id = $params['unset_id'];
+        $admin_pre_accessorials = Mage::getSingleton('shiphawk_shipping/session')->getData('admin_pre_accessorials');
+
+        if ($unset_id == 1) {
+            if($admin_pre_accessorials) {
+                if(is_array($admin_pre_accessorials))
+                    if(($key = array_search($accessories_id, $admin_pre_accessorials)) !== false) {
+                        unset($admin_pre_accessorials[$key]);
+                    }
+            }
+        }else{
+            if($admin_pre_accessorials) {
+
+                if($accessories_id){
+                    if(($key = array_search($accessories_id, $admin_pre_accessorials)) == false) {
+                        $admin_pre_accessorials[] = $accessories_id;
+                    }
+                }
+
+            }else{
+                $admin_pre_accessorials = array();
+
+                if($accessories_id){
+                    $admin_pre_accessorials[] = $accessories_id;
+                }
+            }
+        }
+
+        Mage::getSingleton('shiphawk_shipping/session')->setData('admin_pre_accessorials', $admin_pre_accessorials);
     }
 }

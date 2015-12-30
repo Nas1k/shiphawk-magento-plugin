@@ -516,6 +516,18 @@ class Shiphawk_Shipping_Helper_Data extends
         }
     }
 
+    public function checkAdminDestinationAccessories($admin_accessorials_id) {
+        $admin_pre_accessorials = Mage::getSingleton('shiphawk_shipping/session')->getData('admin_pre_accessorials');
+
+        if(isset($admin_pre_accessorials)&&(is_array($admin_pre_accessorials))) {
+            if (array_search($admin_accessorials_id, $admin_pre_accessorials) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function checkIfOrderIsBackend($order) {
         $ip = $order->getRemoteIp();
         if(!empty($ip)){
@@ -570,7 +582,7 @@ class Shiphawk_Shipping_Helper_Data extends
      * @return Mage_Catalog_Model_Product_Image
      */
     public function getProductThumbnail($product)
-    {
+    { //todo get images from quote items
         if (!$product->getData('thumbnail')
             || ($product->getData('thumbnail') == 'no_selection')
             || (Mage::getStoreConfig('checkout/cart/configurable_product_image') == 'parent')

@@ -690,6 +690,7 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
                 $resp = curl_exec($curl);
                 $arr_res = json_decode($resp);
+                curl_close($curl);
 
                 $helper->shlog($arr_res, 'shiphawk-tracking.log');
 
@@ -727,8 +728,6 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
                 }
 
                 $shipment->save();
-
-                curl_close($curl);
 
             }catch (Mage_Core_Exception $e) {
                 $this->_getSession()->addError($e->getMessage());
@@ -900,6 +899,57 @@ class Shiphawk_Shipping_Model_Api extends Mage_Core_Model_Abstract
 
     public function getDataForTateRequest() {
 
+    }
+
+    public function editParticularShipment($magento_shipment_id, $shiphawk_shipment_id) {
+
+        $helper = Mage::helper('shiphawk_shipping');
+        $api_key = $helper->getApiKey();
+
+            try{
+                //PUT /api/v3/shipments/{id}/tracking
+                $subscribe_url = $helper->getApiUrl() . 'shipments/' . $shiphawk_shipment_id . '/?api_key=' . $api_key;
+                $items_array = array(
+                    'details' =>
+                        array(
+                            'sales_xid' => $magento_shipment_id,
+                        )
+                );
+
+                $curl = curl_init();
+                $items_array =  json_encode($items_array);
+
+                curl_setopt($curl, CURLOPT_URL, $subscribe_url);
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($curl, CURLOPT_POSTFIELDS, $items_array);
+                curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+                        'Content-Type: application/json',
+                        'Content-Length: ' . strlen($items_array)
+                    )
+                );
+
+                $resp = curl_exec($curl);
+                $arr_res = json_decode($resp);
+                curl_close($curl);
+
+                $helper->shlog($arr_res, 'shiphawk-tracking.log');
+
+                if(is_object($arr_res)) {
+                    if(property_exists($arr_res, 'error')) {
+                        if($helper->showErrorsOnFrontend())
+                            Mage::getSingleton('core/session')->addError('Update particular shipment: '. $arr_res->error);
+                        return;
+                    }
+                }
+
+            }catch (Mage_Core_Exception $e) {
+                $this->_getSession()->addError($e->getMessage());
+                Mage::logException($e);
+
+            } catch (Exception $e) {
+                Mage::logException($e);
+            }
     }
 
 }

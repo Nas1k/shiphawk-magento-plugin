@@ -131,13 +131,19 @@
                     </div>
                 </div>
             </li>
+            <?php $attribute = Mage::getSingleton('eav/config')->getAttribute('customer_address', 'shiphawk_location_type');
+            if ($attribute->usesSource()) {
+                $options = $attribute->getSource()->getAllOptions(false);
+            }
+            ?>
             <li class="fields">
                 <div class="field">
                     <label for="location_type" ><?php echo $this->__('Location Type') ?></label>
                     <div class="input-box">
-                        <select id="shiphawk_location_type" name="shiphawk_location_type" >
-                            <option value="residential" <?php if($this->htmlEscape($this->getAddress()->getShiphawkLocationType() == 'residential')) echo 'selected' ?> >Residential</option>
-                            <option value="commercial" <?php if($this->htmlEscape($this->getAddress()->getShiphawkLocationType() == 'commercial')) echo 'selected' ?> >Commercial</option>
+                        <select id="shiphawk_location_type" name="shiphawk_location_type">
+                            <?php foreach ($options as $option) { ?>
+                            <option value="<?php echo $option['value'] ?>" <?php if($this->htmlEscape($this->getAddress()->getShiphawkLocationType() == $option['value'])) echo 'selected' ?> ><?php echo $option['label'] ?></option>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>

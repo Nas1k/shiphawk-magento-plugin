@@ -132,11 +132,17 @@ class Shiphawk_Sales_Model_Shipping extends Mage_Sales_Model_Quote_Address_Total
             foreach ($address->getAllShippingRates() as $rate) {
                 if ($rate->getCode()==$method) {
                     $shiphawk_override_cost = Mage::getSingleton('core/session')->getData('shiphawk_override_cost');
+                    $shiphawk_override_title = Mage::getSingleton('core/session')->getData('shiphawk_override_title');
+                    Mage::getSingleton('core/session')->unsetData('shiphawk_override_title');
 
                     $amountPrice = $address->getQuote()->getStore()->convertPrice($rate->getPrice(), false);
                     if(isset($shiphawk_override_cost)) {
                         $amountPrice = $address->getQuote()->getStore()->convertPrice($shiphawk_override_cost, false);
                         $rate->setPrice($amountPrice)->save();
+                    }
+
+                    if(($shiphawk_override_title != '')&&(isset($shiphawk_override_title))){
+                        $rate->setMethodTitle(trim($shiphawk_override_title))->save();
                     }
 
                     $this->_setAmount($amountPrice);

@@ -34,6 +34,30 @@
         padding-left: 16px;
     }
 </style>
+<div>
+    <label><?php echo $this->__('Destination Accessorials') ?></label>
+    <div>
+        <ul>
+            <li>
+                <input type="checkbox" name="admin_destination_accessorials[]" id="liftgate_delivery"  value="liftgate_delivery" <?php if (Mage::helper('shiphawk_shipping')->checkAdminDestinationAccessories('liftgate_delivery')) echo 'checked'; ?>>
+                <label for="liftgate_delivery" >Liftgate Delivery</label>
+            </li>
+            <li>
+                <input type="checkbox" name="admin_destination_accessorials[]" id="inside_delivery"  value="inside_delivery" <?php if (Mage::helper('shiphawk_shipping')->checkAdminDestinationAccessories('inside_delivery')) echo 'checked'; ?>>
+                <label for="inside_delivery" >Inside Delivery</label>
+            </li>
+            <li>
+                <input type="checkbox" name="admin_destination_accessorials[]" id="notify_prior_delivery"  value="notify_prior_delivery" <?php if (Mage::helper('shiphawk_shipping')->checkAdminDestinationAccessories('notify_prior_delivery')) echo 'checked'; ?>>
+                <label for="notify_prior_delivery" >Notify Prior Delivery</label>
+            </li>
+            <li>
+                <input type="checkbox" name="admin_destination_accessorials[]" id="schedule_appointment_delivery"  value="schedule_appointment_delivery" <?php if (Mage::helper('shiphawk_shipping')->checkAdminDestinationAccessories('schedule_appointment_delivery')) echo 'checked'; ?>>
+                <label for="schedule_appointment_delivery" >Schedule Appointment Delivery</label>
+            </li>
+        </ul>
+    </div>
+</div>
+<hr>
 <?php $_shippingRateGroups = $this->getShippingRates(); ?>
 <?php $multi_zip_code = Mage::getSingleton('core/session')->getData('multi_zip_code');
       $currency_symbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
@@ -130,6 +154,10 @@
                     <td class="label"><label for="sh-override-shipping-cost">Override Shipping Cost:</label></td>
                     <td class="value"><input id="sh-override-shipping-cost" type="text" value="" class="input-text validate-number" name="sh_override_shipping_cost" placeholder="Enter Dollar Amount"/></td>
                 </tr>
+                <tr>
+                    <td class="label"><label for="sh-override-shipping-title">Override Shipping Title:</label></td>
+                    <td class="value"><input id="sh-override-shipping-title" type="text" value="" class="input-text" name="sh_override_shipping_title" placeholder=""/></td>
+                </tr>
             </table>
         </div>
                <div class="form-buttons" style="float: none; text-align: right;"> <!-- sales_quote__collect_totals_after -->
@@ -211,7 +239,7 @@
     var ajaxUrl = '<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB); ?>';
 
     /* fol location type */
-    var locationSelect = '<tr>' +
+   /* var locationSelect = '<tr>' +
         '<td class="label"><label for="shiphawk-shipping-location-type">Location Type<span class="required">*</span></label></td>' +
         '<td class="value">' +
         '<select id="shiphawk-shipping-location-type" class="select required-entry validate-select" onchange="setShiphawkLocationType();">' +
@@ -223,9 +251,9 @@
 
     if ($('shiphawk-shipping-location-type') === null) {
         $$('#order-shipping_address_fields .content .form-list tbody')[0].insert({before: locationSelect});
-    }
+    }*/
 
-    setShiphawkLocationType();
+   /* setShiphawkLocationType();
 
     function setShiphawkLocationType() {
         var element     = $('shiphawk-shipping-location-type');
@@ -250,7 +278,7 @@
         });
 
         return;
-    }
+    }*/
 
     function updateTotalsAccessories() {
         var accessories_checked_array = $$('.accessor:checked');
@@ -265,6 +293,7 @@
         });
 
         var shiphawk_override_cost = $('sh-override-shipping-cost').value;
+        var shiphawk_override_title = $('sh-override-shipping-title').value;
 
         if (typeof accessories_checked_enable_array != 'undefined' && accessories_checked_enable_array.length > 0) {
             accessories_price = accessories_checked_enable_array.invoke('readAttribute' ,'value').reduce(function(previousValue, currentValue, index, array) {
@@ -276,7 +305,8 @@
 
         var parameters = {
             accessories_price: accessories_price,
-            shiphawk_override_cost: shiphawk_override_cost
+            shiphawk_override_cost: shiphawk_override_cost,
+            shiphawk_override_title: shiphawk_override_title
         };
 
         new Ajax.Request(url, {
@@ -298,6 +328,9 @@
 
                     $('sh-override-shipping-cost').value = shiphawk_override_cost;
                     $('sh-override-shipping-cost').innerHTML = shiphawk_override_cost;
+
+                    $('sh-override-shipping-title').value = shiphawk_override_title;
+                    $('sh-override-shipping-title').innerHTML = shiphawk_override_title;
                 }, 3000);
             }
         });
@@ -307,6 +340,45 @@
     if ($('order-shipping-method-choose')) {
 
        $('order-shipping-method-choose').show();
+    }
+
+    $$('input[type="checkbox"][name="admin_destination_accessorials[]"]').each(function(el){
+        Event.observe(el, 'click', function(){
+            if (el.checked == true) {
+                setDestinationAccessorials(el.value, 0);
+            }
+
+            if (el.checked == false) {
+                setDestinationAccessorials(el.value, 1);
+            }
+        });
+    });
+
+    function setDestinationAccessorials(accessories, unset_id) {
+        var url = 'adminshiphawk/adminhtml_shipment/adminprioraccessorials';
+        var baseMagentoUrl = '<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB); ?>';
+
+        url = baseMagentoUrl + url;
+
+        var parameters = {
+            accessories_id: accessories,
+            unset_id: unset_id
+        };
+
+        new Ajax.Request(url, {
+            method: 'post',
+            parameters: parameters,
+            onSuccess: function(transport) {
+
+            },
+            onLoading:function(transport)
+            {
+                $(accessories).disable();
+            },
+            onComplete:function(){
+                $(accessories).enable();
+            }
+        });
     }
 
 </script>

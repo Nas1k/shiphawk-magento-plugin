@@ -76,6 +76,14 @@ $api = Mage::getModel('shiphawk_shipping/api');
             foreach($trackingNumbers as $trackNumber) {
                 $trackResult = $api->getShipmentStatus($trackNumber);
 
+                if(is_object($trackResult)) {
+                    if(property_exists($trackResult, 'error')) {
+                        if(Mage::helper('shiphawk_shipping')->showErrorsOnFrontend())
+                            Mage::getSingleton('core/session')->addError('Get status of a shipment: '. $trackResult->error);
+                        continue;
+                    }
+                }
+
                 switch ($trackResult->status) {
                     case 'in_transit':
                         $comment = "Shipment status is: In Transit. Your shipment is with the carrier and is in transit.";
