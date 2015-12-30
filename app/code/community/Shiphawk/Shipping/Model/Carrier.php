@@ -1131,8 +1131,12 @@ class Shiphawk_Shipping_Model_Carrier
                     'id' => $product->getShiphawkTypeOfProductValue(),
                     'zip'=> $this->getOriginZip($product),
                     'product_id'=> $product_id,
+<<<<<<< HEAD
                     'xid'=> $item->getSku(),
                     //'product_sku'=> $item->getSku(),
+=======
+                    'xid'=> $product['sku'],
+>>>>>>> 829108bec9db0f47b6ab57ec2ff513b6038c10da
                     'origin'=> $this->getShiphawkShippingOrigin($product),
                     'location_type'=> $this->getOriginLocation($product),
                     'require_crating'=> false,
@@ -1177,8 +1181,12 @@ class Shiphawk_Shipping_Model_Carrier
                     'id' => $product->getShiphawkTypeOfProductValue(),
                     'zip'=> $this->getOriginZip($product),
                     'product_id'=> $product_id,
+<<<<<<< HEAD
                     'xid'=> $item->getSku(),
                     //'product_sku'=> $item->getSku(),
+=======
+                    'xid'=> $product['sku'],
+>>>>>>> 829108bec9db0f47b6ab57ec2ff513b6038c10da
                     'origin'=> $this->getShiphawkShippingOrigin($product),
                     'location_type'=> $this->getOriginLocation($product),
                     'require_crating'=> false,
